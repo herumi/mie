@@ -107,7 +107,7 @@ public:
 	template<class RG>
 	void enc(mpz_class& encMsg, const mpz_class& msg, RG& rg) const
 	{
-		if (msg >= n) throw Exception("too arge msg");
+		if (msg >= n) throw Exception("too large msg");
 		mpz_class r;
 		getRandomInt(r, nLen * 2 - 2, rg);
 		mie::powMod(r, r, n, nn);
