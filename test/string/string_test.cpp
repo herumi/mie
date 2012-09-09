@@ -14,6 +14,7 @@
 #ifdef __GNUC__
 #include <strings.h>
 #endif
+//#define USE_BOOST_BM
 
 // strcasestr(key must not have capital character)
 const char *strcasestr_C(const char *str, const char *key)
@@ -70,6 +71,56 @@ struct Fstr_find {
 	size_t end() const { return std::string::npos; }
 	size_t find(size_t p) const { return str_->find(*key_, p); }
 };
+
+#ifdef USE_BOOST_BM
+#include <boost/algorithm/searching/boyer_moore.hpp>
+struct Frange_boost_bm_find {
+	boost::algorithm::boyer_moore<const char*> *bm_;
+	~Frange_boost_bm_find()
+	{
+		delete bm_;
+	}
+	const char *str_;
+	const char *end_;
+	const char *key_;
+	size_t keySize_;
+	typedef const char* type;
+	void set(const std::string& str, const std::string& key)
+	{
+		str_ = &str[0];
+		end_ = str_ + str.size();
+		key_ = &key[0];
+		keySize_ = key.size();
+		bm_ = new boost::algorithm::boyer_moore<const char*>(key_, key_ + keySize_);
+	}
+	Frange_boost_bm_find() : bm_(0), str_(0), end_(0), key_(0), keySize_(0) { }
+	const char *begin() const { return str_; }
+	const char *end() const { return end_; }
+	const char *find(const char *p) const { return (*bm_)(p, end_); }
+};
+#endif
+
+#ifdef __linux__
+struct Fmemmem {
+	const char *str_;
+	const char *strEnd_;
+	const char *key_;
+	size_t keyLen_;
+	typedef const char* type;
+	void set(const std::string& str, const std::string& key)
+	{
+		str_ = &str[0];
+		strEnd_ = str_ + str.size();
+		key_ = &key[0];
+		keyLen_ = key.size();
+	}
+	Fmemmem() : str_(0), strEnd_(0), key_(0), keyLen_(0) { }
+	const char *begin() const { return str_; }
+	const char *end() const { return 0; }
+	const char *find(const char *p) const { return (const char*)memmem((const void*)p, strEnd_ - p, (const void*)key_, keyLen_); }
+};
+
+#endif
 
 // std::string.find_first_of()
 struct Fstr_find_first_of {
@@ -443,13 +494,23 @@ void findStr_test(const std::string& text)
 		const std::string *pstr = text.empty() ? &str : &text;
 		benchmark("findStr_C", Frange<findStr_C>(), "findStr", Frange<mie::findStr>(), *pstr, key);
 		benchmark("findStr2_C", Frange<findStr2_C>(), "findStr", Frange<mie::findStr>(), *pstr, key);
+#ifdef __linux__
+		benchmark("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), *pstr, key);
+#endif
 	}
 	{
 		MIE_ALIGN(16) const char tt[]="\0a\0bAbc\0ef123";
-		const char *q1 = findCaseStr_C(tt, tt + 13, "bc\0ef12", 7);
-		const char *q2 = mie::findCaseStr(tt, tt + 13, "bc\0ef12", 7);
+		const char *key = "bc\0ef12";
+		const char *q1 = findCaseStr_C(tt, tt + 13, key, 7);
+		const char *q2 = mie::findCaseStr(tt, tt + 13, key, 7);
+#ifdef __linux__
+		const char *q3 = (const char*)memmem((const void*)tt, 13, (const void*)key, 7);
+#endif
 		TEST_EQUAL((int)(q1 - tt), 5);
 		TEST_EQUAL((int)(q2 - tt), 5);
+#ifdef __linux__
+		TEST_EQUAL((int)(q3 - tt), 5);
+#endif
 	}
 	puts("ok");
 }
@@ -610,6 +671,12 @@ int main(int argc, char *argv[])
 	}
 
 	try {
+//		benchmarkTbl("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), text, keyTbl);
+//		return 0;
+#ifdef USE_BOOST_BM
+		benchmarkTbl("boost", Frange_boost_bm_find(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
+		return 0;
+#endif
 #ifdef USE_MISCHASAN
 		benchmarkTbl("mischasan", Fmischasan_strstr(), "strstr", Fstrstr<STRSTR>(), text, keyTbl);
 		benchmarkTbl("mischasan", Fmischasan_strstr(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
@@ -655,4 +722,3 @@ int main(int argc, char *argv[])
 	}
 	return 1;
 }
-

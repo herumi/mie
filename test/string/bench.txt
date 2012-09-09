@@ -1,0 +1,330 @@
+2.13 GHz Core 2 Duo Mac OS X 10.6.8
+i686-apple-darwin10-gcc-4.2.1
+
+file=../data.txt, size=33327887
+text size=33327888
+                        a           strstr   2.70           qs org   7.44  0.36     qs   4.92  0.55
+                        b           strstr   2.28           qs org   7.16  0.32     qs   4.68  0.49
+                        c           strstr   2.47           qs org   7.28  0.34     qs   4.79  0.51
+                        d           strstr   2.37           qs org   7.23  0.33     qs   4.74  0.50
+                       ab           strstr   2.51           qs org   4.92  0.51     qs   3.26  0.77
+                       xy           strstr   2.18           qs org   4.81  0.45     qs   3.15  0.69
+                       ex           strstr   2.63           qs org   4.97  0.53     qs   3.31  0.79
+                      std           strstr   2.47           qs org   3.77  0.65     qs   2.51  0.98
+                      jit           strstr   2.16           qs org   3.65  0.59     qs   2.40  0.90
+                      asm           strstr   2.52           qs org   3.75  0.67     qs   2.50  1.01
+                     atoi           strstr   2.78           qs org   3.36  0.83     qs   2.25  1.23
+                     1234           strstr   2.74           qs org   3.11  0.88     qs   2.10  1.30
+                     File           strstr   2.17           qs org   2.98  0.73     qs   1.97  1.10
+                    ?????           strstr   2.59           qs org   2.98  0.87     qs   1.98  1.31
+                    patch           strstr   2.38           qs org   2.53  0.94     qs   1.69  1.41
+                    56789           strstr   2.93           qs org   3.07  0.95     qs   2.06  1.43
+                   ß„               strstr   8.74           qs org   5.44  1.61     qs   4.32  2.02
+                   cybozu           strstr   2.37           qs org   2.17  1.09     qs   1.46  1.62
+                  openssl           strstr   2.80           qs org   2.18  1.28     qs   1.49  1.88
+                namespace           strstr   2.50           qs org   1.63  1.53     qs   1.12  2.23
+                                    strstr   8.49           qs org   4.46  1.90     qs   3.60  2.36
+              cybozu::ssl           strstr   5.60           qs org   3.14  1.78     qs   2.18  2.57
+             asdfasdfasdf           strstr   6.27           qs org   3.07  2.05     qs   2.13  2.95
+            static_assert           strstr   2.88           qs org   1.39  2.08     qs   0.97  2.98
+           const_iterator           strstr   2.86           qs org   1.34  2.13     qs   0.95  3.03
+          000000000000000           strstr   2.96           qs org   1.13  2.62     qs   0.80  3.70
+   WARIXDFSKVJWSVFDVWESVF           strstr   2.13           qs org   1.14  1.87     qs   0.56  3.81
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   2.91           qs org   1.35  2.16     qs   0.74  3.92
+
+Xeon(R) CPU           X5650  @ 2.67GHz 3.0.0-12-server #20-Ubuntu SMP
+gcc version 4.6.1
+                        a           strstr   1.43           qs org   6.22  0.48     qs   4.70  0.33
+                        b           strstr   1.27           qs org   5.18  0.25     qs   4.48  0.29
+                        c           strstr   1.47           qs org   4.99  0.29     qs   4.58  0.31
+                        d           strstr   1.34           qs org   4.96  0.27     qs   4.54  0.30
+                       ab           strstr   1.16           qs org   4.26  0.27     qs   3.12  0.37
+                       xy           strstr   1.16           qs org   4.16  0.28     qs   3.01  0.39
+                       ex           strstr   1.17           qs org   4.30  0.27     qs   3.17  0.37
+                      std           strstr   1.17           qs org   3.68  0.32     qs   2.39  0.49
+                      jit           strstr   1.16           qs org   3.58  0.32     qs   2.27  0.51
+                      asm           strstr   1.16           qs org   3.67  0.32     qs   2.38  0.49
+                     atoi           strstr   1.28           qs org   3.82  0.33     qs   2.13  0.60
+                     1234           strstr   1.17           qs org   3.52  0.33     qs   1.99  0.58
+                     File           strstr   1.17           qs org   3.45  0.34     qs   1.85  0.63
+                    ?????           strstr   1.41           qs org   3.43  0.41     qs   1.85  0.77
+                    patch           strstr   1.16           qs org   2.89  0.40     qs   1.59  0.73
+                    56789           strstr   1.41           qs org   3.51  0.40     qs   1.93  0.73
+                       ß„           strstr   1.33           qs org   5.18  0.26     qs   4.09  0.32
+                   cybozu           strstr   1.16           qs org   2.45  0.47     qs   1.36  0.85
+                  openssl           strstr   1.30           qs org   2.47  0.53     qs   1.38  0.95
+                namespace           strstr   1.19           qs org   2.01  0.59     qs   1.02  1.17
+                                    strstr   1.24           qs org   4.49  0.28     qs   3.40  0.37
+              cybozu::ssl           strstr   2.74           qs org   3.99  0.69     qs   1.95  1.40
+             asdfasdfasdf           strstr   2.90           qs org   3.89  0.74     qs   1.89  1.53
+            static_assert           strstr   1.37           qs org   1.68  0.82     qs   0.85  1.61
+           const_iterator           strstr   1.39           qs org   1.67  0.83     qs   0.83  1.68
+          000000000000000           strstr   1.27           qs org   1.34  0.95     qs   0.70  1.83
+   WARIXDFSKVJWSVFDVWESVF           strstr   0.49           qs org   0.96  0.51     qs   0.45  1.06
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   0.66           qs org   1.15  0.57     qs   0.54  1.19
+
+
+sandy bridge on VC2010 windows 7
+                        a           strstr   5.01           qs org   7.63  0.66     qs   5.78  0.87
+                        b           strstr   4.88           qs org   7.36  0.66     qs   5.56  0.88
+                        c           strstr   4.89           qs org   7.46  0.66     qs   5.67  0.87
+                        d           strstr   4.88           qs org   7.41  0.66     qs   5.62  0.87
+                       ab           strstr   4.85           qs org   5.00  0.97     qs   3.80  1.28
+                       xy           strstr   4.76           qs org   4.91  0.97     qs   3.71  1.28
+                       ex           strstr   4.94           qs org   5.04  0.98     qs   3.85  1.28
+                      std           strstr   4.90           qs org   3.81  1.29     qs   2.92  1.68
+                      jit           strstr   4.83           qs org   3.71  1.30     qs   2.80  1.73
+                      asm           strstr   4.94           qs org   3.79  1.30     qs   2.90  1.71
+                     atoi           strstr   5.37           qs org   3.37  1.59     qs   2.59  2.09
+                     1234           strstr   5.00           qs org   3.11  1.61     qs   2.40  2.08
+                     File           strstr   4.79           qs org   3.01  1.59     qs   2.29  2.10
+                    ?????           strstr   5.65           qs org   3.00  1.88     qs   2.29  2.48
+                    patch           strstr   4.91           qs org   2.54  1.94     qs   1.94  2.55
+                    56789           strstr   5.87           qs org   3.08  1.91     qs   2.36  2.48
+                   Â·éßÂ·°¶          strstr   8.91           qs org   5.18  1.72     qs   4.42  2.01
+                   cybozu           strstr   4.75           qs org   2.16  2.20     qs   1.66  2.87
+                  openssl           strstr   5.49           qs org   2.17  2.53     qs   1.68  3.29
+                namespace           strstr   5.12           qs org   1.97  2.59     qs   1.25  4.01
+                Â·∆Â£ÏÂ·éØ           strstr   8.96           qs org   3.24  2.77     qs   3.70  2.37
+              cybozu::ssl           strstr  11.30           qs org   3.75  3.01     qs   2.39  4.70
+             asdfasdfasdf           strstr  12.43           qs org   3.75  3.31     qs   2.34  5.18
+            static_assert           strstr   5.68           qs org   1.65  3.44     qs   1.05  5.41
+           const_iterator           strstr   5.91           qs org   1.59  3.72     qs   1.01  5.66
+          000000000000000           strstr   5.61           qs org   1.31  4.27     qs   0.87  6.26
+   WARIXDFSKVJWSVFDVWESVF           strstr   4.57           qs org   0.83  5.48     qs   0.55  8.36
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   6.17           qs org   0.97  6.39     qs   0.66  9.39
+
+sandy bridge on VC2011 windows 7
+
+                        a           strstr   0.71           qs org   8.06  0.09     qs   5.80  0.12
+                        b           strstr   0.42           qs org   7.81  0.05     qs   5.56  0.07
+                        c           strstr   0.55           qs org   7.92  0.07     qs   5.66  0.10
+                        d           strstr   0.49           qs org   7.88  0.06     qs   5.64  0.09
+                       ab           strstr   0.32           qs org   5.30  0.06     qs   3.81  0.08
+                       xy           strstr   0.27           qs org   5.20  0.05     qs   3.70  0.07
+                       ex           strstr   0.33           qs org   5.33  0.06     qs   3.85  0.09
+                      std           strstr   0.29           qs org   4.03  0.07     qs   2.91  0.10
+                      jit           strstr   0.27           qs org   3.94  0.07     qs   2.82  0.10
+                      asm           strstr   0.29           qs org   4.01  0.07     qs   2.90  0.10
+                     atoi           strstr   0.32           qs org   3.58  0.09     qs   2.59  0.12
+                     1234           strstr   0.31           qs org   3.29  0.09     qs   2.40  0.13
+                     File           strstr   0.28           qs org   3.19  0.09     qs   2.30  0.12
+                    ?????           strstr   0.33           qs org   3.20  0.10     qs   2.29  0.14
+                    patch           strstr   0.29           qs org   2.70  0.11     qs   1.94  0.15
+                    56789           strstr   0.35           qs org   3.26  0.11     qs   2.36  0.15
+                   Â·éßÂ·°¶          strstr   1.21           qs org   5.31  0.23     qs   4.39  0.27
+                   cybozu           strstr   0.30           qs org   2.29  0.13     qs   1.66  0.18
+                  openssl           strstr   0.32           qs org   2.30  0.14     qs   1.68  0.19
+                namespace           strstr   0.29           qs org   2.06  0.14     qs   1.25  0.24
+                Â·∆Â£ÏÂ·éØ           strstr   1.09           qs org   3.26  0.33     qs   3.66  0.30
+              cybozu::ssl           strstr   0.67           qs org   3.91  0.17     qs   2.39  0.28
+             asdfasdfasdf           strstr   0.72           qs org   3.82  0.19     qs   2.34  0.31
+            static_assert           strstr   0.34           qs org   1.72  0.20     qs   1.05  0.32
+           const_iterator           strstr   0.35           qs org   1.64  0.21     qs   1.01  0.34
+          000000000000000           strstr   0.34           qs org   1.39  0.24     qs   0.85  0.40
+   WARIXDFSKVJWSVFDVWESVF           strstr   0.27           qs org   0.85  0.32     qs   0.55  0.49
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   0.36           qs org   0.97  0.37     qs   0.65  0.55
+
+                        a           strstr   0.71         mystrstr   0.62  1.16
+                        b           strstr   0.41         mystrstr   0.36  1.14
+                        c           strstr   0.56         mystrstr   0.48  1.16
+                        d           strstr   0.49         mystrstr   0.42  1.16
+                       ab           strstr   0.32         mystrstr   0.30  1.09
+                       xy           strstr   0.27         mystrstr   0.28  1.00
+                       ex           strstr   0.34         mystrstr   0.31  1.09
+                      std           strstr   0.30         mystrstr   0.29  1.03
+                      jit           strstr   0.27         mystrstr   0.27  1.00
+                      asm           strstr   0.29         mystrstr   0.29  1.02
+                     atoi           strstr   0.32         mystrstr   0.31  1.03
+                     1234           strstr   0.31         mystrstr   0.29  1.07
+                     File           strstr   0.28         mystrstr   0.28  1.00
+                    ?????           strstr   0.33         mystrstr   0.33  1.00
+                    patch           strstr   0.28         mystrstr   0.28  1.02
+                    56789           strstr   0.35         mystrstr   0.34  1.03
+                   Â·éßÂ·°¶          strstr   1.20         mystrstr   0.96  1.26
+                   cybozu           strstr   0.30         mystrstr   0.29  1.03
+                  openssl           strstr   0.32         mystrstr   0.32  1.01
+                namespace           strstr   0.30         mystrstr   0.29  1.03
+                Â·∆Â£ÏÂ·éØ           strstr   1.10         mystrstr   0.87  1.27
+              cybozu::ssl           strstr   0.68         mystrstr   0.67  1.03
+             asdfasdfasdf           strstr   0.72         mystrstr   0.71  1.02
+            static_assert           strstr   0.35         mystrstr   0.33  1.05
+           const_iterator           strstr   0.35         mystrstr   0.34  1.03
+          000000000000000           strstr   0.34         mystrstr   0.32  1.07
+   WARIXDFSKVJWSVFDVWESVF           strstr   0.27         mystrstr   0.28  0.99
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   0.36         mystrstr   0.36  1.00
+
+windows 7
+                     fghi        findStr_C  14.93          findStr   0.52 28.54
+                     fghi       findStr2_C   2.27          findStr   0.52  4.33
+                        x        findStr_C  12.68          findStr   0.50 25.43
+                        x       findStr2_C   1.90          findStr   0.50  3.80
+                        i        findStr_C  12.86          findStr   0.81 15.83
+                        i       findStr2_C   2.19          findStr   0.81  2.69
+                       ij        findStr_C  12.87          findStr   0.49 26.14
+                       ij       findStr2_C   2.16          findStr   0.46  4.69
+                      lmn        findStr_C  15.26          findStr   0.57 26.68
+                      lmn       findStr2_C   2.45          findStr   0.53  4.61
+            abcdefghijklm        findStr_C  13.94          findStr   0.55 25.42
+            abcdefghijklm       findStr2_C   2.58          findStr   0.58  4.41
+         0123456789abcdef        findStr_C  16.73          findStr   0.66 25.18
+         0123456789abcdef       findStr2_C   3.24          findStr   0.66  4.92
+  0123456789abcdefghijklm        findStr_C  20.86          findStr   0.85 24.66
+  0123456789abcdefghijklm       findStr2_C   4.11          findStr   0.84  4.92
+0123456789abcdefghijklmno        findStr_C  11.57          findStr   0.47 24.39
+0123456789abcdefghijklmno       findStr2_C   2.34          findStr   0.48  4.91
+
+Xeon(R) CPU           X5650  @ 2.67GHz 3.0.0-12-server #20-Ubuntu SMP
+gcc version 4.6.1
+                        a           strstr   1.57       mystrstr_C   0.73  2.16
+                        b           strstr   1.27       mystrstr_C   0.39  3.29
+                        c           strstr   1.41       mystrstr_C   0.55  2.58
+                        d           strstr   1.35       mystrstr_C   0.47  2.84
+                       ab           strstr   1.16       mystrstr_C   0.64  1.83
+                       xy           strstr   1.16       mystrstr_C   0.31  3.76
+                       ex           strstr   1.17       mystrstr_C   0.75  1.56
+                      std           strstr   1.18       mystrstr_C   0.59  2.00
+                      jit           strstr   1.16       mystrstr_C   0.30  3.89
+                      asm           strstr   1.17       mystrstr_C   0.66  1.76
+                     atoi           strstr   1.28       mystrstr_C   0.75  1.70
+                     1234           strstr   1.16       mystrstr_C   0.93  1.25
+                     File           strstr   1.17       mystrstr_C   0.30  3.96
+                    ?????           strstr   1.42       mystrstr_C   0.33  4.27
+                    patch           strstr   1.16       mystrstr_C   0.52  2.23
+                    56789           strstr   1.42       mystrstr_C   0.70  2.03
+                   ß„           strstr   1.33       mystrstr_C   7.85  0.17
+                   cybozu           strstr   1.16       mystrstr_C   0.52  2.21
+                  openssl           strstr   1.30       mystrstr_C   0.75  1.73
+                namespace           strstr   1.19       mystrstr_C   0.63  1.90
+                           strstr   1.24       mystrstr_C   7.87  0.16
+              cybozu::ssl           strstr   2.74       mystrstr_C   1.27  2.16
+             asdfasdfasdf           strstr   2.90       mystrstr_C   1.78  1.63
+            static_assert           strstr   1.37       mystrstr_C   0.73  1.88
+           const_iterator           strstr   1.39       mystrstr_C   0.65  2.13
+          000000000000000           strstr   1.28       mystrstr_C   1.05  1.22
+   WARIXDFSKVJWSVFDVWESVF           strstr   0.49       mystrstr_C   0.28  1.74
+ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   0.65       mystrstr_C   0.43  1.50
+
+Xeon(R) CPU           X5650  @ 2.67GHz 3.0.0-12-server #20-Ubuntu SMP
+gcc version 4.6.1
+                        a       mystrstr_C   0.72         mystrstr   0.60  1.21
+                        b       mystrstr_C   0.39         mystrstr   0.36  1.07
+                        c       mystrstr_C   0.54         mystrstr   0.48  1.14
+                        d       mystrstr_C   0.47         mystrstr   0.42  1.11
+                       ab       mystrstr_C   0.63         mystrstr   0.29  2.15
+                       xy       mystrstr_C   0.31         mystrstr   0.27  1.15
+                       ex       mystrstr_C   0.74         mystrstr   0.31  2.38
+                      std       mystrstr_C   0.59         mystrstr   0.28  2.07
+                      jit       mystrstr_C   0.30         mystrstr   0.27  1.12
+                      asm       mystrstr_C   0.66         mystrstr   0.28  2.33
+                     atoi       mystrstr_C   0.75         mystrstr   0.31  2.43
+                     1234       mystrstr_C   0.93         mystrstr   0.29  3.20
+                     File       mystrstr_C   0.29         mystrstr   0.27  1.08
+                    ?????       mystrstr_C   0.33         mystrstr   0.32  1.02
+                    patch       mystrstr_C   0.52         mystrstr   0.27  1.88
+                    56789       mystrstr_C   0.69         mystrstr   0.33  2.06
+                       ß„       mystrstr_C   7.74         mystrstr   0.98  7.87
+                   cybozu       mystrstr_C   0.52         mystrstr   0.28  1.85
+                  openssl       mystrstr_C   0.75         mystrstr   0.31  2.39
+                namespace       mystrstr_C   0.62         mystrstr   0.28  2.19
+               ko-re-wa         mystrstr_C   7.81         mystrstr   0.90  8.67
+              cybozu::ssl       mystrstr_C   1.26         mystrstr   0.65  1.94
+             asdfasdfasdf       mystrstr_C   1.76         mystrstr   0.70  2.52
+            static_assert       mystrstr_C   0.72         mystrstr   0.33  2.21
+           const_iterator       mystrstr_C   0.65         mystrstr   0.33  1.99
+          000000000000000       mystrstr_C   1.04         mystrstr   0.33  3.19
+   WARIXDFSKVJWSVFDVWESVF       mystrstr_C   0.28         mystrstr   0.27  1.06
+ABCDEFGHIJKLMNOPQRSTUVWXY       mystrstr_C   0.43         mystrstr   0.36  1.21
+
+                        a            boost   6.76      mie::strstr   0.70  9.72
+                        a            boost   6.76      mie::strstr   0.70  9.64
+                        b            boost   6.37      mie::strstr   0.37 17.02
+                        c            boost   6.54      mie::strstr   0.51 12.93
+                        d            boost   6.47      mie::strstr   0.45 14.29
+                       ab            boost   6.03      mie::strstr   0.30 20.00
+                       xy            boost   6.04      mie::strstr   0.27 22.70
+                       ex            boost   6.04      mie::strstr   0.31 19.66
+                      std            boost   4.12      mie::strstr   0.28 14.77
+                      jit            boost   4.13      mie::strstr   0.27 15.46
+                      asm            boost   4.29      mie::strstr   0.30 14.35
+                     atoi            boost   3.57      mie::strstr   0.32 11.17
+                     1234            boost   3.14      mie::strstr   0.29 10.68
+                     File            boost   3.17      mie::strstr   0.27 11.88
+                    ?????            boost   2.76      mie::strstr   0.31  8.87
+                    patch            boost   2.51      mie::strstr   0.27  9.23
+                    56789            boost   2.51      mie::strstr   0.28  9.08
+                   §«§π            boost   2.51      mie::strstr   0.92  2.73
+                   cybozu            boost   2.08      mie::strstr   0.30  6.92
+                  openssl            boost   1.79      mie::strstr   0.28  6.36
+                namespace            boost   1.62      mie::strstr   0.31  5.20
+                §≥§Ï§œ           boost   1.68      mie::strstr   0.81  2.09
+              cybozu::ssl            boost   1.16      mie::strstr   0.28  4.16
+             asdfasdfasdf            boost   1.04      mie::strstr   0.28  3.70
+            static_assert            boost   1.03      mie::strstr   0.28  3.72
+           const_iterator            boost   4.01      mie::strstr   1.15  3.50
+          000000000000000            boost   0.89      mie::strstr   0.30  2.97
+   WARIXDFSKVJWSVFDVWESVF            boost   0.58      mie::strstr   0.26  2.22
+ABCDEFGHIJKLMNOPQRSTUVWXY            boost   0.53      mie::strstr   0.27  1.94
+
+file=../isis.txt, size=130009117
+                        a     string::find   3.37      mie::strstr   0.69  4.85
+                        a     string::find   3.36      mie::strstr   0.70  4.79
+                        b     string::find   2.84      mie::strstr   0.38  7.53
+                        c     string::find   3.05      mie::strstr   0.51  5.98
+                        d     string::find   2.96      mie::strstr   0.46  6.49
+                       ab     string::find   3.04      mie::strstr   0.31  9.96
+                       xy     string::find   2.71      mie::strstr   0.27 10.07
+                       ex     string::find   3.09      mie::strstr   0.31  9.94
+                      std     string::find   2.97      mie::strstr   0.28 10.50
+                      jit     string::find   2.73      mie::strstr   0.27 10.08
+                      asm     string::find   3.24      mie::strstr   0.30 10.74
+                     atoi     string::find   3.48      mie::strstr   0.32 10.70
+                     1234     string::find   3.23      mie::strstr   0.30 10.82
+                     File     string::find   2.72      mie::strstr   0.27 10.08
+                    ?????     string::find   3.20      mie::strstr   0.32 10.15
+                    patch     string::find   2.85      mie::strstr   0.28 10.34
+                    56789     string::find   2.94      mie::strstr   0.28 10.52
+                   §«§π     string::find   7.44      mie::strstr   0.92  8.10
+                   cybozu     string::find   2.90      mie::strstr   0.30  9.63
+                  openssl     string::find   3.06      mie::strstr   0.29 10.50
+                namespace     string::find   3.33      mie::strstr   0.31 10.63
+                §≥§Ï§œ     string::find   7.39      mie::strstr   0.81  9.17
+              cybozu::ssl     string::find   2.90      mie::strstr   0.28 10.40
+             asdfasdfasdf     string::find   3.09      mie::strstr   0.28 10.88
+            static_assert     string::find   2.95      mie::strstr   0.28 10.63
+           const_iterator     string::find  12.08      mie::strstr   1.15 10.50
+          000000000000000     string::find   3.27      mie::strstr   0.30 10.90
+   WARIXDFSKVJWSVFDVWESVF     string::find   2.68      mie::strstr   0.27 10.09
+ABCDEFGHIJKLMNOPQRSTUVWXY     string::find   2.80      mie::strstr   0.27 10.20
+
+Xeon X5650
+                        a           memmem   0.84          findStr   1.04  0.81
+                        a           memmem   0.85          findStr   1.04  0.82
+                        b           memmem   0.40          findStr   0.61  0.65
+                        c           memmem   0.57          findStr   0.78  0.74
+                        d           memmem   0.50          findStr   0.71  0.70
+                       ab           memmem   4.30          findStr   0.51  8.36
+                       xy           memmem   4.39          findStr   0.45  9.68
+                       ex           memmem   4.40          findStr   0.52  8.52
+                      std           memmem   4.49          findStr   0.48  9.39
+                      jit           memmem   4.50          findStr   0.48  9.47
+                      asm           memmem   4.79          findStr   0.51  9.31
+                     atoi           memmem   5.13          findStr   0.55  9.32
+                     1234           memmem   4.48          findStr   0.51  8.85
+                     File           memmem   4.36          findStr   0.46  9.57
+                    ?????           memmem   5.25          findStr   0.53  9.86
+                    patch           memmem   4.53          findStr   0.46  9.77
+                    56789           memmem   4.49          findStr   0.47  9.51
+                    de-su        memmem   6.06          findStr   1.25  4.83
+                   cybozu           memmem   4.42          findStr   0.51  8.68
+                  openssl           memmem   4.53          findStr   0.48  9.35
+                namespace           memmem   5.16          findStr   0.53  9.65
+               ko-re-wa        memmem   6.41          findStr   1.14  5.64
+              cybozu::ssl           memmem   4.46          findStr   0.48  9.34
+             asdfasdfasdf           memmem   4.70          findStr   0.49  9.66
+            static_assert           memmem   4.42          findStr   0.48  9.30
+           const_iterator           memmem  18.83          findStr   1.96  9.59
+          000000000000000           memmem   5.12          findStr   0.52  9.93
+   WARIXDFSKVJWSVFDVWESVF           memmem   4.44          findStr   0.46  9.76
+ABCDEFGHIJKLMNOPQRSTUVWXY           memmem   4.53          findStr   0.47  9.67
+
