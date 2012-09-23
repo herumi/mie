@@ -33,40 +33,14 @@ void setRaw(mpz_class& z, const T *buf, size_t n)
 	mpz_import(z.get_mpz_t(), n, -1, sizeof(*buf), 0, 0, buf);
 }
 
-inline bool fromStr(mpz_class &z, const std::string& str)
+inline bool fromStr(mpz_class &z, const std::string& str, int base = 10)
 {
-	const char *p = str.c_str();
-	int base = 10;
-	if (str.size() > 2 && str[0] == '0') {
-		if (str[1] == 'x') {
-			base = 16;
-			p += 2;
-		} else if (str[1] == 'b') {
-			base = 2;
-			p += 2;
-		}
-	}
-	if (mpz_init_set_str(z.get_mpz_t(), p, base) == 0) {
-		return true;
-	}
-	mpz_clear(z.get_mpz_t());
-	return false;
+	return z.set_str(str, base) == 0;
 }
 
 inline void toStr(std::string& str, const mpz_class& z, int base = 10)
 {
-	__gmp_alloc_cstring tmp(mpz_get_str(0, base, z.get_mpz_t()));
-	if (base == 16) {
-		str = "0x";
-	} else if (base == 2) {
-		str = "0b";
-	} else if (base == 10) {
-		str.clear();
-	} else {
-		fprintf(stderr, "not support base(%d) in toStr\n", base);
-		::exit(1);
-	}
-	str += tmp.str;
+	str = z.get_str(base);
 }
 
 inline void add(mpz_class& z, const mpz_class& x, const mpz_class& y)
@@ -107,6 +81,21 @@ inline void setZero(mpz_class& z)
 inline bool isNegative(const mpz_class& z)
 {
 	return mpz_sgn(z.get_mpz_t()) < 0;
+}
+
+inline bool isEqual(const mpz_class& x, const mpz_class& y)
+{
+	return x == y;
+}
+
+inline bool isEqual(const mpz_class& x, int y)
+{
+	return x == y;
+}
+
+inline int cmp(const mpz_class& x, const mpz_class & y)
+{
+	return mpz_cmp(x.get_mpz_t(), y.get_mpz_t());
 }
 
 inline void addMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)

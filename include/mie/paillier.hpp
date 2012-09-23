@@ -8,20 +8,11 @@
 */
 #include <fstream>
 #include <vector>
+#include <mie/exception.hpp>
 #include <mie/gmp_util.hpp>
 #include <mie/random_generator.hpp>
 
 namespace mie { namespace paillier {
-
-struct Exception : std::exception {
-	std::string str_;
-	virtual ~Exception() throw() {}
-	explicit Exception(const std::string& msg1, const std::string& msg2 = "")
-		: str_(msg1 + msg2)
-	{
-	}
-	const char *what() const throw() { return str_.c_str(); }
-};
 
 template<class RG>
 void getRandomInt(mpz_class& z, size_t bitLen, RG& r)
