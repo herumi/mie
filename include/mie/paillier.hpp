@@ -34,7 +34,7 @@ void getRandomInt(mpz_class& z, size_t bitLen, RG& r)
 	}
 	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 	buf[n - 1] |= 1U << rem;
-	mie::setRaw(z, &buf[0], n);
+	mie::gmp::setRaw(z, &buf[0], n);
 }
 
 template<class RG>
@@ -42,7 +42,7 @@ void getRandomPrime(mpz_class& z, size_t bitLen, RG& r)
 {
 	do {
 		getRandomInt(z, bitLen, r);
-	} while (!mie::isPrime(z));
+	} while (!mie::gmp::isPrime(z));
 }
 
 template<class T>
@@ -69,7 +69,7 @@ class PublicKey : public LoadSave<PublicKey> {
 	// call finish after setting n
 	void finish()
 	{
-		nLen = mie::getBitLen(n);
+		nLen = mie::gmp::getBitLen(n);
 		nn = n * n;
 		g = n + 1;
 	}
@@ -99,7 +99,7 @@ public:
 	}
 	void pow(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
-		mie::powMod(z, x, y, nn);
+		mie::gmp::powMod(z, x, y, nn);
 	}
 	/*
 		encMsg = (g^msg) (r^n) mod n^2
@@ -110,9 +110,9 @@ public:
 		if (msg >= n) throw Exception("too large msg");
 		mpz_class r;
 		getRandomInt(r, nLen * 2 - 2, rg);
-		mie::powMod(r, r, n, nn);
+		mie::gmp::powMod(r, r, n, nn);
 
-		mie::powMod(encMsg, g, msg, nn);
+		mie::gmp::powMod(encMsg, g, msg, nn);
 		mul(encMsg, encMsg, r);
 	}
 	void enc(mpz_class& encMsg, const mpz_class& msg) const
@@ -134,12 +134,12 @@ class PrivateKey : public LoadSave<PrivateKey> {
 	{
 		pub.n = p * q;
 		pub.finish();
-		mie::lcm(lambda, p - 1, q - 1);
+		mie::gmp::lcm(lambda, p - 1, q - 1);
 		// x = (n + 1)^lambda mod n^2
-		mie::powMod(x, pub.g, lambda, pub.nn);
+		mie::gmp::powMod(x, pub.g, lambda, pub.nn);
 		pub.L(x, x);
 		// 1 / L() mod n
-		mie::invMod(x, x, pub.n);
+		mie::gmp::invMod(x, x, pub.n);
 	}
 public:
 	template<class RG>
@@ -149,7 +149,7 @@ public:
 			getRandomPrime(p, (keyLen + 1) / 2, rg);
 			getRandomPrime(q, (keyLen + 1) / 2, rg);
 			pub.n = p * q;
-		} while (mie::getBitLen(pub.n) < keyLen);
+		} while (mie::gmp::getBitLen(pub.n) < keyLen);
 		finish();
 		pub.finish();
 	}
@@ -175,7 +175,7 @@ public:
 	*/
 	void dec(mpz_class& decMsg, const mpz_class& encMsg) const
 	{
-		mie::powMod(decMsg, encMsg, lambda, pub.nn);
+		mie::gmp::powMod(decMsg, encMsg, lambda, pub.nn);
 		pub.L(decMsg, decMsg);
 		decMsg *= x;
 		decMsg %= pub.n;
