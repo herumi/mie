@@ -23,131 +23,134 @@
 #pragma comment(lib, "mpirxx.lib")
 #endif
 
-namespace mie { namespace gmp {
+namespace mie {
 
-// z = [buf[n-1]:..:buf[1]:buf[0]]
-// eg. buf[] = {0x12345678, 0xaabbccdd}; => z = 0xaabbccdd12345678;
-template<class T>
-void setRaw(mpz_class& z, const T *buf, size_t n)
-{
-	mpz_import(z.get_mpz_t(), n, -1, sizeof(*buf), 0, 0, buf);
-}
-
-inline bool fromStr(mpz_class &z, const std::string& str, int base = 10)
-{
-	return z.set_str(str, base) == 0;
-}
-
-inline void toStr(std::string& str, const mpz_class& z, int base = 10)
-{
-	str = z.get_str(base);
-}
-
-inline void add(mpz_class& z, const mpz_class& x, const mpz_class& y)
-{
-	mpz_add(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void sub(mpz_class& z, const mpz_class& x, const mpz_class& y)
-{
-	mpz_sub(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void mul(mpz_class& z, const mpz_class& x, const mpz_class& y)
-{
-	mpz_mul(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void divmod(mpz_class& q, mpz_class& r, const mpz_class& x, const mpz_class& y)
-{
-	mpz_divmod(q.get_mpz_t(), r.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void div(mpz_class& q, const mpz_class& x, const mpz_class& y)
-{
-	mpz_div(q.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void mod(mpz_class& r, const mpz_class& x, const mpz_class& m)
-{
-	mpz_mod(r.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
-}
-
-inline void setZero(mpz_class& z)
-{
-	mpz_clear(z.get_mpz_t());
-}
-
-inline bool isNegative(const mpz_class& z)
-{
-	return mpz_sgn(z.get_mpz_t()) < 0;
-}
-
-inline bool isEqual(const mpz_class& x, const mpz_class& y)
-{
-	return x == y;
-}
-
-inline bool isEqual(const mpz_class& x, int y)
-{
-	return x == y;
-}
-
-inline int cmp(const mpz_class& x, const mpz_class & y)
-{
-	return mpz_cmp(x.get_mpz_t(), y.get_mpz_t());
-}
-
-inline void addMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
-{
-	add(z, x, y);
-	mpz_class t;
-	sub(t, z, m);
-	if (!isNegative(t)) {
-		z = t;
+struct Gmp {
+	typedef mpz_class value_type;
+	// z = [buf[n-1]:..:buf[1]:buf[0]]
+	// eg. buf[] = {0x12345678, 0xaabbccdd}; => z = 0xaabbccdd12345678;
+	template<class T>
+	static void setRaw(mpz_class& z, const T *buf, size_t n)
+	{
+		mpz_import(z.get_mpz_t(), n, -1, sizeof(*buf), 0, 0, buf);
 	}
-}
 
-inline void subMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
-{
-	sub(z, x, y);
-	if (!isNegative(z)) return;
-	add(z, z, m);
-}
+	static inline bool fromStr(mpz_class &z, const std::string& str, int base = 10)
+	{
+		return z.set_str(str, base) == 0;
+	}
 
-inline void mulMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
-{
-	mul(z, x, y);
-	mod(z, z, m);
-}
+	static inline void toStr(std::string& str, const mpz_class& z, int base = 10)
+	{
+		str = z.get_str(base);
+	}
 
-// z = x^y mod m
-inline void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
-{
-	mpz_powm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t(), m.get_mpz_t());
-}
+	static inline void add(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_add(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 
-// z = 1/x mod m
-inline void invMod(mpz_class& z, const mpz_class& x, const mpz_class& m)
-{
-	mpz_invert(z.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
-}
+	static inline void sub(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_sub(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 
-// z = lcm(x, y)
-inline void lcm(mpz_class& z, const mpz_class& x, const mpz_class& y)
-{
-	mpz_lcm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
-}
+	static inline void mul(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_mul(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 
-inline bool isPrime(const mpz_class& x)
-{
-	return mpz_probab_prime_p(x.get_mpz_t(), 10) != 0;
-}
+	static inline void divmod(mpz_class& q, mpz_class& r, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_divmod(q.get_mpz_t(), r.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 
-inline size_t getBitLen(const mpz_class& x)
-{
-	return mpz_sizeinbase(x.get_mpz_t(), 2);
-}
+	static inline void div(mpz_class& q, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_div(q.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 
-} } // mie::gmp
+	static inline void mod(mpz_class& r, const mpz_class& x, const mpz_class& m)
+	{
+		mpz_mod(r.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
+	}
+
+	static inline void setZero(mpz_class& z)
+	{
+		mpz_clear(z.get_mpz_t());
+	}
+
+	static inline bool isNegative(const mpz_class& z)
+	{
+		return mpz_sgn(z.get_mpz_t()) < 0;
+	}
+
+	static inline bool isEqual(const mpz_class& x, const mpz_class& y)
+	{
+		return x == y;
+	}
+
+	static inline bool isEqual(const mpz_class& x, int y)
+	{
+		return x == y;
+	}
+
+	static inline int cmp(const mpz_class& x, const mpz_class & y)
+	{
+		return mpz_cmp(x.get_mpz_t(), y.get_mpz_t());
+	}
+
+	static inline void addMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	{
+		add(z, x, y);
+		mpz_class t;
+		sub(t, z, m);
+		if (!isNegative(t)) {
+			z = t;
+		}
+	}
+
+	static inline void subMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	{
+		sub(z, x, y);
+		if (!isNegative(z)) return;
+		add(z, z, m);
+	}
+
+	static inline void mulMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	{
+		mul(z, x, y);
+		mod(z, z, m);
+	}
+
+	// z = x^y mod m
+	static inline void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	{
+		mpz_powm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t(), m.get_mpz_t());
+	}
+
+	// z = 1/x mod m
+	static inline void invMod(mpz_class& z, const mpz_class& x, const mpz_class& m)
+	{
+		mpz_invert(z.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
+	}
+
+	// z = lcm(x, y)
+	static inline void lcm(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_lcm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
+
+	static inline bool isPrime(const mpz_class& x)
+	{
+		return mpz_probab_prime_p(x.get_mpz_t(), 10) != 0;
+	}
+
+	static inline size_t getBitLen(const mpz_class& x)
+	{
+		return mpz_sizeinbase(x.get_mpz_t(), 2);
+	}
+};
+
+} // mie::gmp
 
