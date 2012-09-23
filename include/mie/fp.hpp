@@ -13,9 +13,10 @@ namespace mie {
 
 template<class T>
 class FpT {
+	typedef typename T::value_type value_type;
 	static T m_;
-	T v;
-	static inline void fromStr(T& t, const std::string& str)
+	value_type v;
+	static inline void fromStr(value_type& t, const std::string& str)
 	{
 		const char *p = str.c_str();
 		int base = 10;
@@ -28,8 +29,8 @@ class FpT {
 				p += 2;
 			}
 		}
-		if (!fromStr(t, str, base)) {
-			throw Exception("FpT::FpT", str);
+		if (!T::fromStr(t, p, base)) {
+			throw Exception("FpT::FpT ", str);
 		}
 	}
 public:
@@ -45,13 +46,13 @@ public:
 	}
 	void toStr(std::string& str, int base = 10) const
 	{
-		toStr(str, v, base);
+		T::toStr(str, v, base);
 		if (base == 16) {
 			str.insert(0, "0x");
 		} else if (base == 2) {
 			str.insert(0, "0b");
 		} else if (base != 10) {
-			throw Exception("FpT::toSTr", "bad base") << base;
+			throw Exception("FpT::toStr ", "bad base") << base;
 		}
 	}
 	void set(int x)
@@ -64,37 +65,37 @@ public:
 	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y)
 	{
-		addMod(z.v, x.v, y.v, m_);
+		T::addMod(z.v, x.v, y.v, m_);
 	}
 	static inline void sub(FpT& z, const FpT& x, const FpT& y)
 	{
-		subMod(z.v, x.v, y.v, m_);
+		T::subMod(z.v, x.v, y.v, m_);
 	}
 	static inline void mul(FpT& z, const FpT& x, const FpT& y)
 	{
-		mulMod(z.v, x.v, y.v, m_);
+		T::mulMod(z.v, x.v, y.v, m_);
 	}
 	static inline void inv(FpT& z, const FpT& x)
 	{
-		invMod(z.v, x.v, m_);
+		T::invMod(z.v, x.v, m_);
 	}
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
-		T rev;
-		invMod(rev.v, y.v, m_);
-		mulMod(z, x, rev.v);
+		value_type rev;
+		T::invMod(rev.v, y.v, m_);
+		T::mulMod(z, x, rev.v);
 	}
 	bool isZero() const
 	{
-		return v.isZero();
+		return T::v.isZero();
 	}
 	friend inline bool operator==(const FpT& x, const FpT& y)
 	{
-		return isEqual(x.v, y.v);
+		return T::isEqual(x.v, y.v);
 	}
 	friend inline bool operator==(const FpT& x, int y)
 	{
-		return isEqual(x.v, y);
+		return T::isEqual(x.v, y);
 	}
 	friend inline bool operator!=(const FpT& x, const FpT& y)
 	{
@@ -106,7 +107,7 @@ public:
 	}
 	friend inline int cmp(const FpT& x, const FpT& y)
 	{
-		return cmp(x.v, y.v);
+		return T::cmp(x.v, y.v);
 	}
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
