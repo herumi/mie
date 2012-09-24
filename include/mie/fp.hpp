@@ -14,7 +14,7 @@ namespace mie {
 template<class T>
 class FpT {
 	typedef typename T::value_type value_type;
-	static T m_;
+	static value_type m_;
 	value_type v;
 	static inline void fromStr(value_type& t, const std::string& str)
 	{
@@ -69,7 +69,11 @@ public:
 	}
 	static inline void setModulo(const std::string& str)
 	{
-		fromStr(m_, str);
+		FpT::fromStr(m_, str);
+	}
+	static inline void getModulo(std::string& str)
+	{
+		T::toStr(str, m_);
 	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y)
 	{
@@ -123,7 +127,7 @@ public:
 };
 
 template<class T>
-T FpT<T>::m_;
+typename T::value_type FpT<T>::m_;
 
 } // mie
 

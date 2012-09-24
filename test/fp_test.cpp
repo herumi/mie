@@ -70,3 +70,43 @@ CYBOZU_TEST_AUTO(conv)
 	CYBOZU_TEST_EQUAL(str, hex);
 }
 
+const int m = 65537;
+
+CYBOZU_TEST_AUTO(modulo)
+{
+	std::ostringstream ms;
+	ms << m;
+	Fp::setModulo(ms.str());
+
+	std::string str;
+	Fp::getModulo(str);
+	CYBOZU_TEST_EQUAL(str, ms.str());
+}
+
+CYBOZU_TEST_AUTO(ope)
+{
+	const struct {
+		int x;
+		int y;
+		int add; // x + y
+		int sub; // x - y
+		int mul; // x * y
+	} tbl[] = {
+		{ 1, 0, 1, 1, 0 },
+		{ 9, 5, 14, 4, 45 },
+		{ 10, 13, 23, m - 3, 130 },
+		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Fp x(tbl[i].x);
+		Fp y(tbl[i].y);
+		Fp z;
+		Fp::add(z, x, y);
+		CYBOZU_TEST_EQUAL(z, tbl[i].add);
+		Fp::sub(z, x, y);
+		CYBOZU_TEST_EQUAL(z, tbl[i].sub);
+		Fp::mul(z, x, y);
+		CYBOZU_TEST_EQUAL(z, tbl[i].mul);
+	}
+}
+
