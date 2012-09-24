@@ -40,6 +40,18 @@ public:
 	{
 		fromStr(str);
 	}
+	FpT(const FpT& x)
+		: v(x.v)
+	{
+	}
+	FpT& operator=(const FpT& x)
+	{
+		v = x.v; return *this;
+	}
+	FpT& operator=(int x)
+	{
+		v = x; return *this;
+	}
 	void fromStr(const std::string& str)
 	{
 		fromStr(v, str);
@@ -54,10 +66,6 @@ public:
 		} else if (base != 10) {
 			throw Exception("FpT::toStr ", "bad base") << base;
 		}
-	}
-	void set(int x)
-	{
-		v = x;
 	}
 	static inline void setModulo(const std::string& str)
 	{
@@ -89,25 +97,17 @@ public:
 	{
 		return T::v.isZero();
 	}
-	friend inline bool operator==(const FpT& x, const FpT& y)
+	bool operator==(const FpT& rhs) const
 	{
-		return T::isEqual(x.v, y.v);
+		return T::isEqual(v, rhs.v);
 	}
-	friend inline bool operator==(const FpT& x, int y)
+	bool operator!=(const FpT& rhs) const
 	{
-		return T::isEqual(x.v, y);
+		return !(*this == rhs);
 	}
-	friend inline bool operator!=(const FpT& x, const FpT& y)
+	int compare(const FpT& rhs) const
 	{
-		return !operator==(x.v, y.v);
-	}
-	friend inline bool operator!=(const FpT& x, int y)
-	{
-		return !operator==(x.v, y);
-	}
-	friend inline int cmp(const FpT& x, const FpT& y)
-	{
-		return T::cmp(x.v, y.v);
+		return T::cmp(v, rhs.v);
 	}
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
