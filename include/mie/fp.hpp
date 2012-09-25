@@ -8,11 +8,15 @@
 */
 #include <sstream>
 #include <mie/exception.hpp>
+#include <mie/operator.hpp>
 
 namespace mie {
 
 template<class T>
-class FpT {
+class FpT : public ope::comparable<FpT<T>,
+	ope::addsubmul<FpT<T>,
+	ope::invertible<FpT<T>,
+	ope::hasNegative<FpT<T> > > > > {
 	typedef typename T::value_type value_type;
 	static value_type m_;
 	value_type v;
@@ -97,22 +101,12 @@ public:
 		T::invMod(rev.v, y.v, m_);
 		T::mulMod(z, x, rev.v);
 	}
-	bool isZero() const
+	static inline int compare(const FpT& x, const FpT& y)
 	{
-		return T::v.isZero();
+		return T::compare(x.v, y.v);
 	}
-	bool operator==(const FpT& rhs) const
-	{
-		return T::isEqual(v, rhs.v);
-	}
-	bool operator!=(const FpT& rhs) const
-	{
-		return !(*this == rhs);
-	}
-	int compare(const FpT& rhs) const
-	{
-		return T::cmp(v, rhs.v);
-	}
+	bool isZero() const { return v.isZero(); }
+	bool isNegative() const { return T::isNegative(v); }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
 		return os << self.v;

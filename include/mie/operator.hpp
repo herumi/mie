@@ -16,13 +16,14 @@
 	#endif
 #endif
 
-namespace mie {
-/*
-	T must have compare, add, sub, mul
-*/
+namespace mie { namespace ope {
+
 template<class T>
 struct Empty {};
 
+/*
+	T must have compare
+*/
 template<class T, class E = Empty<T> >
 struct comparable : E {
 	MIE_FORCE_INLINE friend bool operator<(const T& x, const T& y) { return T::compare(x, y) < 0; }
@@ -34,6 +35,9 @@ struct comparable : E {
 	MIE_FORCE_INLINE friend bool operator!=(const T& x, const T& y) { return !operator==(x, y); }
 };
 
+/*
+	T must have compare, add, sub, mul
+*/
 template<class T, class E = Empty<T> >
 struct addsubmul : E {
 	MIE_FORCE_INLINE T& operator+=(const T& rhs) { T::add(static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
@@ -44,37 +48,22 @@ struct addsubmul : E {
 	MIE_FORCE_INLINE friend T operator*(const T& a, const T& b) { T c; T::mul(c, a, b); return c; }
 };
 
+/*
+	T must have inv, mul
+*/
 template<class T, class E = Empty<T> >
-struct dividable : E {
-	MIE_FORCE_INLINE T& operator/=(const T& rhs) { T rdummy; T::div(static_cast<T*>(this), rdummy, static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
-	MIE_FORCE_INLINE T& operator%=(const T& rhs) { T::div(0, static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
-
-	MIE_FORCE_INLINE friend T operator/(const T& a, const T& b) { T q, r; T::div(&q, r, a, b); return q; }
-	MIE_FORCE_INLINE friend T operator%(const T& a, const T& b) { T r; T::div(0, r, a, b); return r; }
+struct invertible : E {
+	MIE_FORCE_INLINE T& operator/=(const T& rhs) { T c; T::inv(c, rhs); T::mul(static_cast<T&>(*this), static_cast<const T&>(*this), c); return static_cast<T&>(*this); }
+	MIE_FORCE_INLINE friend T operator/(const T& a, const T& b) { T c; T::inv(c, b); T::mul(c, c, a); return c; }
 };
 
+/*
+	T must have neg
+*/
 template<class T, class E = Empty<T> >
 struct hasNegative : E {
 	MIE_FORCE_INLINE T operator-() const { T c; T::neg(c, static_cast<const T&>(*this)); return c; }
 };
 
-template<class T, class E = Empty<T> >
-struct shiftable : E {
-	MIE_FORCE_INLINE T operator<<(size_t n) const { T out; T::shl(out, static_cast<const T&>(*this), n); return out; }
-	MIE_FORCE_INLINE T operator>>(size_t n) const { T out; T::shr(out, static_cast<const T&>(*this), n); return out; }
-
-//	T& operator<<=(size_t n) { *this = *this << n; return static_cast<T&>(*this); }
-//	T& operator>>=(size_t n) { *this = *this >> n; return static_cast<T&>(*this); }
-	MIE_FORCE_INLINE T& operator<<=(size_t n) { T::shl(static_cast<T&>(*this), static_cast<const T&>(*this), n); return static_cast<T&>(*this); }
-	MIE_FORCE_INLINE T& operator>>=(size_t n) { T::shr(static_cast<T&>(*this), static_cast<const T&>(*this), n); return static_cast<T&>(*this); }
-};
-
-template<class T, class E = Empty<T> >
-struct inversible : E {
-	MIE_FORCE_INLINE void inverse() { T& self = static_cast<T&>(*this);T out; T::inv(out, self); self = out; }
-	MIE_FORCE_INLINE friend T operator/(const T& x, const T& y) { T out; T::inv(out, y); out *= x; return out; }
-	MIE_FORCE_INLINE T& operator/=(const T& x) { T rx; T::inv(rx, x); T& self = static_cast<T&>(*this); self *= rx; return self; }
-};
-
-} // mie
+} } // mie::ope
 

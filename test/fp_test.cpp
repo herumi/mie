@@ -92,14 +92,15 @@ CYBOZU_TEST_AUTO(ope)
 		int sub; // x - y
 		int mul; // x * y
 	} tbl[] = {
-		{ 1, 0, 1, 1, 0 },
+		{ 0, 1, 1, m - 1, 0 },
 		{ 9, 5, 14, 4, 45 },
 		{ 10, 13, 23, m - 3, 130 },
 		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m },
+		{ 12345, 9999, 12345 + 9999, 12345 - 9999, (12345 * 9999) % m },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		Fp x(tbl[i].x);
-		Fp y(tbl[i].y);
+		const Fp x(tbl[i].x);
+		const Fp y(tbl[i].y);
 		Fp z;
 		Fp::add(z, x, y);
 		CYBOZU_TEST_EQUAL(z, tbl[i].add);
@@ -107,6 +108,22 @@ CYBOZU_TEST_AUTO(ope)
 		CYBOZU_TEST_EQUAL(z, tbl[i].sub);
 		Fp::mul(z, x, y);
 		CYBOZU_TEST_EQUAL(z, tbl[i].mul);
+
+		Fp r;
+		Fp::inv(r, y);
+		Fp::mul(z, z, r);
+		CYBOZU_TEST_EQUAL(z, tbl[i].x);
+
+		z = x + y;
+		CYBOZU_TEST_EQUAL(z, tbl[i].add);
+		z = x - y;
+		CYBOZU_TEST_EQUAL(z, tbl[i].sub);
+		z = x * y;
+		CYBOZU_TEST_EQUAL(z, tbl[i].mul);
+
+		z = x / y;
+		z *= y;
+		CYBOZU_TEST_EQUAL(z, tbl[i].x);
 	}
 }
 

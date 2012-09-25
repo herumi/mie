@@ -79,23 +79,21 @@ struct Gmp {
 	{
 		mpz_clear(z.get_mpz_t());
 	}
+	static inline bool isZero(const mpz_class& z)
+	{
+		return mpz_sgn(z.get_mpz_t()) == 0;
+	}
 
 	static inline bool isNegative(const mpz_class& z)
 	{
 		return mpz_sgn(z.get_mpz_t()) < 0;
 	}
-
-	static inline bool isEqual(const mpz_class& x, const mpz_class& y)
+	static inline void neg(mpz_class& z, const mpz_class& x)
 	{
-		return x == y;
+		mpz_neg(z.get_mpz_t(), x.get_mpz_t());
 	}
 
-	static inline bool isEqual(const mpz_class& x, int y)
-	{
-		return x == y;
-	}
-
-	static inline int cmp(const mpz_class& x, const mpz_class & y)
+	static inline int compare(const mpz_class& x, const mpz_class & y)
 	{
 		return mpz_cmp(x.get_mpz_t(), y.get_mpz_t());
 	}
