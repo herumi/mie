@@ -102,11 +102,15 @@ public:
 		T::invMod(rev.v, y.v, m_);
 		T::mulMod(z, x, rev.v);
 	}
+	static inline void neg(FpT& z, const FpT& x)
+	{
+		T::neg(z.v, x.v);
+	}
 	static inline int compare(const FpT& x, const FpT& y)
 	{
 		return T::compare(x.v, y.v);
 	}
-	bool isZero() const { return v.isZero(); }
+	bool isZero() const { return T::isZero(v); }
 	bool isNegative() const { return T::isNegative(v); }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{

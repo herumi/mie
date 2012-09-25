@@ -40,9 +40,9 @@ public:
 	{
 		return _y * _y == (_x * _x + a_) * _x + b_;
 	}
-	void set(const Fp& _x, const Fp& _y)
+	void set(const Fp& _x, const Fp& _y, bool verify = true)
 	{
-		if (!isValid(_x, _y)) throw Exception("ECA:set");
+		if (verify && !isValid(_x, _y)) throw Exception("ECA:set");
 		x = _x; y = _y;
 		inf_ = false;
 	}
