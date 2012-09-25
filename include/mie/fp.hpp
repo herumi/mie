@@ -72,13 +72,13 @@ public:
 			throw Exception("FpT::toStr ", "bad base") << base;
 		}
 	}
-	static inline void setModulo(const std::string& str)
+	static inline void setModulo(const std::string& mstr)
 	{
-		FpT::fromStr(m_, str);
+		FpT::fromStr(m_, mstr);
 	}
-	static inline void getModulo(std::string& str)
+	static inline void getModulo(std::string& mstr)
 	{
-		T::toStr(str, m_);
+		T::toStr(mstr, m_);
 	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y)
 	{
@@ -112,7 +112,7 @@ public:
 	{
 		return os << self.v;
 	}
-	friend inline std::istream& operator>>(std::istream& is, const FpT& self)
+	friend inline std::istream& operator>>(std::istream& is, FpT& self)
 	{
 		std::string str;
 		is >> str;
