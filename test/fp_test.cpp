@@ -70,6 +70,40 @@ CYBOZU_TEST_AUTO(conv)
 	CYBOZU_TEST_EQUAL(str, hex);
 }
 
+CYBOZU_TEST_AUTO(compare)
+{
+	const struct {
+		int lhs;
+		int rhs;
+		int cmp;
+	} tbl[] = {
+		{ 0, 0, 0 },
+		{ 1, 0, 1 },
+		{ 0, 1, -1 },
+		{ -1, 0, -1 },
+		{ 0, -1, 1 },
+		{ 123, 456, -1 },
+		{ 456, 123, 1 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		const Fp x(tbl[i].lhs);
+		const Fp y(tbl[i].rhs);
+		const int cmp = tbl[i].cmp;
+		if (cmp == 0) {
+			CYBOZU_TEST_EQUAL(x, y);
+			CYBOZU_TEST_ASSERT(x >= y);
+			CYBOZU_TEST_ASSERT(x <= y);
+		} else if (cmp > 0) {
+			CYBOZU_TEST_ASSERT(x > y);
+			CYBOZU_TEST_ASSERT(x >= y);
+		} else {
+			CYBOZU_TEST_ASSERT(x < y);
+			CYBOZU_TEST_ASSERT(x <= y);
+		}
+	}
+}
+
+
 const int m = 65537;
 
 CYBOZU_TEST_AUTO(modulo)
