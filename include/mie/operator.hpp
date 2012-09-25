@@ -36,15 +36,22 @@ struct comparable : E {
 };
 
 /*
-	T must have compare, add, sub, mul
+	T must have add, sub
 */
 template<class T, class E = Empty<T> >
-struct addsubmul : E {
+struct addsub : E {
 	MIE_FORCE_INLINE T& operator+=(const T& rhs) { T::add(static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
 	MIE_FORCE_INLINE T& operator-=(const T& rhs) { T::sub(static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
-	MIE_FORCE_INLINE T& operator*=(const T& rhs) { T::mul(static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
 	MIE_FORCE_INLINE friend T operator+(const T& a, const T& b) { T c; T::add(c, a, b); return c; }
 	MIE_FORCE_INLINE friend T operator-(const T& a, const T& b) { T c; T::sub(c, a, b); return c; }
+};
+
+/*
+	T must have mul
+*/
+template<class T, class E = Empty<T> >
+struct mulable : E {
+	MIE_FORCE_INLINE T& operator*=(const T& rhs) { T::mul(static_cast<T&>(*this), static_cast<const T&>(*this), rhs); return static_cast<T&>(*this); }
 	MIE_FORCE_INLINE friend T operator*(const T& a, const T& b) { T c; T::mul(c, a, b); return c; }
 };
 

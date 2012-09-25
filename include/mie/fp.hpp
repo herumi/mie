@@ -14,9 +14,10 @@ namespace mie {
 
 template<class T>
 class FpT : public ope::comparable<FpT<T>,
-	ope::addsubmul<FpT<T>,
+	ope::addsub<FpT<T>,
+	ope::mulable<FpT<T>,
 	ope::invertible<FpT<T>,
-	ope::hasNegative<FpT<T> > > > > {
+	ope::hasNegative<FpT<T> > > > > > {
 	typedef typename T::value_type value_type;
 	static value_type m_;
 	value_type v;
