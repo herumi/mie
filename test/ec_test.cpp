@@ -54,7 +54,7 @@ CYBOZU_TEST_AUTO(add)
 	CYBOZU_TEST_EQUAL(R, P);
 
 	{
-		EC::twice(R, P);
+		EC::dbl(R, P);
 		EC R2 = P + P;
 		CYBOZU_TEST_EQUAL(R, R2);
 		EC R3L = R2 + P;

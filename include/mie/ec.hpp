@@ -53,7 +53,7 @@ public:
 		y.clear();
 	}
 
-	static inline void twice(ECA& R, const ECA& P, bool verifyInf = true)
+	static inline void dbl(ECA& R, const ECA& P, bool verifyInf = true)
 	{
 		if (verifyInf) {
 			if (P.inf_) {
@@ -73,15 +73,15 @@ public:
 		if (P.inf_) { R = Q; return; }
 		if (Q.inf_) { R = P; return; }
 		if (P.y == -Q.y) { R.clear(); return; }
-		Fp t = P.x - Q.x;
+		Fp t = Q.x - P.x;
 		if (t.isZero()) {
-			twice(R, P, false);
+			dbl(R, P, false);
 			return;
 		}
-		t = (P.y - Q.y) / t;
+		t = (Q.y - P.y) / t;
 		R.inf_ = false;
 		Fp x3 = t * t - P.x - Q.x;
-		R.y = t * (P.x - x3) - Q.y;
+		R.y = t * (P.x - x3) - P.y;
 		R.x = x3;
 	}
 	static inline void sub(ECA& R, const ECA& P, const ECA& Q)
@@ -100,6 +100,30 @@ public:
 		R.x = P.x;
 		Fp::neg(R.y, P.y);
 	}
+	static inline void power(ECA& z, const ECA& x, const Fp& y)
+	{
+		typedef typename Fp::block_type block_type;
+		ECA t(x);
+		ECA out;
+		for (size_t i = 0, n = y.size(); i < n; i++) {
+			block_type v = y[i];
+			int m = (int)sizeof(block_type) * 8;
+			if (i == n - 1) {
+				// avoid unused multiplication
+				while (m > 0 && (v & (block_type(1) << (m - 1))) == 0) {
+					m--;
+				}
+			}
+			for (int j = 0; j < m; j++) {
+				if (v & (block_type(1) << j)) {
+					out += t;
+				}
+				dbl(t, t);
+			}
+		}
+		z = out;
+	}
+
 	bool operator==(const ECA& rhs) const
 	{
 		if (inf_) return rhs.inf_;
