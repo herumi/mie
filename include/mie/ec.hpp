@@ -49,6 +49,8 @@ public:
 	void clear()
 	{
 		inf_ = true;
+		x.clear();
+		y.clear();
 	}
 
 	static inline void twice(ECA& R, const ECA& P, bool verifyInf = true)
@@ -62,8 +64,9 @@ public:
 		t += a_;
 		t /= (2 * P.y);
 		Fp x3 = t * t - 2 * P.x;
-		R.y = t * (P.x - x3) - P.y;
+		R.y = (P.x - x3) * t - P.y;
 		R.x = x3;
+		R.inf_ = false;
 	}
 	static inline void add(ECA& R, const ECA& P, const ECA& Q)
 	{

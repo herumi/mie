@@ -54,11 +54,12 @@ CYBOZU_TEST_AUTO(add)
 	CYBOZU_TEST_EQUAL(R, P);
 
 	{
-		EC R2 = P + P;
 		EC::twice(R, P);
+		EC R2 = P + P;
 		CYBOZU_TEST_EQUAL(R, R2);
-	}
-	{
+		EC R3L = R2 + P;
+		EC R3R = P + R2;
+		CYBOZU_TEST_EQUAL(R3L, R3R);
 	}
 }
 

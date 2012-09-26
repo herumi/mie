@@ -10,6 +10,7 @@
 #include <mie/exception.hpp>
 #include <mie/operator.hpp>
 
+#define PUT(x) std::cout << #x "=" << (x) << std::endl
 namespace mie {
 
 template<class T>
@@ -71,6 +72,10 @@ public:
 		} else if (base != 10) {
 			throw Exception("FpT::toStr ", "bad base") << base;
 		}
+	}
+	void clear()
+	{
+		T::clear(v);
 	}
 	static inline void setModulo(const std::string& mstr)
 	{

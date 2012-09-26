@@ -75,9 +75,9 @@ struct Gmp {
 		mpz_mod(r.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
 	}
 
-	static inline void setZero(mpz_class& z)
+	static inline void clear(mpz_class& z)
 	{
-		mpz_clear(z.get_mpz_t());
+		mpz_set_ui(z.get_mpz_t(), 0);
 	}
 	static inline bool isZero(const mpz_class& z)
 	{
