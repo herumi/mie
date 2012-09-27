@@ -105,8 +105,8 @@ public:
 		typedef typename Fp::block_type block_type;
 		ECA t(x);
 		ECA out;
-		for (size_t i = 0, n = y.size(); i < n; i++) {
-			block_type v = y[i];
+		for (size_t i = 0, n = Fp::getBlockSize(y); i < n; i++) {
+			block_type v = Fp::getBlock(y, i);
 			int m = (int)sizeof(block_type) * 8;
 			if (i == n - 1) {
 				// avoid unused multiplication
@@ -166,7 +166,7 @@ struct ECparam {
 	const char *b;
 	const char *gx;
 	const char *gy;
-	const char *gn;
+	const char *n;
 };
 
 } // mie

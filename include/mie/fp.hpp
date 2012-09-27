@@ -19,27 +19,9 @@ class FpT : public ope::comparable<FpT<T>,
 	ope::mulable<FpT<T>,
 	ope::invertible<FpT<T>,
 	ope::hasNegative<FpT<T> > > > > > {
-	typedef typename T::value_type value_type;
-	static value_type m_;
-	value_type v;
-	static inline void fromStr(value_type& t, const std::string& str)
-	{
-		const char *p = str.c_str();
-		int base = 10;
-		if (str.size() > 2 && str[0] == '0') {
-			if (str[1] == 'x') {
-				base = 16;
-				p += 2;
-			} else if (str[1] == 'b') {
-				base = 2;
-				p += 2;
-			}
-		}
-		if (!T::fromStr(t, p, base)) {
-			throw Exception("FpT::FpT ", str);
-		}
-	}
 public:
+	typedef typename T::block_type block_type;
+	typedef typename T::value_type value_type;
 	FpT() {}
 	FpT(int x) : v(x) {}
 	explicit FpT(const std::string& str)
@@ -109,7 +91,19 @@ public:
 	}
 	static inline void neg(FpT& z, const FpT& x)
 	{
-		T::neg(z.v, x.v);
+		if (x.isZero()) {
+			z.clear();
+		} else {
+			T::sub(z.v, m_, x.v);
+		}
+	}
+	static inline block_type getBlock(const FpT& x, size_t i)
+	{
+		return T::getBlock(x.v, i);
+	}
+	static inline size_t getBlockSize(const FpT& x)
+	{
+		return T::getBlockSize(x.v);
 	}
 	static inline int compare(const FpT& x, const FpT& y)
 	{
@@ -127,6 +121,26 @@ public:
 		is >> str;
 		self.fromStr(str);
 		return is;
+	}
+private:
+	static value_type m_;
+	value_type v;
+	static inline void fromStr(value_type& t, const std::string& str)
+	{
+		const char *p = str.c_str();
+		int base = 10;
+		if (str.size() > 2 && str[0] == '0') {
+			if (str[1] == 'x') {
+				base = 16;
+				p += 2;
+			} else if (str[1] == 'b') {
+				base = 2;
+				p += 2;
+			}
+		}
+		if (!T::fromStr(t, p, base)) {
+			throw Exception("FpT::FpT ", str);
+		}
 	}
 };
 

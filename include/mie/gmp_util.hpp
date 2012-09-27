@@ -27,6 +27,7 @@ namespace mie {
 
 struct Gmp {
 	typedef mpz_class value_type;
+	typedef mp_limb_t block_type;
 	// z = [buf[n-1]:..:buf[1]:buf[0]]
 	// eg. buf[] = {0x12345678, 0xaabbccdd}; => z = 0xaabbccdd12345678;
 	template<class T>
@@ -147,6 +148,14 @@ struct Gmp {
 	static inline size_t getBitLen(const mpz_class& x)
 	{
 		return mpz_sizeinbase(x.get_mpz_t(), 2);
+	}
+	static inline block_type getBlock(const mpz_class& x, size_t i)
+	{
+		return x.get_mpz_t()->_mp_d[i];
+	}
+	static inline size_t getBlockSize(const mpz_class& x)
+	{
+		return x.get_mpz_t()->_mp_size;
 	}
 };
 
