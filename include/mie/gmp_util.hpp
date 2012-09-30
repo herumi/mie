@@ -19,8 +19,13 @@
 	#pragma warning(pop)
 #endif
 #ifdef _WIN32
+#ifdef _DEBUG
+#pragma comment(lib, "mpird.lib")
+#pragma comment(lib, "mpirxxd.lib")
+#else
 #pragma comment(lib, "mpir.lib")
 #pragma comment(lib, "mpirxx.lib")
+#endif
 #endif
 
 namespace mie {
