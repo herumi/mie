@@ -7,6 +7,7 @@
 	http://www.opensource.org/licenses/bsd-license.php
 */
 #include <sstream>
+#include <vector>
 #include <mie/exception.hpp>
 #include <mie/operator.hpp>
 
@@ -59,6 +60,19 @@ public:
 	{
 		T::clear(v);
 	}
+	template<class RG>
+	void initRand(RG& r, size_t bitLen)
+	{
+		const size_t rem = bitLen & 31;
+		const size_t n = (bitLen + 31) / 32;
+		std::vector<unsigned int> buf(n);
+		for (size_t i = 0; i < n; i++) {
+			buf[i] = r();
+		}
+		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
+		buf[n - 1] |= 1U << rem;
+		FpT::setRaw(v, &buf[0], n);
+	}
 	static inline void setModulo(const std::string& mstr)
 	{
 		FpT::fromStr(m_, mstr);
@@ -86,8 +100,8 @@ public:
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
 		value_type rev;
-		T::invMod(rev.v, y.v, m_);
-		T::mulMod(z, x, rev.v);
+		T::invMod(rev, y.v, m_);
+		T::mulMod(z.v, x.v, rev, m_);
 	}
 	static inline void neg(FpT& z, const FpT& x)
 	{
