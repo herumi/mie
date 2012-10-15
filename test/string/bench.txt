@@ -19,7 +19,7 @@ text size=33327888
                     ?????           strstr   2.59           qs org   2.98  0.87     qs   1.98  1.31
                     patch           strstr   2.38           qs org   2.53  0.94     qs   1.69  1.41
                     56789           strstr   2.93           qs org   3.07  0.95     qs   2.06  1.43
-                   —Å               strstr   8.74           qs org   5.44  1.61     qs   4.32  2.02
+                   ÑÉ               strstr   8.74           qs org   5.44  1.61     qs   4.32  2.02
                    cybozu           strstr   2.37           qs org   2.17  1.09     qs   1.46  1.62
                   openssl           strstr   2.80           qs org   2.18  1.28     qs   1.49  1.88
                 namespace           strstr   2.50           qs org   1.63  1.53     qs   1.12  2.23
@@ -50,7 +50,7 @@ gcc version 4.6.1
                     ?????           strstr   1.41           qs org   3.43  0.41     qs   1.85  0.77
                     patch           strstr   1.16           qs org   2.89  0.40     qs   1.59  0.73
                     56789           strstr   1.41           qs org   3.51  0.40     qs   1.93  0.73
-                       —Å           strstr   1.33           qs org   5.18  0.26     qs   4.09  0.32
+                       ÑÉ           strstr   1.33           qs org   5.18  0.26     qs   4.09  0.32
                    cybozu           strstr   1.16           qs org   2.45  0.47     qs   1.36  0.85
                   openssl           strstr   1.30           qs org   2.47  0.53     qs   1.38  0.95
                 namespace           strstr   1.19           qs org   2.01  0.59     qs   1.02  1.17
@@ -81,11 +81,11 @@ sandy bridge on VC2010 windows 7
                     ?????           strstr   5.65           qs org   3.00  1.88     qs   2.29  2.48
                     patch           strstr   4.91           qs org   2.54  1.94     qs   1.94  2.55
                     56789           strstr   5.87           qs org   3.08  1.91     qs   2.36  2.48
-                   „Åß„Åô          strstr   8.91           qs org   5.18  1.72     qs   4.42  2.01
+                   Ç≈Ç∑          strstr   8.91           qs org   5.18  1.72     qs   4.42  2.01
                    cybozu           strstr   4.75           qs org   2.16  2.20     qs   1.66  2.87
                   openssl           strstr   5.49           qs org   2.17  2.53     qs   1.68  3.29
                 namespace           strstr   5.12           qs org   1.97  2.59     qs   1.25  4.01
-                „Åì„Çå„ÅØ           strstr   8.96           qs org   3.24  2.77     qs   3.70  2.37
+                Ç±ÇÍÇÕ           strstr   8.96           qs org   3.24  2.77     qs   3.70  2.37
               cybozu::ssl           strstr  11.30           qs org   3.75  3.01     qs   2.39  4.70
              asdfasdfasdf           strstr  12.43           qs org   3.75  3.31     qs   2.34  5.18
             static_assert           strstr   5.68           qs org   1.65  3.44     qs   1.05  5.41
@@ -112,11 +112,11 @@ sandy bridge on VC2011 windows 7
                     ?????           strstr   0.33           qs org   3.20  0.10     qs   2.29  0.14
                     patch           strstr   0.29           qs org   2.70  0.11     qs   1.94  0.15
                     56789           strstr   0.35           qs org   3.26  0.11     qs   2.36  0.15
-                   „Åß„Åô          strstr   1.21           qs org   5.31  0.23     qs   4.39  0.27
+                   Ç≈Ç∑          strstr   1.21           qs org   5.31  0.23     qs   4.39  0.27
                    cybozu           strstr   0.30           qs org   2.29  0.13     qs   1.66  0.18
                   openssl           strstr   0.32           qs org   2.30  0.14     qs   1.68  0.19
                 namespace           strstr   0.29           qs org   2.06  0.14     qs   1.25  0.24
-                „Åì„Çå„ÅØ           strstr   1.09           qs org   3.26  0.33     qs   3.66  0.30
+                Ç±ÇÍÇÕ           strstr   1.09           qs org   3.26  0.33     qs   3.66  0.30
               cybozu::ssl           strstr   0.67           qs org   3.91  0.17     qs   2.39  0.28
              asdfasdfasdf           strstr   0.72           qs org   3.82  0.19     qs   2.34  0.31
             static_assert           strstr   0.34           qs org   1.72  0.20     qs   1.05  0.32
@@ -141,11 +141,11 @@ ABCDEFGHIJKLMNOPQRSTUVWXY           strstr   0.36           qs org   0.97  0.37 
                     ?????           strstr   0.33         mystrstr   0.33  1.00
                     patch           strstr   0.28         mystrstr   0.28  1.02
                     56789           strstr   0.35         mystrstr   0.34  1.03
-                   „Åß„Åô          strstr   1.20         mystrstr   0.96  1.26
+                   Ç≈Ç∑          strstr   1.20         mystrstr   0.96  1.26
                    cybozu           strstr   0.30         mystrstr   0.29  1.03
                   openssl           strstr   0.32         mystrstr   0.32  1.01
                 namespace           strstr   0.30         mystrstr   0.29  1.03
-                „Åì„Çå„ÅØ           strstr   1.10         mystrstr   0.87  1.27
+                Ç±ÇÍÇÕ           strstr   1.10         mystrstr   0.87  1.27
               cybozu::ssl           strstr   0.68         mystrstr   0.67  1.03
              asdfasdfasdf           strstr   0.72         mystrstr   0.71  1.02
             static_assert           strstr   0.35         mystrstr   0.33  1.05
@@ -192,7 +192,7 @@ gcc version 4.6.1
                     ?????           strstr   1.42       mystrstr_C   0.33  4.27
                     patch           strstr   1.16       mystrstr_C   0.52  2.23
                     56789           strstr   1.42       mystrstr_C   0.70  2.03
-                   —Å           strstr   1.33       mystrstr_C   7.85  0.17
+                   ÑÉ           strstr   1.33       mystrstr_C   7.85  0.17
                    cybozu           strstr   1.16       mystrstr_C   0.52  2.21
                   openssl           strstr   1.30       mystrstr_C   0.75  1.73
                 namespace           strstr   1.19       mystrstr_C   0.63  1.90
@@ -223,7 +223,7 @@ gcc version 4.6.1
                     ?????       mystrstr_C   0.33         mystrstr   0.32  1.02
                     patch       mystrstr_C   0.52         mystrstr   0.27  1.88
                     56789       mystrstr_C   0.69         mystrstr   0.33  2.06
-                       —Å       mystrstr_C   7.74         mystrstr   0.98  7.87
+                       ÑÉ       mystrstr_C   7.74         mystrstr   0.98  7.87
                    cybozu       mystrstr_C   0.52         mystrstr   0.28  1.85
                   openssl       mystrstr_C   0.75         mystrstr   0.31  2.39
                 namespace       mystrstr_C   0.62         mystrstr   0.28  2.19
@@ -253,11 +253,11 @@ ABCDEFGHIJKLMNOPQRSTUVWXY       mystrstr_C   0.43         mystrstr   0.36  1.21
                     ?????            boost   2.76      mie::strstr   0.31  8.87
                     patch            boost   2.51      mie::strstr   0.27  9.23
                     56789            boost   2.51      mie::strstr   0.28  9.08
-                   „Åß„Åô            boost   2.51      mie::strstr   0.92  2.73
+                   Ç≈Ç∑            boost   2.51      mie::strstr   0.92  2.73
                    cybozu            boost   2.08      mie::strstr   0.30  6.92
                   openssl            boost   1.79      mie::strstr   0.28  6.36
                 namespace            boost   1.62      mie::strstr   0.31  5.20
-                „Åì„Çå„ÅØ           boost   1.68      mie::strstr   0.81  2.09
+                Ç±ÇÍÇÕ           boost   1.68      mie::strstr   0.81  2.09
               cybozu::ssl            boost   1.16      mie::strstr   0.28  4.16
              asdfasdfasdf            boost   1.04      mie::strstr   0.28  3.70
             static_assert            boost   1.03      mie::strstr   0.28  3.72
@@ -284,11 +284,11 @@ file=../isis.txt, size=130009117
                     ?????     string::find   3.20      mie::strstr   0.32 10.15
                     patch     string::find   2.85      mie::strstr   0.28 10.34
                     56789     string::find   2.94      mie::strstr   0.28 10.52
-                   „Åß„Åô     string::find   7.44      mie::strstr   0.92  8.10
+                   Ç≈Ç∑     string::find   7.44      mie::strstr   0.92  8.10
                    cybozu     string::find   2.90      mie::strstr   0.30  9.63
                   openssl     string::find   3.06      mie::strstr   0.29 10.50
                 namespace     string::find   3.33      mie::strstr   0.31 10.63
-                „Åì„Çå„ÅØ     string::find   7.39      mie::strstr   0.81  9.17
+                Ç±ÇÍÇÕ     string::find   7.39      mie::strstr   0.81  9.17
               cybozu::ssl     string::find   2.90      mie::strstr   0.28 10.40
              asdfasdfasdf     string::find   3.09      mie::strstr   0.28 10.88
             static_assert     string::find   2.95      mie::strstr   0.28 10.63
