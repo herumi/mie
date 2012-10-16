@@ -126,6 +126,10 @@ public:
 	}
 	bool isZero() const { return T::isZero(v); }
 	bool isNegative() const { return T::isNegative(v); }
+	size_t getBitLen() const
+	{
+		return T::getBitLen(v);
+	}
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
 		return os << self.v;

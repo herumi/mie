@@ -2,24 +2,18 @@
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
 #include <mie/ec.hpp>
+#include <mie/ecparam.hpp>
 
 typedef mie::FpT<mie::Gmp> Fp;
 typedef mie::ECA<Fp> EC;
 
-const struct mie::ECparam secp192k1 = {
-	"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
-	"0",
-	"3",
-	"0xdb4ff10ec057e9ae26b07d0280b7f4341da5d1b1eae06c7d",
-	"0x9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9d",
-	"0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d"
-};
+const mie::ECparam& para = mie::ecparam::secp192k1;
 
 struct Init {
 	Init()
 	{
-		Fp::setModulo(secp192k1.p);
-		EC::setParam(secp192k1.a, secp192k1.b);
+		Fp::setModulo(para.p);
+		EC::setParam(para.a, para.b);
 	}
 };
 
@@ -36,9 +30,9 @@ CYBOZU_TEST_AUTO(cstr)
 
 CYBOZU_TEST_AUTO(ope)
 {
-	Fp x(secp192k1.gx);
-	Fp y(secp192k1.gy);
-	Fp n(secp192k1.n);
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
 	CYBOZU_TEST_ASSERT(EC::isValid(x, y));
 	EC P(x, y);
 	EC Q;
@@ -86,9 +80,9 @@ CYBOZU_TEST_AUTO(ope)
 
 CYBOZU_TEST_AUTO(power)
 {
-	Fp x(secp192k1.gx);
-	Fp y(secp192k1.gy);
-	Fp n(secp192k1.n);
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
 	EC P(x, y);
 	EC Q;
 	EC R;
@@ -101,9 +95,9 @@ CYBOZU_TEST_AUTO(power)
 
 CYBOZU_TEST_AUTO(power_fp)
 {
-	Fp x(secp192k1.gx);
-	Fp y(secp192k1.gy);
-	Fp n(secp192k1.n);
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
 	EC P(x, y);
 	EC Q;
 	EC R;
