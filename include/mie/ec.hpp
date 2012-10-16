@@ -137,25 +137,22 @@ public:
 	}
 };
 
-namespace power_impl {
 
 template<class T>
-struct Tag1<ECA<T> > {
-	static void square(ECA<T>& x)
+struct TagMultiGr<ECA<T> > {
+	static void square(ECA<T>& z, const ECA<T>& x)
 	{
-		x += x;
+		ECA<T>::dbl(z, x);
 	}
-	static void mul(ECA<T>& y, const ECA<T>& x)
+	static void mul(ECA<T>& z, const ECA<T>& x, const ECA<T>& y)
 	{
-		y += x;
+		ECA<T>::add(z, x, y);
 	}
 	static void init(ECA<T>& x)
 	{
 		x.clear();
 	}
 };
-
-} // power_impl
 
 template<class _Fp>
 _Fp ECA<_Fp>::a_;

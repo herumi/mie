@@ -8,24 +8,26 @@
 */
 #include <assert.h>
 
-namespace mie { namespace power_impl {
+namespace mie {
 
 // default tag is for multiplicative group
 template<class G>
-struct Tag1 {
-	static void square(G& x)
+struct TagMultiGr {
+	static void square(G& z, const G& x)
 	{
-		x *= x;
+		G::mul(z, z, x);
 	}
-	static void mul(G& y, const G& x)
+	static void mul(G& z, const G& x, const G& y)
 	{
-		y *= x;
+		G::mul(z, x, y);
 	}
 	static void init(G& x)
 	{
 		x = 1;
 	}
 };
+
+namespace power_impl {
 
 template<class F>
 struct Tag2 {
@@ -71,7 +73,7 @@ struct Tag2<size_t> {
 template<class G, class F>
 void power(G& z, const G& x, const F& y)
 {
-	typedef power_impl::Tag1<G> TagG;
+	typedef TagMultiGr<G> TagG;
 	typedef power_impl::Tag2<F> TagF;
 	typedef typename TagF::block_type block_type;
 	if (y == 0) {
@@ -96,9 +98,9 @@ void power(G& z, const G& x, const F& y)
 		}
 		for (int j = 0; j < m; j++) {
 			if (v & (block_type(1) << j)) {
-				TagG::mul(out, t);
+				TagG::mul(out, out, t);
 			}
-			TagG::square(t);
+			TagG::square(t, t);
 		}
 	}
 	z = out;
