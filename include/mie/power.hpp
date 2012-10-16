@@ -15,17 +15,14 @@ template<class G>
 struct Tag1 {
 	static void square(G& x)
 	{
-//		x += x;
 		x *= x;
 	}
 	static void mul(G& y, const G& x)
 	{
-//		y += x;
 		y *= x;
 	}
 	static void init(G& x)
 	{
-//		x.clear();
 		x = 1;
 	}
 };
@@ -77,9 +74,17 @@ void power(G& z, const G& x, const F& y)
 	typedef power_impl::Tag1<G> TagG;
 	typedef power_impl::Tag2<F> TagF;
 	typedef typename TagF::block_type block_type;
-	G t(x);
+	if (y == 0) {
+		TagG::init(z);
+		return;
+	}
+	if (y == 1) {
+		z = x;
+		return;
+	}
 	G out;
 	TagG::init(out);
+	G t(x);
 	for (size_t i = 0, n = TagF::getBlockSize(y); i < n; i++) {
 		block_type v = TagF::getBlock(y, i);
 		int m = (int)sizeof(block_type) * 8;
