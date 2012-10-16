@@ -113,6 +113,7 @@ public:
 		if (rhs.inf_) return false;
 		return x == rhs.x && y == rhs.y;
 	}
+	bool operator!=(const ECA& rhs) const { return !operator==(rhs); }
 	bool isZero() const { return inf_; }
 	friend inline std::ostream& operator<<(std::ostream& os, const ECA& self)
 	{
