@@ -84,3 +84,24 @@ CYBOZU_TEST_AUTO(ope)
 	CYBOZU_TEST_ASSERT(R.isZero());
 }
 
+CYBOZU_TEST_AUTO(power)
+{
+	Fp x(secp192k1.gx);
+	Fp y(secp192k1.gy);
+	Fp n(secp192k1.n);
+	CYBOZU_TEST_ASSERT(EC::isValid(x, y));
+	EC P(x, y);
+	EC Q;
+	EC::power(Q, P, 0);
+	CYBOZU_TEST_ASSERT(Q.isZero());
+	EC::power(Q, P, 1);
+	CYBOZU_TEST_EQUAL(P, Q);
+	EC R;
+	EC::power(Q, P, 2);
+	R = P + P;
+	CYBOZU_TEST_EQUAL(Q, R);
+	EC::power(Q, P, 3);
+	R += P;
+	CYBOZU_TEST_EQUAL(Q, R);
+}
+

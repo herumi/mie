@@ -9,6 +9,7 @@
 #include <sstream>
 #include <mie/exception.hpp>
 #include <mie/operator.hpp>
+#include <mie/power.hpp>
 
 namespace mie {
 
@@ -102,26 +103,7 @@ public:
 	}
 	static inline void power(ECA& z, const ECA& x, const Fp& y)
 	{
-		typedef typename Fp::block_type block_type;
-		ECA t(x);
-		ECA out;
-		for (size_t i = 0, n = Fp::getBlockSize(y); i < n; i++) {
-			block_type v = Fp::getBlock(y, i);
-			int m = (int)sizeof(block_type) * 8;
-			if (i == n - 1) {
-				// avoid unused multiplication
-				while (m > 0 && (v & (block_type(1) << (m - 1))) == 0) {
-					m--;
-				}
-			}
-			for (int j = 0; j < m; j++) {
-				if (v & (block_type(1) << j)) {
-					out += t;
-				}
-				dbl(t, t);
-			}
-		}
-		z = out;
+		power_impl::power(z, x, y);
 	}
 
 	bool operator==(const ECA& rhs) const
