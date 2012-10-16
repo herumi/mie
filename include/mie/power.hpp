@@ -7,30 +7,14 @@
 	http://www.opensource.org/licenses/bsd-license.php
 */
 #include <assert.h>
+#include <mie/tagmultigr.hpp>
 
 namespace mie {
-
-// default tag is for multiplicative group
-template<class G>
-struct TagMultiGr {
-	static void square(G& z, const G& x)
-	{
-		G::mul(z, z, x);
-	}
-	static void mul(G& z, const G& x, const G& y)
-	{
-		G::mul(z, x, y);
-	}
-	static void init(G& x)
-	{
-		x = 1;
-	}
-};
 
 namespace power_impl {
 
 template<class F>
-struct Tag2 {
+struct TagInt {
 	typedef typename F::block_type block_type;
 	static size_t getBlockSize(const F& n)
 	{
@@ -43,7 +27,7 @@ struct Tag2 {
 };
 
 template<>
-struct Tag2<int> {
+struct TagInt<int> {
 	typedef int block_type;
 	static int getBlockSize(int)
 	{
@@ -57,7 +41,7 @@ struct Tag2<int> {
 };
 
 template<>
-struct Tag2<size_t> {
+struct TagInt<size_t> {
 	typedef size_t block_type;
 	static size_t getBlockSize(size_t)
 	{
@@ -74,8 +58,8 @@ template<class G, class F>
 void power(G& z, const G& x, const F& y)
 {
 	typedef TagMultiGr<G> TagG;
-	typedef power_impl::Tag2<F> TagF;
-	typedef typename TagF::block_type block_type;
+	typedef power_impl::TagInt<F> TagI;
+	typedef typename TagI::block_type block_type;
 	if (y == 0) {
 		TagG::init(z);
 		return;
@@ -87,8 +71,8 @@ void power(G& z, const G& x, const F& y)
 	G out;
 	TagG::init(out);
 	G t(x);
-	for (size_t i = 0, n = TagF::getBlockSize(y); i < n; i++) {
-		block_type v = TagF::getBlock(y, i);
+	for (size_t i = 0, n = TagI::getBlockSize(y); i < n; i++) {
+		block_type v = TagI::getBlock(y, i);
 		int m = (int)sizeof(block_type) * 8;
 		if (i == n - 1) {
 			// avoid unused multiplication
