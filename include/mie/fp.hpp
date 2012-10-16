@@ -72,7 +72,7 @@ public:
 		}
 		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 		buf[n - 1] |= 1U << rem;
-		FpT::setRaw(v, &buf[0], n);
+		T::setRaw(v, &buf[0], n);
 	}
 	static inline void setModulo(const std::string& mstr)
 	{
