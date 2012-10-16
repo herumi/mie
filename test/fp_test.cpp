@@ -173,3 +173,14 @@ CYBOZU_TEST_AUTO(power)
 	}
 }
 
+CYBOZU_TEST_AUTO(power_fp)
+{
+	Fp x, y, z;
+	x = 12345;
+	z = 1;
+	for (int i = 0; i < 100; i++) {
+		Fp::power(y, x, Fp(i));
+		CYBOZU_TEST_EQUAL(y, z);
+		z *= x;
+	}
+}

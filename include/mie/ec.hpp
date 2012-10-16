@@ -101,7 +101,8 @@ public:
 		R.x = P.x;
 		Fp::neg(R.y, P.y);
 	}
-	static inline void power(ECA& z, const ECA& x, const Fp& y)
+	template<class N>
+	static inline void power(ECA& z, const ECA& x, const N& y)
 	{
 		power_impl::power(z, x, y);
 	}
@@ -135,6 +136,26 @@ public:
 		return is;
 	}
 };
+
+namespace power_impl {
+
+template<class T>
+struct Tag1<ECA<T> > {
+	static void square(ECA<T>& x)
+	{
+		x += x;
+	}
+	static void mul(ECA<T>& y, const ECA<T>& x)
+	{
+		y += x;
+	}
+	static void init(ECA<T>& x)
+	{
+		x.clear();
+	}
+};
+
+} // power_impl
 
 template<class _Fp>
 _Fp ECA<_Fp>::a_;

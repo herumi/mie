@@ -1,26 +1,32 @@
 #pragma once
 /**
     @file
-    @brief Fp
+    @brief power
     @author MITSUNARI Shigeo(@herumi)
 	@license modified new BSD license
 	http://www.opensource.org/licenses/bsd-license.php
 */
+#include <assert.h>
+
 namespace mie { namespace power_impl {
 
+// default tag is for multiplicative group
 template<class G>
 struct Tag1 {
 	static void square(G& x)
 	{
-		x += x;
+//		x += x;
+		x *= x;
 	}
 	static void mul(G& y, const G& x)
 	{
-		y += x;
+//		y += x;
+		y *= x;
 	}
 	static void init(G& x)
 	{
-		x.clear();
+//		x.clear();
+		x = 1;
 	}
 };
 
@@ -34,6 +40,34 @@ struct Tag2 {
 	static block_type getBlock(const F& n, size_t i)
 	{
 		return F::getBlock(n, i);
+	}
+};
+
+template<>
+struct Tag2<int> {
+	typedef int block_type;
+	static int getBlockSize(int)
+	{
+		return 1;
+	}
+	static block_type getBlock(int n, size_t i)
+	{
+		assert(i == 0);
+		return n;
+	}
+};
+
+template<>
+struct Tag2<size_t> {
+	typedef size_t block_type;
+	static size_t getBlockSize(size_t)
+	{
+		return 1;
+	}
+	static block_type getBlock(size_t n, size_t i)
+	{
+		assert(i == 0);
+		return n;
 	}
 };
 

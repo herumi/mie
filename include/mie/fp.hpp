@@ -137,7 +137,8 @@ public:
 		self.fromStr(str);
 		return is;
 	}
-	static void power(FpT& z, const FpT& x, const FpT& y)
+	template<class N>
+	static void power(FpT& z, const FpT& x, const N& y)
 	{
 		power_impl::power(z, x, y);
 	}
@@ -163,25 +164,6 @@ private:
 	}
 };
 
-namespace power_impl {
-
-template<class T>
-struct Tag1<FpT<T> > {
-	static void square(FpT<T>& x)
-	{
-		x *= x;
-	}
-	static void mul(FpT<T>& y, const FpT<T>& x)
-	{
-		y *= x;
-	}
-	static void init(FpT<T>& x)
-	{
-		x = 1;
-	}
-};
-
-} // power_impl
 template<class T>
 typename T::value_type FpT<T>::m_;
 
