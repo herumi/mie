@@ -1,10 +1,10 @@
 #pragma once
 /**
-    @file
-    @brief Fp
-    @author MITSUNARI Shigeo(@herumi)
+	@file
+	@brief Fp
+	@author MITSUNARI Shigeo(@herumi)
 	@license modified new BSD license
-	http://www.opensource.org/licenses/bsd-license.php
+	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <sstream>
 #include <vector>

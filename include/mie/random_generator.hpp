@@ -2,9 +2,9 @@
 /**
 	@file
 	@brief pseudrandom generator
-    @author MITSUNARI Shigeo(@herumi)
+	@author MITSUNARI Shigeo(@herumi)
 	@license modified new BSD license
-	http://www.opensource.org/licenses/bsd-license.php
+	http://opensource.org/licenses/BSD-3-Clause
 */
 
 #ifdef _WIN32
