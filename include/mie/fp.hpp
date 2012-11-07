@@ -15,7 +15,11 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
 namespace mie {
 
-template<class T, int tag = 0>
+namespace fp_local {
+struct TagDefault;
+}
+
+template<class T, class tag = fp_local::TagDefault>
 class FpT : public ope::comparable<FpT<T, tag>,
 	ope::addsub<FpT<T, tag>,
 	ope::mulable<FpT<T, tag>,
@@ -179,7 +183,7 @@ private:
 	}
 };
 
-template<class T, int tag>
+template<class T, class tag>
 typename T::value_type FpT<T, tag>::m_;
 
 } // mie

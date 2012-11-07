@@ -193,9 +193,11 @@ CYBOZU_TEST_AUTO(power_fp)
 	}
 }
 
+struct TagAnother;
+
 CYBOZU_TEST_AUTO(another)
 {
-	typedef mie::FpT<mie::Gmp, 1> G;
+	typedef mie::FpT<mie::Gmp, TagAnother> G;
 	G::setModulo("13");
 	G a = 3;
 	G b = 9;
