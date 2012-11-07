@@ -25,7 +25,7 @@ public:
 	typedef typename T::block_type block_type;
 	typedef typename T::value_type value_type;
 	FpT() {}
-	FpT(int x) : v(x) {}
+	FpT(int x) { operator=(x); }
 	explicit FpT(const std::string& str)
 	{
 		fromStr(str);
@@ -40,10 +40,19 @@ public:
 	}
 	FpT& operator=(int x)
 	{
-		v = x; return *this;
+		if (x >= 0) {
+			v = x;
+		} else {
+			assert(m_ >= -x);
+			T::sub(v, m_, -x);
+		}
+		return *this;
 	}
 	void fromStr(const std::string& str)
 	{
+		if (str.empty() || str[0] == '-') {
+			throw Exception("FpT::fromStr ") << str;
+		}
 		fromStr(v, str);
 	}
 	void toStr(std::string& str, int base = 10) const
@@ -76,6 +85,9 @@ public:
 	}
 	static inline void setModulo(const std::string& mstr)
 	{
+		if (mstr.empty() || mstr[0] == '-') {
+			throw Exception("FpT::setModulo ", mstr);
+		}
 		FpT::fromStr(m_, mstr);
 	}
 	static inline void getModulo(std::string& mstr)
@@ -125,7 +137,6 @@ public:
 		return T::compare(x.v, y.v);
 	}
 	bool isZero() const { return T::isZero(v); }
-	bool isNegative() const { return T::isNegative(v); }
 	size_t getBitLen() const
 	{
 		return T::getBitLen(v);

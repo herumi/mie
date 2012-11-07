@@ -4,6 +4,18 @@
 
 typedef mie::FpT<mie::Gmp> Fp;
 
+const int m = 65537;
+struct Init {
+	Init()
+	{
+		std::ostringstream ms;
+		ms << m;
+		Fp::setModulo(ms.str());
+	}
+};
+
+CYBOZU_TEST_SETUP_FIXTURE(Init);
+
 CYBOZU_TEST_AUTO(cstr)
 {
 	const struct {
@@ -13,7 +25,6 @@ CYBOZU_TEST_AUTO(cstr)
 		{ "0", 0 },
 		{ "1", 1 },
 		{ "123", 123 },
-		{ "-9999", -9999 },
 		{ "0x123", 0x123 },
 		{ "0b10101", 21 },
 	};
@@ -48,6 +59,7 @@ CYBOZU_TEST_AUTO(cstr)
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
 	}
+	CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), mie::Exception, "fromStr");
 }
 
 CYBOZU_TEST_AUTO(conv)
@@ -80,8 +92,8 @@ CYBOZU_TEST_AUTO(compare)
 		{ 0, 0, 0 },
 		{ 1, 0, 1 },
 		{ 0, 1, -1 },
-		{ -1, 0, -1 },
-		{ 0, -1, 1 },
+		{ -1, 0, 1 }, // m-1, 0
+		{ 0, -1, -1 }, // 0, m-1
 		{ 123, 456, -1 },
 		{ 456, 123, 1 },
 	};
@@ -103,14 +115,10 @@ CYBOZU_TEST_AUTO(compare)
 	}
 }
 
-
-const int m = 65537;
-
 CYBOZU_TEST_AUTO(modulo)
 {
 	std::ostringstream ms;
 	ms << m;
-	Fp::setModulo(ms.str());
 
 	std::string str;
 	Fp::getModulo(str);
