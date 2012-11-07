@@ -15,12 +15,12 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
 namespace mie {
 
-template<class T>
-class FpT : public ope::comparable<FpT<T>,
-	ope::addsub<FpT<T>,
-	ope::mulable<FpT<T>,
-	ope::invertible<FpT<T>,
-	ope::hasNegative<FpT<T> > > > > > {
+template<class T, int tag = 0>
+class FpT : public ope::comparable<FpT<T, tag>,
+	ope::addsub<FpT<T, tag>,
+	ope::mulable<FpT<T, tag>,
+	ope::invertible<FpT<T, tag>,
+	ope::hasNegative<FpT<T, tag> > > > > > {
 public:
 	typedef typename T::block_type block_type;
 	typedef typename T::value_type value_type;
@@ -179,8 +179,8 @@ private:
 	}
 };
 
-template<class T>
-typename T::value_type FpT<T>::m_;
+template<class T, int tag>
+typename T::value_type FpT<T, tag>::m_;
 
 } // mie
 

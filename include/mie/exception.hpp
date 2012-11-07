@@ -26,6 +26,7 @@ struct Exception : std::exception {
 		return *this;
 	}
 	const char *what() const throw() { return str_.c_str(); }
+	const std::string& toString() const { return str_; }
 };
 
 } // mie

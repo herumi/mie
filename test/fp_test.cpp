@@ -192,3 +192,14 @@ CYBOZU_TEST_AUTO(power_fp)
 		z *= x;
 	}
 }
+
+CYBOZU_TEST_AUTO(another)
+{
+	typedef mie::FpT<mie::Gmp, 1> G;
+	G::setModulo("13");
+	G a = 3;
+	G b = 9;
+	a *= b;
+	CYBOZU_TEST_EQUAL(a, 1);
+}
+
