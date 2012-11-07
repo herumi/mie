@@ -21,6 +21,10 @@ struct TagMultiGr {
 	{
 		G::mul(z, x, y);
 	}
+	static void inv(G& z, const G& x)
+	{
+		G::inv(z, x);
+	}
 	static void div(G& z, const G& x, const G& y)
 	{
 		G::div(z, x, y);

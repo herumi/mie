@@ -142,12 +142,16 @@ template<class T>
 struct TagMultiGr<ECA<T> > {
 	static void square(ECA<T>& z, const ECA<T>& x)
 	{
-//		ECA<T>::dbl(z, x);
-		ECA<T>::add(z, x, x);
+		ECA<T>::dbl(z, x);
+//		ECA<T>::add(z, x, x);
 	}
 	static void mul(ECA<T>& z, const ECA<T>& x, const ECA<T>& y)
 	{
 		ECA<T>::add(z, x, y);
+	}
+	static void inv(ECA<T>& z, const ECA<T>& x)
+	{
+		ECA<T>::neg(z, x);
 	}
 	static void div(ECA<T>& z, const ECA<T>& x, const ECA<T>& y)
 	{
