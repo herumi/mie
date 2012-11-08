@@ -55,19 +55,21 @@ struct TagInt<size_t> {
 };
 
 template<class G, class F>
-void power(G& z, const G& x, const F& y)
+void power(G& z, const G& x, const F& _y)
 {
 	typedef TagMultiGr<G> TagG;
 	typedef power_impl::TagInt<F> TagI;
 	typedef typename TagI::block_type block_type;
-	if (y == 0) {
+	if (_y == 0) {
 		TagG::init(z);
 		return;
 	}
-	if (y == 1) {
+	if (_y == 1) {
 		z = x;
 		return;
 	}
+	bool isNegative = _y < 0;
+	const F& y = isNegative ? -_y : _y;
 	G out;
 	TagG::init(out);
 	G t(x);
@@ -88,6 +90,9 @@ void power(G& z, const G& x, const F& y)
 		}
 	}
 	z = out;
+	if (isNegative) {
+		TagG::inv(z, z);
+	}
 }
 
 } } // mie::power_impl
