@@ -93,6 +93,21 @@ CYBOZU_TEST_AUTO(power)
 	}
 }
 
+CYBOZU_TEST_AUTO(neg_power)
+{
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
+	EC P(x, y);
+	EC Q;
+	EC R;
+	for (int i = 0; i < 100; i++) {
+		EC::power(Q, P, -i);
+		CYBOZU_TEST_EQUAL(Q, R);
+		R -= P;
+	}
+}
+
 CYBOZU_TEST_AUTO(power_fp)
 {
 	Fp x(para.gx);
