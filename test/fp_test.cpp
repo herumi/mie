@@ -218,3 +218,19 @@ CYBOZU_TEST_AUTO(another)
 	CYBOZU_TEST_EQUAL(a, 1);
 }
 
+CYBOZU_TEST_AUTO(setRaw)
+{
+	Fp::setModulo("100000000000000");
+	char b1[] = { 0x56, 0x34, 0x12 };
+	Fp x;
+	x.setRaw(b1, 3);
+	CYBOZU_TEST_EQUAL(x, 0x123456);
+	int b2[] = { 0x12, 0x34 };
+	x.setRaw(b2, 2);
+	CYBOZU_TEST_EQUAL(x, Fp("0x3400000012"));
+	Fp::setModulo("65537");
+	int b3 = 65540;
+	x.setRaw(&b3, 1);
+	CYBOZU_TEST_EQUAL(x, 3);
+}
+

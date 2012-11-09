@@ -87,6 +87,12 @@ public:
 		buf[n - 1] |= 1U << rem;
 		T::setRaw(v, &buf[0], n);
 	}
+	template<class S>
+	void setRaw(const S *buf, size_t n)
+	{
+		T::setRaw(v, buf, n);
+		T::mod(v, v, m_);
+	}
 	static inline void setModulo(const std::string& mstr)
 	{
 		if (mstr.empty() || mstr[0] == '-') {
