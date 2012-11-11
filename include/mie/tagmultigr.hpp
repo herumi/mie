@@ -15,7 +15,7 @@ template<class G>
 struct TagMultiGr {
 	static void square(G& z, const G& x)
 	{
-		G::mul(z, z, x);
+		G::mul(z, x, x);
 	}
 	static void mul(G& z, const G& x, const G& y)
 	{
