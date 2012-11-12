@@ -11,7 +11,7 @@ sample:
 	$(MAKE) -C sample test
 
 clean:
-	$(MAKE) -C src clean
+#	$(MAKE) -C src clean
 	$(MAKE) -C test clean
 	$(MAKE) -C sample clean
 
