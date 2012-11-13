@@ -1,6 +1,7 @@
 include common.mk
 
 all:
+	$(MKDIR) bin
 	$(MAKE) -C test
 	$(MAKE) -C sample
 
