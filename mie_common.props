@@ -14,6 +14,8 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)../cybozulib_ext/mpir/lib</AdditionalLibraryDirectories>
