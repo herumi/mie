@@ -8,7 +8,7 @@
 */
 #include <sstream>
 #include <vector>
-#include <mie/exception.hpp>
+#include <cybozu/exception.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
@@ -55,7 +55,7 @@ public:
 	void fromStr(const std::string& str)
 	{
 		if (str.empty() || str[0] == '-') {
-			throw Exception("FpT::fromStr ") << str;
+			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}
 		fromStr(v, str);
 	}
@@ -67,7 +67,7 @@ public:
 		} else if (base == 2) {
 			str.insert(0, "0b");
 		} else if (base != 10) {
-			throw Exception("FpT::toStr ", "bad base") << base;
+			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
 		}
 	}
 	void clear()
@@ -96,7 +96,7 @@ public:
 	static inline void setModulo(const std::string& mstr)
 	{
 		if (mstr.empty() || mstr[0] == '-') {
-			throw Exception("FpT::setModulo ", mstr);
+			throw cybozu::Exception("fp:FpT:setModulo") << mstr;
 		}
 		FpT::fromStr(m_, mstr);
 	}
@@ -184,7 +184,7 @@ private:
 			}
 		}
 		if (!T::fromStr(t, p, base)) {
-			throw Exception("FpT::FpT ", str);
+			throw cybozu::Exception("fp:FpT:FpT") << str;
 		}
 	}
 };
@@ -193,4 +193,3 @@ template<class T, class tag>
 typename T::value_type FpT<T, tag>::m_;
 
 } // mie
-

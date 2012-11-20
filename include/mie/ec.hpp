@@ -7,7 +7,7 @@
 	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <sstream>
-#include <mie/exception.hpp>
+#include <cybozu/exception.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
@@ -43,7 +43,7 @@ public:
 	}
 	void set(const Fp& _x, const Fp& _y, bool verify = true)
 	{
-		if (verify && !isValid(_x, _y)) throw Exception("ECA:set");
+		if (verify && !isValid(_x, _y)) throw cybozu::Exception("ec:ECA:set") << _x << _y;
 		x = _x; y = _y;
 		inf_ = false;
 	}

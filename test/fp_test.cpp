@@ -59,7 +59,7 @@ CYBOZU_TEST_AUTO(cstr)
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
 	}
-	CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), mie::Exception, "fromStr");
+	CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "fromStr");
 }
 
 CYBOZU_TEST_AUTO(conv)
