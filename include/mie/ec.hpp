@@ -18,16 +18,16 @@ namespace mie {
 	y^2 = x^3 + ax + b
 */
 template<class _Fp>
-class ECA : public ope::addsub<ECA<_Fp>,
-	ope::hasNegative<ECA<_Fp> > > {
+class EcT : public ope::addsub<EcT<_Fp>,
+	ope::hasNegative<EcT<_Fp> > > {
 	typedef _Fp Fp;
 public:
 	Fp x, y;
 	bool inf_;
 	static Fp a_;
 	static Fp b_;
-	ECA() : inf_(true) {}
-	ECA(const Fp& _x, const Fp& _y)
+	EcT() : inf_(true) {}
+	EcT(const Fp& _x, const Fp& _y)
 	{
 		set(_x, _y);
 	}
@@ -43,7 +43,7 @@ public:
 	}
 	void set(const Fp& _x, const Fp& _y, bool verify = true)
 	{
-		if (verify && !isValid(_x, _y)) throw cybozu::Exception("ec:ECA:set") << _x << _y;
+		if (verify && !isValid(_x, _y)) throw cybozu::Exception("ec:EcT:set") << _x << _y;
 		x = _x; y = _y;
 		inf_ = false;
 	}
@@ -54,7 +54,7 @@ public:
 		y.clear();
 	}
 
-	static inline void dbl(ECA& R, const ECA& P, bool verifyInf = true)
+	static inline void dbl(EcT& R, const EcT& P, bool verifyInf = true)
 	{
 		if (verifyInf) {
 			if (P.inf_) {
@@ -69,7 +69,7 @@ public:
 		R.x = x3;
 		R.inf_ = false;
 	}
-	static inline void add(ECA& R, const ECA& P, const ECA& Q)
+	static inline void add(EcT& R, const EcT& P, const EcT& Q)
 	{
 		if (P.inf_) { R = Q; return; }
 		if (Q.inf_) { R = P; return; }
@@ -85,13 +85,13 @@ public:
 		R.y = t * (P.x - x3) - P.y;
 		R.x = x3;
 	}
-	static inline void sub(ECA& R, const ECA& P, const ECA& Q)
+	static inline void sub(EcT& R, const EcT& P, const EcT& Q)
 	{
-		ECA nQ;
+		EcT nQ;
 		neg(nQ, Q);
 		add(R, P, nQ);
 	}
-	static inline void neg(ECA& R, const ECA& P)
+	static inline void neg(EcT& R, const EcT& P)
 	{
 		if (P.inf_) {
 			R.inf_ = true;
@@ -102,20 +102,20 @@ public:
 		Fp::neg(R.y, P.y);
 	}
 	template<class N>
-	static inline void power(ECA& z, const ECA& x, const N& y)
+	static inline void power(EcT& z, const EcT& x, const N& y)
 	{
 		power_impl::power(z, x, y);
 	}
 
-	bool operator==(const ECA& rhs) const
+	bool operator==(const EcT& rhs) const
 	{
 		if (inf_) return rhs.inf_;
 		if (rhs.inf_) return false;
 		return x == rhs.x && y == rhs.y;
 	}
-	bool operator!=(const ECA& rhs) const { return !operator==(rhs); }
+	bool operator!=(const EcT& rhs) const { return !operator==(rhs); }
 	bool isZero() const { return inf_; }
-	friend inline std::ostream& operator<<(std::ostream& os, const ECA& self)
+	friend inline std::ostream& operator<<(std::ostream& os, const EcT& self)
 	{
 		if (self.inf_) {
 			return os << 'O';
@@ -123,7 +123,7 @@ public:
 			return os << self.x << ' ' << self.y;
 		}
 	}
-	friend inline std::istream& operator>>(std::istream& is, ECA& self)
+	friend inline std::istream& operator>>(std::istream& is, EcT& self)
 	{
 		std::string str;
 		is >> str;
@@ -139,36 +139,36 @@ public:
 };
 
 template<class T>
-struct TagMultiGr<ECA<T> > {
-	static void square(ECA<T>& z, const ECA<T>& x)
+struct TagMultiGr<EcT<T> > {
+	static void square(EcT<T>& z, const EcT<T>& x)
 	{
-		ECA<T>::dbl(z, x);
+		EcT<T>::dbl(z, x);
 	}
-	static void mul(ECA<T>& z, const ECA<T>& x, const ECA<T>& y)
+	static void mul(EcT<T>& z, const EcT<T>& x, const EcT<T>& y)
 	{
-		ECA<T>::add(z, x, y);
+		EcT<T>::add(z, x, y);
 	}
-	static void inv(ECA<T>& z, const ECA<T>& x)
+	static void inv(EcT<T>& z, const EcT<T>& x)
 	{
-		ECA<T>::neg(z, x);
+		EcT<T>::neg(z, x);
 	}
-	static void div(ECA<T>& z, const ECA<T>& x, const ECA<T>& y)
+	static void div(EcT<T>& z, const EcT<T>& x, const EcT<T>& y)
 	{
-		ECA<T>::sub(z, x, y);
+		EcT<T>::sub(z, x, y);
 	}
-	static void init(ECA<T>& x)
+	static void init(EcT<T>& x)
 	{
 		x.clear();
 	}
 };
 
 template<class _Fp>
-_Fp ECA<_Fp>::a_;
+_Fp EcT<_Fp>::a_;
 
 template<class _Fp>
-_Fp ECA<_Fp>::b_;
+_Fp EcT<_Fp>::b_;
 
-struct ECparam {
+struct EcParam {
 	const char *p;
 	const char *a;
 	const char *b;
@@ -178,4 +178,3 @@ struct ECparam {
 };
 
 } // mie
-
