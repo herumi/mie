@@ -169,6 +169,7 @@ template<class _Fp>
 _Fp EcT<_Fp>::b_;
 
 struct EcParam {
+	const char *name;
 	const char *p;
 	const char *a;
 	const char *b;

@@ -70,6 +70,12 @@ public:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
 		}
 	}
+	std::string toStr(int base = 10) const
+	{
+		std::string str;
+		toStr(str, base);
+		return str;
+	}
 	void clear()
 	{
 		T::clear(v);
@@ -153,7 +159,10 @@ public:
 	}
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
-		return os << self.v;
+		int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
+		std::string str;
+		self.toStr(str, base);
+		return os << str;
 	}
 	friend inline std::istream& operator>>(std::istream& is, FpT& self)
 	{

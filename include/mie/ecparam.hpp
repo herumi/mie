@@ -11,6 +11,7 @@
 namespace mie { namespace ecparam {
 
 const struct mie::EcParam secp192k1 = {
+	"secp192k1",
 	"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
 	"0",
 	"3",
