@@ -81,13 +81,13 @@ public:
 		T::clear(v);
 	}
 	template<class RG>
-	void initRand(RG& r, size_t bitLen)
+	void initRand(RG& rg, size_t bitLen)
 	{
 		const size_t rem = bitLen & 31;
 		const size_t n = (bitLen + 31) / 32;
 		std::vector<unsigned int> buf(n);
 		for (size_t i = 0; i < n; i++) {
-			buf[i] = r();
+			buf[i] = rg();
 		}
 		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 		buf[n - 1] |= 1U << rem;

@@ -15,13 +15,13 @@
 namespace mie { namespace paillier {
 
 template<class RG>
-void getRandomInt(mpz_class& z, size_t bitLen, RG& r)
+void getRandomInt(mpz_class& z, size_t bitLen, RG& rg)
 {
 	const size_t rem = bitLen & 31;
 	const size_t n = (bitLen + 31) / 32;
 	std::vector<unsigned int> buf(n);
 	for (size_t i = 0; i < n; i++) {
-		buf[i] = r();
+		buf[i] = rg();
 	}
 	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 	buf[n - 1] |= 1U << rem;
@@ -29,10 +29,10 @@ void getRandomInt(mpz_class& z, size_t bitLen, RG& r)
 }
 
 template<class RG>
-void getRandomPrime(mpz_class& z, size_t bitLen, RG& r)
+void getRandomPrime(mpz_class& z, size_t bitLen, RG& rg)
 {
 	do {
-		getRandomInt(z, bitLen, r);
+		getRandomInt(z, bitLen, rg);
 	} while (!Gmp::isPrime(z));
 }
 
