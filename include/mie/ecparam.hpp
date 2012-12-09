@@ -10,6 +10,16 @@
 
 namespace mie { namespace ecparam {
 
+// p=2^160 + 7
+const struct mie::EcParam p160_1 = {
+	"p160_1",
+	"0x10000000000000000000000000000000000000007",
+	"10",
+	"1343632762150092499701637438970764818528075565078",
+	"",
+	"",
+	"1461501637330902918203683518218126812711137002561",
+};
 const struct mie::EcParam secp192k1 = {
 	"secp192k1",
 	"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
