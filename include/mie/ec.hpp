@@ -19,7 +19,8 @@ namespace mie {
 */
 template<class _Fp>
 class EcT : public ope::addsub<EcT<_Fp>,
-	ope::hasNegative<EcT<_Fp> > > {
+	ope::comparable<EcT<_Fp>,
+	ope::hasNegative<EcT<_Fp> > > > {
 	typedef _Fp Fp;
 public:
 	Fp x, y;
@@ -106,14 +107,22 @@ public:
 	{
 		power_impl::power(z, x, y);
 	}
-
-	bool operator==(const EcT& rhs) const
+	/*
+		O <= P for any P
+		(Px, Py) <= (P'x, P'y) iff Px < P'x or Px == P'x and Py <= P'y
+	*/
+	static inline int compare(const EcT& P, const EcT& Q)
 	{
-		if (inf_) return rhs.inf_;
-		if (rhs.inf_) return false;
-		return x == rhs.x && y == rhs.y;
+		if (P.inf_) {
+			if (Q.inf_) return 0;
+			return -1;
+		}
+		if (Q.inf_) return 1;
+		int c = _Fp::compare(P.x, Q.x);
+		if (c > 0) return 1;
+		if (c < 0) return -1;
+		return _Fp::compare(P.y, Q.y);
 	}
-	bool operator!=(const EcT& rhs) const { return !operator==(rhs); }
 	bool isZero() const { return inf_; }
 	friend inline std::ostream& operator<<(std::ostream& os, const EcT& self)
 	{
