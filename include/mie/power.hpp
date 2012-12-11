@@ -7,6 +7,7 @@
 	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <assert.h>
+#include <cybozu/inttype.hpp>
 #include <mie/tagmultigr.hpp>
 
 namespace mie {
@@ -36,6 +37,7 @@ struct TagInt<int> {
 	static block_type getBlock(int n, size_t i)
 	{
 		assert(i == 0);
+		cybozu::disable_warning_unused_variable(i);
 		return n;
 	}
 };
@@ -50,6 +52,7 @@ struct TagInt<size_t> {
 	static block_type getBlock(size_t n, size_t i)
 	{
 		assert(i == 0);
+		cybozu::disable_warning_unused_variable(i);
 		return n;
 	}
 };
