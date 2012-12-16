@@ -13,6 +13,8 @@
 	#pragma warning(disable : 4616)
 	#pragma warning(disable : 4800)
 	#pragma warning(disable : 4244)
+	#pragma warning(disable : 4127)
+	#pragma warning(disable : 4512)
 #endif
 #include <gmpxx.h>
 #ifdef _WIN32

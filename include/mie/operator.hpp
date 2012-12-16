@@ -10,6 +10,8 @@
 	#ifndef MIE_FORCE_INLINE
 		#define MIE_FORCE_INLINE __forceinline
 	#endif
+	#pragma warning(push)
+	#pragma warning(disable : 4714)
 #else
 	#ifndef MIE_FORCE_INLINE
 		#define MIE_FORCE_INLINE __attribute__((always_inline))
@@ -74,3 +76,6 @@ struct hasNegative : E {
 
 } } // mie::ope
 
+#ifdef _WIN32
+//	#pragma warning(pop)
+#endif
