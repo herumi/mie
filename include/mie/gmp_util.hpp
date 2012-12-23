@@ -180,6 +180,10 @@ struct Gmp {
 	{
 		return x.get_mpz_t()->_mp_d[i];
 	}
+	static inline const block_type *getBlock(const mpz_class& x)
+	{
+		return x.get_mpz_t()->_mp_d;
+	}
 	static inline size_t getBlockSize(const mpz_class& x)
 	{
 		return x.get_mpz_t()->_mp_size;

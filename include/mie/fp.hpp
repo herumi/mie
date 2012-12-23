@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <cybozu/exception.hpp>
+#include <cybozu/hash.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
@@ -147,6 +148,10 @@ public:
 	{
 		return T::getBlock(x.v, i);
 	}
+	static inline const block_type *getBlock(const FpT& x)
+	{
+		return T::getBlock(x.v);
+	}
 	static inline size_t getBlockSize(const FpT& x)
 	{
 		return T::getBlockSize(x.v);
@@ -202,20 +207,23 @@ private:
 };
 
 template<class T, class tag>
-struct std::hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, size_t> {
-	size_t operator()(const mie::FpT<T, tag>& x) const
-	{
-		typedef mie::FpT<T, tag> Fp;
-		uint64_t v = 14695981039346656037ULL;
-		for (size_t i = 0, n = typename Fp::getBlockSize(x); i < n; i++) {
-			v ^= Fp::getBlock(x, i);
-			v *= 1099511628211ULL;
-		}
-		v ^= v >> 32;
-		return static_cast<size_t>(v);
-	}
-};
-template<class T, class tag>
 typename T::value_type FpT<T, tag>::m_;
 
 } // mie
+
+namespace std {
+template<class T> struct hash;
+
+template<class T, class tag>
+struct hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, size_t> {
+	size_t operator()(const mie::FpT<T, tag>& x, uint64_t v = 0) const
+	{
+		typedef mie::FpT<T, tag> Fp;
+		size_t n = Fp::getBlockSize(x);
+		const typename Fp::block_type *p = Fp::getBlock(x);
+		return static_cast<size_t>(cybozu::hash64(p, n, v));
+	}
+};
+
+} // std
+

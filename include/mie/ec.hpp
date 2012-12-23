@@ -220,19 +220,6 @@ _Fp EcT<_Fp>::a_;
 template<class _Fp>
 _Fp EcT<_Fp>::b_;
 
-template<class _Fp>
-struct std::hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> {
-	size_t operator()(const mie::EcT<_Fp>& P) const
-	{
-		if (P.isZero()) return 0;
-		uint64_t v = 14695981039346656037ULL;
-		v ^= std::hash<_Fp>()(P.x);
-		v *= 1099511628211ULL;
-		v ^= std::hash<_Fp>()(P.y);
-		v *= 1099511628211ULL;
-		return static_cast<size_t>(v);
-	}
-};
 struct EcParam {
 	const char *name;
 	const char *p;
@@ -244,3 +231,20 @@ struct EcParam {
 };
 
 } // mie
+
+namespace std {
+template<class T> struct hash;
+
+template<class _Fp>
+struct hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> {
+	size_t operator()(const mie::EcT<_Fp>& P) const
+	{
+		if (P.isZero()) return 0;
+		uint64_t v = std::hash<_Fp>()(P.x);
+		v = std::hash<_Fp>()(P.y, v);
+		return static_cast<size_t>(v);
+	}
+};
+
+} // std
+
