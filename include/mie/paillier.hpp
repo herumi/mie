@@ -8,9 +8,8 @@
 */
 #include <fstream>
 #include <vector>
-#include <mie/exception.hpp>
 #include <mie/gmp_util.hpp>
-#include <mie/random_generator.hpp>
+#include <cybozu/random_generator.hpp>
 
 namespace mie { namespace paillier {
 
@@ -41,13 +40,13 @@ struct LoadSave {
 	void load(const std::string& fileName)
 	{
 		std::ifstream ifs(fileName.c_str(), std::ios::binary);
-		if (!ifs) throw Exception("load:can't open ", fileName);
+		if (!ifs) throw cybozu::Exception("load:can't open") << fileName;
 		ifs >> static_cast<T&>(*this);
 	}
 	void save(const std::string& fileName) const
 	{
 		std::ofstream ofs(fileName.c_str(), std::ios::binary);
-		if (!ofs) throw Exception("save:can't open ", fileName);
+		if (!ofs) throw cybozu::Exception("save:can't open") << fileName;
 		ofs << static_cast<const T&>(*this);
 	}
 };
@@ -98,7 +97,7 @@ public:
 	template<class RG>
 	void enc(mpz_class& encMsg, const mpz_class& msg, RG& rg) const
 	{
-		if (msg >= n) throw Exception("too large msg");
+		if (msg >= n) throw cybozu::Exception("too large msg");
 		mpz_class r;
 		getRandomInt(r, nLen * 2 - 2, rg);
 		Gmp::powMod(r, r, n, nn);
@@ -108,7 +107,7 @@ public:
 	}
 	void enc(mpz_class& encMsg, const mpz_class& msg) const
 	{
-		mie::RandomGenerator rg;
+		cybozu::RandomGenerator rg;
 		enc(encMsg, msg, rg);
 	}
 };
@@ -146,7 +145,7 @@ public:
 	}
 	void init(size_t keyLen)
 	{
-		mie::RandomGenerator rg;
+		cybozu::RandomGenerator rg;
 		init(keyLen, rg);
 	}
 	const PublicKey& getPublicKey() const { return pub; }
