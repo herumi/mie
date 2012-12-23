@@ -57,15 +57,27 @@ struct Gmp {
 	{
 		mpz_add(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
+	static inline void add(mpz_class& z, const mpz_class& x, int y)
+	{
+		mpz_add_ui(z.get_mpz_t(), x.get_mpz_t(), y);
+	}
 
 	static inline void sub(mpz_class& z, const mpz_class& x, const mpz_class& y)
 	{
 		mpz_sub(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
+	static inline void sub(mpz_class& z, const mpz_class& x, int y)
+	{
+		mpz_sub_ui(z.get_mpz_t(), x.get_mpz_t(), y);
+	}
 
 	static inline void mul(mpz_class& z, const mpz_class& x, const mpz_class& y)
 	{
 		mpz_mul(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
+	static inline void mul(mpz_class& z, const mpz_class& x, int y)
+	{
+		mpz_mul_ui(z.get_mpz_t(), x.get_mpz_t(), y);
 	}
 
 	static inline void divmod(mpz_class& q, mpz_class& r, const mpz_class& x, const mpz_class& y)
@@ -78,9 +90,18 @@ struct Gmp {
 		mpz_div(q.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
 
+	static inline void div(mpz_class& q, const mpz_class& x, int y)
+	{
+		mpz_div_ui(q.get_mpz_t(), x.get_mpz_t(), y);
+	}
+
 	static inline void mod(mpz_class& r, const mpz_class& x, const mpz_class& m)
 	{
 		mpz_mod(r.get_mpz_t(), x.get_mpz_t(), m.get_mpz_t());
+	}
+	static inline void mod(mpz_class& r, const mpz_class& x, int m)
+	{
+		mpz_mod_ui(r.get_mpz_t(), x.get_mpz_t(), m);
 	}
 
 	static inline void clear(mpz_class& z)
@@ -106,24 +127,23 @@ struct Gmp {
 		return mpz_cmp(x.get_mpz_t(), y.get_mpz_t());
 	}
 
-	static inline void addMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	template<class T>
+	static inline void addMod(mpz_class& z, const mpz_class& x, const T& y, const mpz_class& m)
 	{
 		add(z, x, y);
-		mpz_class t;
-		sub(t, z, m);
-		if (!isNegative(t)) {
-			z = t;
+		if (compare(z, m) >= 0) {
+			sub(z, z, m);
 		}
 	}
-
-	static inline void subMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	template<class T>
+	static inline void subMod(mpz_class& z, const mpz_class& x, const T& y, const mpz_class& m)
 	{
 		sub(z, x, y);
 		if (!isNegative(z)) return;
 		add(z, z, m);
 	}
-
-	static inline void mulMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
+	template<class T>
+	static inline void mulMod(mpz_class& z, const mpz_class& x, const T& y, const mpz_class& m)
 	{
 		mul(z, x, y);
 		mod(z, z, m);

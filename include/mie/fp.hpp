@@ -110,15 +110,18 @@ public:
 	{
 		T::toStr(mstr, m_);
 	}
-	static inline void add(FpT& z, const FpT& x, const FpT& y)
+	template<class S>
+	static inline void add(FpT& z, const FpT& x, const S& y)
 	{
 		T::addMod(z.v, x.v, y.v, m_);
 	}
-	static inline void sub(FpT& z, const FpT& x, const FpT& y)
+	template<class S>
+	static inline void sub(FpT& z, const FpT& x, const S& y)
 	{
 		T::subMod(z.v, x.v, y.v, m_);
 	}
-	static inline void mul(FpT& z, const FpT& x, const FpT& y)
+	template<class S>
+	static inline void mul(FpT& z, const FpT& x, const S& y)
 	{
 		T::mulMod(z.v, x.v, y.v, m_);
 	}

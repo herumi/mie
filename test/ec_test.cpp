@@ -3,6 +3,7 @@
 #include <mie/gmp_util.hpp>
 #include <mie/ec.hpp>
 #include <mie/ecparam.hpp>
+#include <time.h>
 
 typedef mie::FpT<mie::Gmp> Fp;
 typedef mie::EcT<Fp> Ec;
@@ -121,4 +122,63 @@ CYBOZU_TEST_AUTO(power_fp)
 		CYBOZU_TEST_EQUAL(Q, R);
 		R += P;
 	}
+}
+
+template<class F>
+void test(F f, const char *msg)
+{
+	const int N = 1000000;
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
+	Ec P(x, y);
+	Ec Q = P + P + P;
+	clock_t begin = clock();
+	for (int i = 0; i < N; i++) {
+		f(Q, P, Q);
+	}
+	clock_t end = clock();
+	printf("%s %.2fusec\n", msg, (end - begin) / double(CLOCKS_PER_SEC) / N * 1e6);
+}
+/*
+	add 8.71usec -> 6.94
+	sub 6.80usec -> 4.84
+	dbl 9.59usec -> 7.75
+	pos 2730usec -> 2153
+*/
+CYBOZU_TEST_AUTO(addsub_bench)
+{
+	test(Ec::add, "add");
+	test(Ec::sub, "sub");
+}
+
+CYBOZU_TEST_AUTO(dbl_bench)
+{
+	const int N = 1000000;
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
+	Ec P(x, y);
+	clock_t begin = clock();
+	for (int i = 0; i < N; i++) {
+		Ec::dbl(P, P);
+	}
+	clock_t end = clock();
+	printf("dbl %.2fusec\n", (end - begin) / double(CLOCKS_PER_SEC) / N * 1e6);
+}
+
+CYBOZU_TEST_AUTO(power_bench)
+{
+	const int N = 1000;
+	Fp x(para.gx);
+	Fp y(para.gy);
+	Fp n(para.n);
+	Ec P(x, y);
+	Fp z("0x9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9");
+	clock_t begin = clock();
+	for (int i = 0; i < N; i++) {
+		Ec::power(P, P, z);
+	}
+	clock_t end = clock();
+	printf("pow %.2fusec\n", (end - begin) / double(CLOCKS_PER_SEC) / N * 1e6);
 }

@@ -62,11 +62,20 @@ public:
 				R.clear(); return;
 			}
 		}
-		Fp t = P.x * P.x * 3;
+		Fp t, s;
+		Fp::mul(t, P.x, P.x);
+		Fp::add(s, t, t);
+		t += s;
 		t += a_;
-		t /= (2 * P.y);
-		Fp x3 = t * t - 2 * P.x;
-		R.y = (P.x - x3) * t - P.y;
+		Fp::add(s, P.y, P.y);
+		t /= s;
+		Fp::mul(s, t, t);
+		s -= P.x;
+		Fp x3;
+		Fp::sub(x3, s, P.x);
+		Fp::sub(s, P.x, x3);
+		s *= t;
+		Fp::sub(R.y, s, P.y);
 		R.x = x3;
 		R.inf_ = false;
 	}
@@ -74,23 +83,57 @@ public:
 	{
 		if (P.inf_) { R = Q; return; }
 		if (Q.inf_) { R = P; return; }
-		if (P.y == -Q.y) { R.clear(); return; }
-		Fp t = Q.x - P.x;
+		Fp t;
+		Fp::neg(t, Q.y);
+		if (P.y == t) { R.clear(); return; }
+		Fp::sub(t, Q.x, P.x);
 		if (t.isZero()) {
 			dbl(R, P, false);
 			return;
 		}
-		t = (Q.y - P.y) / t;
+		Fp s;
+		Fp::sub(s, Q.y, P.y);
+		Fp::div(t, s, t);
 		R.inf_ = false;
-		Fp x3 = t * t - P.x - Q.x;
-		R.y = t * (P.x - x3) - P.y;
+		Fp x3;
+		Fp::mul(x3, t, t);
+		x3 -= P.x;
+		x3 -= Q.x;
+		Fp::sub(s, P.x, x3);
+		s *= t;
+		Fp::sub(R.y, s, P.y);
 		R.x = x3;
 	}
 	static inline void sub(EcT& R, const EcT& P, const EcT& Q)
 	{
+#if 1
+		if (P.inf_) { neg(R, Q); return; }
+		if (Q.inf_) { R = P; return; }
+		if (P.y == Q.y) { R.clear(); return; }
+		Fp t;
+		Fp::sub(t, Q.x, P.x);
+		if (t.isZero()) {
+			dbl(R, P, false);
+			return;
+		}
+		Fp s;
+		Fp::add(s, Q.y, P.y);
+		Fp::neg(s, s);
+		Fp::div(t, s, t);
+		R.inf_ = false;
+		Fp x3;
+		Fp::mul(x3, t, t);
+		x3 -= P.x;
+		x3 -= Q.x;
+		Fp::sub(s, P.x, x3);
+		s *= t;
+		Fp::sub(R.y, s, P.y);
+		R.x = x3;
+#else
 		EcT nQ;
 		neg(nQ, Q);
 		add(R, P, nQ);
+#endif
 	}
 	static inline void neg(EcT& R, const EcT& P)
 	{
