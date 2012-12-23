@@ -202,6 +202,20 @@ private:
 };
 
 template<class T, class tag>
+struct std::hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, size_t> {
+	size_t operator()(const mie::FpT<T, tag>& x) const
+	{
+		typedef mie::FpT<T, tag> Fp;
+		uint64_t v = 14695981039346656037ULL;
+		for (size_t i = 0, n = typename Fp::getBlockSize(x); i < n; i++) {
+			v ^= Fp::getBlock(x, i);
+			v *= 1099511628211ULL;
+		}
+		v ^= v >> 32;
+		return static_cast<size_t>(v);
+	}
+};
+template<class T, class tag>
 typename T::value_type FpT<T, tag>::m_;
 
 } // mie
