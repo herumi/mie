@@ -1,6 +1,7 @@
 #include <cybozu/test.hpp>
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
+#include <time.h>
 
 typedef mie::FpT<mie::Gmp> Fp;
 
@@ -234,3 +235,57 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EQUAL(x, 3);
 }
 
+CYBOZU_TEST_AUTO(bench)
+{
+	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+	const int N = 5000000;
+	Fp x("12345678901234567900342423332197");
+	double base = 0;
+	{
+		clock_t begin = clock();
+		for (int i = 0; i < N; i++) {
+			x += x;
+		}
+		clock_t end = clock();
+		base = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
+		printf("add %7.2fnsec\n", base);
+	}
+	{
+		clock_t begin = clock();
+		for (int i = 0; i < N; i++) {
+			x += x;
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
+		printf("add %7.2fnsec(x%5.2f)\n", t, t / base);
+	}
+	{
+		Fp y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		clock_t begin = clock();
+		for (int i = 0; i < N; i++) {
+			x -= y;
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
+		printf("sub %7.2fnsec(x%5.2f)\n", t, t / base);
+	}
+	{
+		clock_t begin = clock();
+		for (int i = 0; i < N; i++) {
+			x *= x;
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
+		printf("mul %7.2fnsec(x%5.2f)\n", t, t / base);
+	}
+	{
+		Fp y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		clock_t begin = clock();
+		for (int i = 0; i < N; i++) {
+			x /= y;
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
+		printf("div %7.2fnsec(x%5.2f)\n", t, t / base);
+	}
+}
