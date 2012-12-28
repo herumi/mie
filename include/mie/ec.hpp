@@ -13,6 +13,7 @@
 
 namespace mie {
 
+#define MIE_EC_USE_JACOBI
 /*
 	elliptic curve with affine coordinate
 	y^2 = x^3 + ax + b
@@ -23,14 +24,34 @@ class EcT : public ope::addsub<EcT<_Fp>,
 	ope::hasNegative<EcT<_Fp> > > > {
 	typedef _Fp Fp;
 public:
+#ifdef MIE_EC_USE_JACOBI
+	mutable Fp x, y, z;
+#else
 	Fp x, y;
 	bool inf_;
+#endif
 	static Fp a_;
 	static Fp b_;
+#ifdef MIE_EC_USE_JACOBI
+	EcT() { z.clear(); }
+#else
 	EcT() : inf_(true) {}
+#endif
 	EcT(const Fp& _x, const Fp& _y)
 	{
 		set(_x, _y);
+	}
+	void normalize() const
+	{
+#ifdef MIE_EC_USE_JACOBI
+		if (isZero() || z == 1) return;
+		Fp rz, rz2;
+		Fp::inv(rz, z);
+		rz2 = rz * rz;
+		x *= rz2;
+		y *= rz2 * rz;
+		z = 1;
+#endif
 	}
 
 	static inline void setParam(const std::string& astr, const std::string& bstr)
@@ -46,11 +67,19 @@ public:
 	{
 		if (verify && !isValid(_x, _y)) throw cybozu::Exception("ec:EcT:set") << _x << _y;
 		x = _x; y = _y;
+#ifdef MIE_EC_USE_JACOBI
+		z = 1;
+#else
 		inf_ = false;
+#endif
 	}
 	void clear()
 	{
+#ifdef MIE_EC_USE_JACOBI
+		z = 0;
+#else
 		inf_ = true;
+#endif
 		x.clear();
 		y.clear();
 	}
@@ -58,10 +87,36 @@ public:
 	static inline void dbl(EcT& R, const EcT& P, bool verifyInf = true)
 	{
 		if (verifyInf) {
-			if (P.inf_) {
+			if (P.isZero()) {
 				R.clear(); return;
 			}
 		}
+#ifdef MIE_EC_USE_JACOBI
+		Fp S, M, t, y2;
+		Fp::mul(y2, P.y, P.y);
+		Fp::mul(S, P.x, y2);
+		S += S;
+		S += S;
+		Fp::mul(t, P.z, P.z);
+		t *= t;
+		t *= a_;
+		Fp::mul(M, P.x, P.x);
+		t += M;
+		M += M;
+		M += t;
+		Fp::mul(R.x, M, M);
+		R.x -= S;
+		R.x -= S;
+		Fp::mul(R.z, P.y, P.z);
+		R.z += R.z;
+		y2 *= y2;
+		y2 += y2;
+		y2 += y2;
+		y2 += y2;
+		Fp::sub(R.y, S, R.x);
+		R.y *= M;
+		R.y -= y2;
+#else
 		Fp t, s;
 		Fp::mul(t, P.x, P.x);
 		Fp::add(s, t, t);
@@ -78,11 +133,46 @@ public:
 		Fp::sub(R.y, s, P.y);
 		R.x = x3;
 		R.inf_ = false;
+#endif
 	}
 	static inline void add(EcT& R, const EcT& P, const EcT& Q)
 	{
-		if (P.inf_) { R = Q; return; }
-		if (Q.inf_) { R = P; return; }
+		if (P.isZero()) { R = Q; return; }
+		if (Q.isZero()) { R = P; return; }
+#ifdef MIE_EC_USE_JACOBI
+		Fp r, U1, S1, H, H3;
+		Fp::mul(r, P.z, P.z);
+		Fp::mul(S1, Q.z, Q.z);
+		Fp::mul(U1, P.x, S1);
+		Fp::mul(H, Q.x, r);
+		Fp::sub(H, H, U1);
+		r *= P.z;
+		S1 *= Q.z;
+		Fp::mul(S1, P.y, S1);
+		Fp::mul(r, Q.y, r);
+		Fp::sub(r, r, S1);
+		if (H.isZero()) {
+			if (r.isZero()) {
+				dbl(R, P, false);
+			} else {
+				R.clear();
+			}
+			return;
+		}
+		Fp::mul(R.z, P.z, Q.z);
+		R.z *= H;
+		Fp::mul(H3, H, H); // H^2
+		Fp::mul(R.y, r, r); // r^2
+		U1 *= H3; // U1 H^2
+		H3 *= H; // H^3
+		R.y -= U1;
+		R.y -= U1;
+		Fp::sub(R.x, R.y, H3);
+		U1 -= R.x;
+		U1 *= r;
+		H3 *= S1;
+		Fp::sub(R.y, U1, H3);
+#else
 		Fp t;
 		Fp::neg(t, Q.y);
 		if (P.y == t) { R.clear(); return; }
@@ -103,10 +193,11 @@ public:
 		s *= t;
 		Fp::sub(R.y, s, P.y);
 		R.x = x3;
+#endif
 	}
 	static inline void sub(EcT& R, const EcT& P, const EcT& Q)
 	{
-#if 1
+#if 0
 		if (P.inf_) { neg(R, Q); return; }
 		if (Q.inf_) { R = P; return; }
 		if (P.y == Q.y) { R.clear(); return; }
@@ -137,13 +228,19 @@ public:
 	}
 	static inline void neg(EcT& R, const EcT& P)
 	{
-		if (P.inf_) {
-			R.inf_ = true;
+#ifdef MIE_EC_USE_JACOBI
+		R.x = P.x;
+		Fp::neg(R.y, P.y);
+		R.z = P.z;
+#else
+		if (P.isZero()) {
+			R.clear();
 			return;
 		}
 		R.inf_ = false;
 		R.x = P.x;
 		Fp::neg(R.y, P.y);
+#endif
 	}
 	template<class N>
 	static inline void power(EcT& z, const EcT& x, const N& y)
@@ -156,22 +253,32 @@ public:
 	*/
 	static inline int compare(const EcT& P, const EcT& Q)
 	{
-		if (P.inf_) {
-			if (Q.inf_) return 0;
+		P.normalize();
+		Q.normalize();
+		if (P.isZero()) {
+			if (Q.isZero()) return 0;
 			return -1;
 		}
-		if (Q.inf_) return 1;
+		if (Q.isZero()) return 1;
 		int c = _Fp::compare(P.x, Q.x);
 		if (c > 0) return 1;
 		if (c < 0) return -1;
 		return _Fp::compare(P.y, Q.y);
 	}
-	bool isZero() const { return inf_; }
+	bool isZero() const
+	{
+#ifdef MIE_EC_USE_JACOBI
+		return z.isZero();
+#else
+		return inf_;
+#endif
+	}
 	friend inline std::ostream& operator<<(std::ostream& os, const EcT& self)
 	{
-		if (self.inf_) {
+		if (self.isZero()) {
 			return os << 'O';
 		} else {
+			self.normalize();
 			return os << self.x << ' ' << self.y;
 		}
 	}
@@ -180,9 +287,13 @@ public:
 		std::string str;
 		is >> str;
 		if (str == "O") {
-			self.inf_ = true;
+			self.clear();
 		} else {
+#ifdef MIE_EC_USE_JACOBI
+			self.z = 1;
+#else
 			self.inf_ = false;
+#endif
 			self.x.fromStr(str);
 			is >> self.y;
 		}
@@ -214,11 +325,8 @@ struct TagMultiGr<EcT<T> > {
 	}
 };
 
-template<class _Fp>
-_Fp EcT<_Fp>::a_;
-
-template<class _Fp>
-_Fp EcT<_Fp>::b_;
+template<class _Fp> _Fp EcT<_Fp>::a_;
+template<class _Fp> _Fp EcT<_Fp>::b_;
 
 struct EcParam {
 	const char *name;
@@ -240,6 +348,7 @@ struct hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> 
 	size_t operator()(const mie::EcT<_Fp>& P) const
 	{
 		if (P.isZero()) return 0;
+		P.normalize();
 		uint64_t v = std::hash<_Fp>()(P.x);
 		v = std::hash<_Fp>()(P.y, v);
 		return static_cast<size_t>(v);

@@ -160,11 +160,16 @@ public:
 	{
 		return T::compare(x.v, y.v);
 	}
-	bool isZero() const { return T::isZero(v); }
-	size_t getBitLen() const
+	static inline bool isZero(const FpT& x)
 	{
-		return T::getBitLen(v);
+		return T::isZero(x.v);
 	}
+	static inline size_t getBitLen(const FpT& x)
+	{
+		return T::getBitLen(x.v);
+	}
+	bool isZero() const { return isZero(*this); }
+	size_t getBitLen() const { return getBitLen(*this); }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
 		int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
