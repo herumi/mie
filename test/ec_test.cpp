@@ -15,6 +15,7 @@ struct Test {
 	{
 		Fp::setModulo(para.p);
 		Ec::setParam(para.a, para.b);
+		printf("len=%d\n", (int)Fp(-1).getBitLen());
 	}
 	void cstr() const
 	{
@@ -124,7 +125,7 @@ return;
 	template<class F>
 	void test(F f, const char *msg) const
 	{
-		const int N = 1000000;
+		const int N = 100000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Fp n(para.n);
@@ -151,7 +152,7 @@ return;
 
 	void dbl_bench() const
 	{
-		const int N = 1000000;
+		const int N = 100000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Fp n(para.n);
@@ -215,6 +216,8 @@ CYBOZU_TEST_AUTO(all)
 {
 	puts("p160_1");
 	Test(mie::ecparam::p160_1).run();
+	puts("secp160k1");
+	Test(mie::ecparam::secp160k1).run();
 	puts("secp192k1");
 	Test(mie::ecparam::secp192k1).run();
 }
