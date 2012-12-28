@@ -97,12 +97,16 @@ public:
 		Fp::mul(S, P.x, y2);
 		S += S;
 		S += S;
-		Fp::mul(t, P.z, P.z);
-		t *= t;
-		t *= a_;
 		Fp::mul(M, P.x, P.x);
-		t += M;
-		M += M;
+		if (a_.isZero()) {
+			Fp::add(t, M, M);
+		} else {
+			Fp::mul(t, P.z, P.z);
+			t *= t;
+			t *= a_;
+			t += M;
+			M += M;
+		}
 		M += t;
 		Fp::mul(R.x, M, M);
 		R.x -= S;

@@ -187,10 +187,10 @@ sub 2.43usec
 dbl 3.32usec
 pow 905.00usec
 Jacobi
-add 2.32usec
-sub 2.64usec
-dbl 1.76usec
-pow 561.00usec
+add 2.34usec
+sub 2.65usec
+dbl 1.56usec
+pow 499.00usec
 */
 	void run() const
 	{
