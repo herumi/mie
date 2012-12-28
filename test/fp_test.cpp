@@ -114,6 +114,12 @@ CYBOZU_TEST_AUTO(compare)
 			CYBOZU_TEST_ASSERT(x <= y);
 		}
 	}
+	{
+		Fp x(5);
+		CYBOZU_TEST_ASSERT(x < 10);
+		CYBOZU_TEST_ASSERT(x == 5);
+		CYBOZU_TEST_ASSERT(x > 2);
+	}
 }
 
 CYBOZU_TEST_AUTO(modulo)
