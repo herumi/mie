@@ -27,8 +27,8 @@ class FpT : public ope::comparable<FpT<T, tag>,
 	ope::invertible<FpT<T, tag>,
 	ope::hasNegative<FpT<T, tag> > > > > > {
 public:
-	typedef typename T::block_type block_type;
-	typedef typename T::value_type value_type;
+	typedef typename T::BlockType BlockType;
+	typedef typename T::ImplType ImplType;
 	FpT() {}
 	FpT(int x) { operator=(x); }
 	explicit FpT(const std::string& str)
@@ -122,7 +122,7 @@ public:
 	static inline void inv(FpT& z, const FpT& x) { T::invMod(z.v, x.v, m_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
-		value_type rev;
+		ImplType rev;
 		T::invMod(rev, y.v, m_);
 		T::mulMod(z.v, x.v, rev, m_);
 	}
@@ -134,11 +134,11 @@ public:
 			T::sub(z.v, m_, x.v);
 		}
 	}
-	static inline block_type getBlock(const FpT& x, size_t i)
+	static inline BlockType getBlock(const FpT& x, size_t i)
 	{
 		return T::getBlock(x.v, i);
 	}
-	static inline const block_type *getBlock(const FpT& x)
+	static inline const BlockType *getBlock(const FpT& x)
 	{
 		return T::getBlock(x.v);
 	}
@@ -180,9 +180,9 @@ public:
 		power_impl::power(z, x, y);
 	}
 private:
-	static value_type m_;
-	value_type v;
-	static inline void fromStr(value_type& t, const std::string& str)
+	static ImplType m_;
+	ImplType v;
+	static inline void fromStr(ImplType& t, const std::string& str)
 	{
 		const char *p = str.c_str();
 		int base = 10;
@@ -202,7 +202,7 @@ private:
 };
 
 template<class T, class tag>
-typename T::value_type FpT<T, tag>::m_;
+typename T::ImplType FpT<T, tag>::m_;
 
 } // mie
 
@@ -215,7 +215,7 @@ struct hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, si
 	{
 		typedef mie::FpT<T, tag> Fp;
 		size_t n = Fp::getBlockSize(x);
-		const typename Fp::block_type *p = Fp::getBlock(x);
+		const typename Fp::BlockType *p = Fp::getBlock(x);
 		return static_cast<size_t>(cybozu::hash64(p, n, v));
 	}
 };
