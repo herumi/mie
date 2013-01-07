@@ -7,7 +7,7 @@
 	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <assert.h>
-#include <cybozu/inttype.hpp>
+#include <cybozu/bit_operation.hpp>
 #include <mie/tagmultigr.hpp>
 
 namespace mie {
@@ -17,13 +17,17 @@ namespace power_impl {
 template<class F>
 struct TagInt {
 	typedef typename F::BlockType BlockType;
-	static size_t getBlockSize(const F& n)
+	static size_t getBlockSize(const F& x)
 	{
-		return F::getBlockSize(n);
+		return F::getBlockSize(x);
 	}
-	static BlockType getBlock(const F& n, size_t i)
+	static BlockType getBlock(const F& x, size_t i)
 	{
-		return F::getBlock(n, i);
+		return F::getBlock(x, i);
+	}
+	static size_t getBitLen(const F& x)
+	{
+		return F::getBitLen(x);
 	}
 };
 
@@ -34,11 +38,15 @@ struct TagInt<int> {
 	{
 		return 1;
 	}
-	static BlockType getBlock(int n, size_t i)
+	static BlockType getBlock(int x, size_t i)
 	{
 		assert(i == 0);
 		cybozu::disable_warning_unused_variable(i);
-		return n;
+		return x;
+	}
+	static size_t getBitLen(int x)
+	{
+		return x == 0 ? 1 : cybozu::bsr(x);
 	}
 };
 
@@ -49,11 +57,15 @@ struct TagInt<size_t> {
 	{
 		return 1;
 	}
-	static BlockType getBlock(size_t n, size_t i)
+	static BlockType getBlock(size_t x, size_t i)
 	{
 		assert(i == 0);
 		cybozu::disable_warning_unused_variable(i);
-		return n;
+		return x;
+	}
+	static size_t getBitLen(size_t x)
+	{
+		return x == 0 ? 1 : cybozu::bsr64(x);
 	}
 };
 
