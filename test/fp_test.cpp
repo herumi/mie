@@ -63,6 +63,25 @@ CYBOZU_TEST_AUTO(cstr)
 	CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "fromStr");
 }
 
+CYBOZU_TEST_AUTO(bitLen)
+{
+	const struct {
+		const char *str;
+		size_t len;
+	} tbl[] = {
+		{ "0", 1 },
+		{ "1", 1 },
+		{ "2", 2 },
+		{ "3", 2 },
+		{ "0xffff", 16 },
+		{ "0xffffffffffff", 48 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Fp x(tbl[i].str);
+		CYBOZU_TEST_EQUAL(x.getBitLen(), tbl[i].len);
+	}
+}
+
 CYBOZU_TEST_AUTO(conv)
 {
 	const char *bin = "0b100100011010001010110011110001001000000010010001101000101011001111000100100000001001000110100010101100111100010010000";
