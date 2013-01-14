@@ -206,7 +206,7 @@ typename T::ImplType FpT<T, tag>::m_;
 
 } // mie
 
-namespace std {
+namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
 template<class T, class tag>
@@ -220,5 +220,5 @@ struct hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, si
 	}
 };
 
-} // std
+CYBOZU_NAMESPACE_TR1_END } // std::tr1
 

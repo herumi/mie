@@ -344,7 +344,8 @@ struct EcParam {
 
 } // mie
 
-namespace std {
+namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
+
 template<class T> struct hash;
 
 template<class _Fp>
@@ -353,11 +354,11 @@ struct hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> 
 	{
 		if (P.isZero()) return 0;
 		P.normalize();
-		uint64_t v = std::hash<_Fp>()(P.x);
-		v = std::hash<_Fp>()(P.y, v);
+		uint64_t v = hash<_Fp>()(P.x);
+		v = hash<_Fp>()(P.y, v);
 		return static_cast<size_t>(v);
 	}
 };
 
-} // std
+CYBOZU_NAMESPACE_TR1_END } // std
 
