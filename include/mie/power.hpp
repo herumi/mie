@@ -29,6 +29,10 @@ struct TagInt {
 	{
 		return F::getBitLen(x);
 	}
+	static void shr(F& x, size_t n)
+	{
+		x >>= n;
+	}
 };
 
 template<>
@@ -48,6 +52,10 @@ struct TagInt<int> {
 	{
 		return x == 0 ? 1 : cybozu::bsr(x);
 	}
+	static void shr(int& x, size_t n)
+	{
+		x >>= n;
+	}
 };
 
 template<>
@@ -66,6 +74,10 @@ struct TagInt<size_t> {
 	static size_t getBitLen(size_t x)
 	{
 		return x == 0 ? 1 : cybozu::bsr64(x);
+	}
+	static void shr(size_t& x, size_t n)
+	{
+		x >>= n;
 	}
 };
 
