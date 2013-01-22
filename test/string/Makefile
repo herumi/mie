@@ -17,7 +17,7 @@ TARGET += string_test64
 endif
 # ----------------------------------------------------------------
 CFLAGS += -O3 -fomit-frame-pointer -DNDEBUG -fno-operator-names -msse4 $(ADD_OPT) -I../../include
-CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wwrite-strings -Wfloat-equal -Wpointer-arith # -Wcast-align 
+CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wwrite-strings -Wfloat-equal -Wpointer-arith -Wlong-long # -Wcast-align
 CFLAGS+=$(CFLAGS_WARN)
 # ----------------------------------------------------------------
 
