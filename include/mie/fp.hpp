@@ -87,9 +87,7 @@ public:
 		const size_t rem = bitLen & 31;
 		const size_t n = (bitLen + 31) / 32;
 		std::vector<unsigned int> buf(n);
-		for (size_t i = 0; i < n; i++) {
-			buf[i] = rg();
-		}
+		rg.read(&buf[0], n);
 		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 		buf[n - 1] |= 1U << rem;
 		T::setRaw(v, &buf[0], n);
