@@ -5,6 +5,7 @@ endif
 ifeq ($(shell uname -s),Linux)
   LDFLAGS += -lrt -lgmp -lgmpxx
 endif
+BIT=64
 #CXX = g++
 #CXX = clang++ -x c++ -c
 #CC = gcc
@@ -15,9 +16,9 @@ RM=rm -fr
 CFLAGS_OPT += -O3 -fomit-frame-pointer -DNDEBUG
 #CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
 CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
-CFLAGS = -g -D_FILE_OFFSET_BITS=64 -msse4.2
+CFLAGS = -g -D_FILE_OFFSET_BITS=64 -msse4.2 -m$(BIT)
 CFLAGS+=$(CFLAGS_WARN)
-LDFLAGS += -lz -lpthread -lssl -lmecab 
+LDFLAGS += -lpthread -lssl -m$(BIT)
 
 DEBUG=1
 ifeq ($(RELEASE),1)
