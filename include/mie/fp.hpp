@@ -156,6 +156,10 @@ public:
 	{
 		return T::getBitLen(x.v);
 	}
+	static inline void shr(FpT& z, const FpT& x, size_t n)
+	{
+		z.v = x.v >> n;
+	}
 	bool isZero() const { return isZero(*this); }
 	size_t getBitLen() const { return getBitLen(*this); }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)

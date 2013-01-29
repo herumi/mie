@@ -31,7 +31,7 @@ struct TagInt {
 	}
 	static void shr(F& x, size_t n)
 	{
-		x >>= n;
+		F::shr(x, x, n);
 	}
 };
 
