@@ -82,6 +82,57 @@ CYBOZU_TEST_AUTO(bitLen)
 	}
 }
 
+CYBOZU_TEST_AUTO(fromStr)
+{
+	const struct {
+		const char *in;
+		int out;
+		int base;
+	} tbl[] = {
+		{ "100", 100, 0 }, // set base = 10 if base = 0
+		{ "100", 4, 2 },
+		{ "100", 256, 16 },
+		{ "0b100", 4, 0 },
+		{ "0b100", 4, 2 },
+		{ "0b100", 4, 16 }, // ignore base
+		{ "0x100", 256, 0 },
+		{ "0x100", 256, 2 }, // ignore base
+		{ "0x100", 256, 16 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Fp x;
+		x.fromStr(tbl[i].in, tbl[i].base);
+		CYBOZU_TEST_EQUAL(x, tbl[i].out);
+	}
+}
+
+CYBOZU_TEST_AUTO(stream)
+{
+	const struct {
+		const char *in;
+		int out10;
+		int out16;
+	} tbl[] = {
+		{ "100", 100, 256 }, // set base = 10 if base = 0
+		{ "0b100", 4, 4 },
+		{ "0x100", 256, 256 }, // ignore base
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		{
+			std::istringstream is(tbl[i].in);
+			Fp x;
+			is >> x;
+			CYBOZU_TEST_EQUAL(x, tbl[i].out10);
+		}
+		{
+			std::istringstream is(tbl[i].in);
+			Fp x;
+			is >> std::hex >> x;
+			CYBOZU_TEST_EQUAL(x, tbl[i].out16);
+		}
+	}
+}
+
 CYBOZU_TEST_AUTO(conv)
 {
 	const char *bin = "0b100100011010001010110011110001001000000010010001101000101011001111000100100000001001000110100010101100111100010010000";
@@ -260,6 +311,7 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EQUAL(x, 3);
 }
 
+#ifdef NDEBUG
 CYBOZU_TEST_AUTO(bench)
 {
 	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
@@ -314,3 +366,5 @@ CYBOZU_TEST_AUTO(bench)
 		printf("div %7.2fnsec(x%5.2f)\n", t, t / base);
 	}
 }
+#endif
+

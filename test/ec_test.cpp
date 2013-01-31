@@ -19,7 +19,6 @@ struct Test {
 	}
 	void cstr() const
 	{
-return;
 		Ec O;
 		CYBOZU_TEST_ASSERT(O.isZero());
 		Ec P;
@@ -204,10 +203,12 @@ pow 499.00usec
 		neg_power();
 		puts("power_fp");
 		power_fp();
+#ifdef NDEUBG
 		puts("bench");
 		addsub_bench();
 		dbl_bench();
 		power_bench();
+#endif
 	}
 };
 

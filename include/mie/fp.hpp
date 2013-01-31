@@ -53,12 +53,12 @@ public:
 		}
 		return *this;
 	}
-	void fromStr(const std::string& str)
+	void fromStr(const std::string& str, int base = 10)
 	{
 		if (str.empty() || str[0] == '-') {
 			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}
-		fromStr(v, str);
+		fromStr(v, str, base);
 	}
 	void toStr(std::string& str, int base = 10) const
 	{
@@ -173,7 +173,8 @@ public:
 	{
 		std::string str;
 		is >> str;
-		self.fromStr(str);
+		int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
+		self.fromStr(str, base);
 		return is;
 	}
 	template<class N>
@@ -184,10 +185,9 @@ public:
 private:
 	static ImplType m_;
 	ImplType v;
-	static inline void fromStr(ImplType& t, const std::string& str)
+	static inline void fromStr(ImplType& t, const std::string& str, int base = 0)
 	{
 		const char *p = str.c_str();
-		int base = 10;
 		if (str.size() > 2 && str[0] == '0') {
 			if (str[1] == 'x') {
 				base = 16;
@@ -197,8 +197,9 @@ private:
 				p += 2;
 			}
 		}
+		if (base == 0) base = 10;
 		if (!T::fromStr(t, p, base)) {
-			throw cybozu::Exception("fp:FpT:FpT") << str;
+			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}
 	}
 };
