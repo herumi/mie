@@ -288,6 +288,7 @@ public:
 	}
 	friend inline std::istream& operator>>(std::istream& is, EcT& self)
 	{
+		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
 		std::string str;
 		is >> str;
 		if (str == "O") {
@@ -298,7 +299,7 @@ public:
 #else
 			self.inf_ = false;
 #endif
-			self.x.fromStr(str);
+			self.x.fromStr(str, base);
 			is >> self.y;
 		}
 		return is;

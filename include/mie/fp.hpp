@@ -164,16 +164,16 @@ public:
 	size_t getBitLen() const { return getBitLen(*this); }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
-		int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
+		const int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
 		std::string str;
 		self.toStr(str, base);
 		return os << str;
 	}
 	friend inline std::istream& operator>>(std::istream& is, FpT& self)
 	{
+		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
 		std::string str;
 		is >> str;
-		int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
 		self.fromStr(str, base);
 		return is;
 	}
