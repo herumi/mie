@@ -283,12 +283,11 @@ public:
 			return os << 'O';
 		} else {
 			self.normalize();
-			return os << self.x << ' ' << self.y;
+			return os << self.x.toStr(16) << '_' << self.y.toStr(16);
 		}
 	}
 	friend inline std::istream& operator>>(std::istream& is, EcT& self)
 	{
-		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
 		std::string str;
 		is >> str;
 		if (str == "O") {
@@ -299,8 +298,11 @@ public:
 #else
 			self.inf_ = false;
 #endif
-			self.x.fromStr(str, base);
-			is >> self.y;
+			size_t pos = str.find('_');
+			if (pos == std::string::npos) throw cybozu::Exception("EcT:bad format") << str;
+			str[pos] = '\0';
+			self.x.fromStr(&str[0]);
+			self.y.fromStr(&str[pos + 1]);
 		}
 		return is;
 	}
