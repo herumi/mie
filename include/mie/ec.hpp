@@ -150,12 +150,12 @@ public:
 		Fp::square(S1, Q.z);
 		Fp::mul(U1, P.x, S1);
 		Fp::mul(H, Q.x, r);
-		Fp::sub(H, H, U1);
+		H -= U1;
 		r *= P.z;
 		S1 *= Q.z;
-		Fp::mul(S1, P.y, S1);
+		S1 *= P.y;
 		Fp::mul(r, Q.y, r);
-		Fp::sub(r, r, S1);
+		r -= S1;
 		if (H.isZero()) {
 			if (r.isZero()) {
 				dbl(R, P, false);
