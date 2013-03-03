@@ -74,6 +74,10 @@ struct Gmp {
 	{
 		mpz_mul(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
+	static inline void square(mpz_class& z, const mpz_class& x)
+	{
+		mpz_mul(z.get_mpz_t(), x.get_mpz_t(), x.get_mpz_t());
+	}
 	static inline void mul(mpz_class& z, const mpz_class& x, unsigned int y)
 	{
 		mpz_mul_ui(z.get_mpz_t(), x.get_mpz_t(), y);
@@ -141,6 +145,11 @@ struct Gmp {
 	static inline void mulMod(mpz_class& z, const mpz_class& x, const T& y, const mpz_class& m)
 	{
 		mul(z, x, y);
+		mod(z, z, m);
+	}
+	static inline void squareMod(mpz_class& z, const mpz_class& x, const mpz_class& m)
+	{
+		square(z, x);
 		mod(z, z, m);
 	}
 	// z = x^y mod m

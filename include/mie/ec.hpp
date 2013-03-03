@@ -15,8 +15,9 @@ namespace mie {
 
 #define MIE_EC_USE_JACOBI
 /*
-	elliptic curve with affine coordinate
-	y^2 = x^3 + ax + b
+	elliptic curve
+	y^2 = x^3 + ax + b (affine)
+	y^2 = x^3 + az^4 + bz^6 (Jacobi)
 */
 template<class _Fp>
 class EcT : public ope::addsub<EcT<_Fp>,
@@ -93,27 +94,27 @@ public:
 		}
 #ifdef MIE_EC_USE_JACOBI
 		Fp S, M, t, y2;
-		Fp::mul(y2, P.y, P.y);
+		Fp::square(y2, P.y);
 		Fp::mul(S, P.x, y2);
 		S += S;
 		S += S;
-		Fp::mul(M, P.x, P.x);
+		Fp::square(M, P.x);
 		if (a_.isZero()) {
 			Fp::add(t, M, M);
 		} else {
-			Fp::mul(t, P.z, P.z);
-			t *= t;
+			Fp::square(t, P.z);
+			Fp::square(t, t);
 			t *= a_;
 			t += M;
 			M += M;
 		}
 		M += t;
-		Fp::mul(R.x, M, M);
+		Fp::square(R.x, M);
 		R.x -= S;
 		R.x -= S;
 		Fp::mul(R.z, P.y, P.z);
 		R.z += R.z;
-		y2 *= y2;
+		Fp::square(y2, y2);
 		y2 += y2;
 		y2 += y2;
 		y2 += y2;
@@ -122,13 +123,13 @@ public:
 		R.y -= y2;
 #else
 		Fp t, s;
-		Fp::mul(t, P.x, P.x);
+		Fp::square(t, P.x);
 		Fp::add(s, t, t);
 		t += s;
 		t += a_;
 		Fp::add(s, P.y, P.y);
 		t /= s;
-		Fp::mul(s, t, t);
+		Fp::square(s, t);
 		s -= P.x;
 		Fp x3;
 		Fp::sub(x3, s, P.x);
@@ -145,8 +146,8 @@ public:
 		if (Q.isZero()) { R = P; return; }
 #ifdef MIE_EC_USE_JACOBI
 		Fp r, U1, S1, H, H3;
-		Fp::mul(r, P.z, P.z);
-		Fp::mul(S1, Q.z, Q.z);
+		Fp::square(r, P.z);
+		Fp::square(S1, Q.z);
 		Fp::mul(U1, P.x, S1);
 		Fp::mul(H, Q.x, r);
 		Fp::sub(H, H, U1);
@@ -165,8 +166,8 @@ public:
 		}
 		Fp::mul(R.z, P.z, Q.z);
 		R.z *= H;
-		Fp::mul(H3, H, H); // H^2
-		Fp::mul(R.y, r, r); // r^2
+		Fp::square(H3, H); // H^2
+		Fp::square(R.y, r); // r^2
 		U1 *= H3; // U1 H^2
 		H3 *= H; // H^3
 		R.y -= U1;
@@ -190,7 +191,7 @@ public:
 		Fp::div(t, s, t);
 		R.inf_ = false;
 		Fp x3;
-		Fp::mul(x3, t, t);
+		Fp::square(x3, t);
 		x3 -= P.x;
 		x3 -= Q.x;
 		Fp::sub(s, P.x, x3);
