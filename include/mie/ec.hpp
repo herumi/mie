@@ -17,7 +17,7 @@ namespace mie {
 /*
 	elliptic curve
 	y^2 = x^3 + ax + b (affine)
-	y^2 = x^3 + az^4 + bz^6 (Jacobi)
+	y^2 = x^3 + az^4 + bz^6 (Jacobi) x = X/Z^2, y = Y/Z^3
 */
 template<class _Fp>
 class EcT : public ope::addsub<EcT<_Fp>,
@@ -253,7 +253,7 @@ public:
 		power_impl::power(z, x, y);
 	}
 	/*
-		O <= P for any P
+		0 <= P for any P
 		(Px, Py) <= (P'x, P'y) iff Px < P'x or Px == P'x and Py <= P'y
 	*/
 	static inline int compare(const EcT& P, const EcT& Q)
@@ -281,7 +281,7 @@ public:
 	friend inline std::ostream& operator<<(std::ostream& os, const EcT& self)
 	{
 		if (self.isZero()) {
-			return os << 'O';
+			return os << '0';
 		} else {
 			self.normalize();
 			return os << self.x.toStr(16) << '_' << self.y.toStr(16);
@@ -291,7 +291,7 @@ public:
 	{
 		std::string str;
 		is >> str;
-		if (str == "O") {
+		if (str == "0") {
 			self.clear();
 		} else {
 #ifdef MIE_EC_USE_JACOBI
