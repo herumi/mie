@@ -210,6 +210,9 @@ pow 499.00usec
 		power_bench();
 #endif
 	}
+private:
+	Test(const Test&);
+	void operator=(const Test&);
 };
 
 
