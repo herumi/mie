@@ -10,6 +10,7 @@
 	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <stdlib.h>
+#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 
@@ -227,7 +228,7 @@ private:
 		add(a, 1);
 		jmp(".lp");
 	L(".notFound");
-		xor(eax, eax);
+		xor_(eax, eax);
 	L(".found");
 #ifdef XBYAK32
 		mov(esi, ptr [esp + 0]);
@@ -289,7 +290,7 @@ private:
 		const Reg64& c = rcx;
 		const Reg64& a = rax;
 		if (mode == M_one) {
-			and(c1, 0xff);
+			and_(c1, 0xff);
 			movq(xm0, c1);
 		} else {
 			movdqu(xm0, ptr [c1]);
@@ -318,7 +319,7 @@ private:
 		add(a, c);
 		ret();
 	L(".notfound");
-		xor(a, a);
+		xor_(a, a);
 		ret();
 		outLocalLabel();
 	}
@@ -376,7 +377,7 @@ private:
 		}
 #endif
 		if (mode == M_one) {
-			xor(eax, eax);
+			xor_(eax, eax);
 			inc(eax); // eax = 1
 		}
 		/*
