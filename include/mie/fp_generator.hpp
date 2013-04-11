@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <cybozu/exception.hpp>
-#define XBYAK_NO_NAME_OP
+#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 
 namespace mie {
