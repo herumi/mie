@@ -13,7 +13,6 @@
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
-#define PUT(x) std::cout << #x "=" << (x) << std::endl
 namespace mie {
 
 namespace fp_local {
