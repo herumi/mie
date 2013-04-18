@@ -12,16 +12,16 @@ const uint64_t g_p[] = {
 
 template<int N>
 struct IntT {
-	uint64_t v_[N];
+	uint64_t v[N];
 	void set(const uint64_t* x)
 	{
-		for (int i = 0; i < N; i++) v_[i] = x[i];
+		for (int i = 0; i < N; i++) v[i] = x[i];
 	}
 	std::string toStr() const
 	{
 		std::string ret;
 		for (int i = 0; i < N; i++) {
-			ret += cybozu::itohex(v_[N - 1 - i], false);
+			ret += cybozu::itohex(v[N - 1 - i], false);
 		}
 		return ret;
 	}
@@ -37,11 +37,9 @@ int main()
 {
 	mie::FpGenerator fg;
 	fg.init(g_p, CYBOZU_NUM_OF_ARRAY(g_p));
-	void (*addNC)(Int&, const Int&, const Int&) = fg.getCode<void (*)(Int&, const Int&, const Int&)>();
-	fg.genAddNC();
 	Int x, z;
 	x.set(g_p);
 	x.put();
-	addNC(z, x, x);
+	fg.addNC(z.v, x.v, x.v);
 	z.put();
 }
