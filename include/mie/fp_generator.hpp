@@ -23,14 +23,17 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	bool isFullBit_;
 	// add/sub without carry. return true if overflow
 	typedef bool (*bool3op)(uint64_t*, const uint64_t*, const uint64_t*);
-	typedef void (*bool3opI)(uint64_t*, const uint64_t*, uint64_t);
 
+	// add/sub with mod
 	typedef void (*void3op)(uint64_t*, const uint64_t*, const uint64_t*);
-	typedef void (*void3opI)(uint64_t*, const uint64_t*, uint64_t);
+
+	// mul without carry. return top of z
+	typedef uint64_t (*uint3opI)(uint64_t*, const uint64_t*, uint64_t);
 	bool3op add_;
 	bool3op sub_;
 	void3op addMod_;
 	void3op subMod_;
+	uint3opI mulI_;
 	FpGenerator()
 		: p_(0)
 		, pn_(0)
@@ -39,6 +42,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		, sub_(0)
 		, addMod_(0)
 		, subMod_(0)
+		, mulI_(0)
 	{
 	}
 	/*
@@ -79,6 +83,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			movzx(eax, al);
 		}
 	}
+	/*
+		pz[] = px[] + py[]
+	*/
 	void gen_raw_add(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
 	{
 		mov(t, ptr [px]);
@@ -90,6 +97,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + i * 8], t);
 		}
 	}
+	/*
+		pz[] = px[] - py[]
+	*/
 	void gen_raw_sub(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
 	{
 		mov(t, ptr [px]);
@@ -101,8 +111,18 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + i * 8], t);
 		}
 	}
-	// pz[0..n) <- px[0..n)
-	// use t
+	/*
+		(rax:pz[]) = px[] * y
+		use rax, rdx
+	*/
+#if 0
+	void gen_raw_mulI2(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg64& t0)
+	{
+	}
+#endif
+	/*
+		pz[] = px[]
+	*/
 	void gen_mov(const Reg32e& pz, const Reg32e& px, const Reg64& t, int n)
 	{
 		for (int i = 0; i < n; i++) {
