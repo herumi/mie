@@ -127,6 +127,25 @@ void testAddSub(const mie::FpGenerator& fg, int pn)
 	}
 }
 
+void testNeg(const mie::FpGenerator& fg, int pn)
+{
+	Fp x;
+	Int mx(pn), my(pn);
+	const char *tbl[] = {
+		"0",
+		"0x12346",
+		"0x11223344556677881122334455667788",
+		"0x0abbccddeeffaabb0000000000000000",
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		x.fromStr(tbl[i]);
+		mx.set(x);
+		x = -x;
+		fg.neg_(mx.v, mx.v);
+		CYBOZU_TEST_EQUAL(mx, x);
+	}
+}
+
 void test(const char *pStr)
 {
 	Fp::setModulo(pStr, 16);
@@ -136,6 +155,7 @@ void test(const char *pStr)
 	mie::FpGenerator fg;
 	fg.init(p, pn);
 	testAddSub(fg, pn);
+	testNeg(fg, pn);
 }
 
 CYBOZU_TEST_AUTO(all)

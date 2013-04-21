@@ -29,11 +29,15 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 	// mul without carry. return top of z
 	typedef uint64_t (*uint3opI)(uint64_t*, const uint64_t*, uint64_t);
+
+	// neg
+	typedef void (*void2op)(uint64_t*, const uint64_t*);
 	bool3op addNc_;
 	bool3op subNc_;
 	void3op add_;
 	void3op sub_;
 	uint3opI mulI_;
+	void2op neg_;
 	FpGenerator()
 		: p_(0)
 		, pn_(0)
@@ -43,6 +47,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		, add_(0)
 		, sub_(0)
 		, mulI_(0)
+		, neg_(0)
 	{
 	}
 	/*
@@ -69,6 +74,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		sub_ = getCurr<void3op>();
 		gen_sub();
+		align(16);
+		neg_ = getCurr<void2op>();
+		gen_neg();
 	}
 	void gen_addSubNc(bool isAdd)
 	{
@@ -110,6 +118,31 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			sbb(t, ptr [py + i * 8]);
 			mov(ptr [pz + i * 8], t);
 		}
+	}
+	/*
+		pz[] = -px[]
+	*/
+	void gen_raw_neg(const Reg32e& pz, const Reg32e& px, const Reg64& t0, const Reg64& t1)
+	{
+		inLocalLabel();
+		mov(t0, ptr [px]);
+		test(t0, t0);
+		jnz(".neg");
+		for (int i = 1; i < pn_; i++) {
+			or_(t0, ptr [px + i * 8]);
+		}
+		test(t0, t0);
+		jnz(".neg");
+		// zero
+		for (int i = 0; i < pn_; i++) {
+			mov(ptr [pz + i * 8], t0);
+		}
+		jmp(".exit");
+	L(".neg");
+		mov(t1, (size_t)p_);
+		gen_raw_sub(pz, t1, px, t0);
+	L(".exit");
+		outLocalLabel();
 	}
 	/*
 		(rax:pz[]) = px[] * y
@@ -168,6 +201,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		gen_raw_add(pz, pz, px, rax);
 	L(".exit");
 		outLocalLabel();
+	}
+	void gen_neg()
+	{
+		StackFrame sf(this, 2, 2);
+		const Reg64& pz = sf.p(0);
+		const Reg64& px = sf.p(1);
+		gen_raw_neg(pz, px, sf.t(0), sf.t(1));
 	}
 private:
 	FpGenerator(const FpGenerator&);
