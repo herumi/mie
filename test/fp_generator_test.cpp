@@ -1,3 +1,4 @@
+#include <cybozu/test.hpp>
 #include <mie/gmp_util.hpp>
 #include <stdint.h>
 #include <string>
@@ -96,14 +97,9 @@ struct Int {
 	}
 	bool operator!=(const Fp& rhs) const { return !operator==(rhs); }
 };
-
-int g_errNum = 0;
-void check(const Int& lhs, const Fp& rhs)
+static inline std::ostream& operator<<(std::ostream& os, const Int& x)
 {
-	if (lhs != rhs) {
-		std::cout << "err:" << lhs.toStr() << ", " << std::hex << rhs << std::endl;
-		g_errNum++;
-	}
+	return os << x.toStr();
 }
 
 void testAddSubMod(const mie::FpGenerator& fg, int pn)
@@ -115,17 +111,17 @@ void testAddSubMod(const mie::FpGenerator& fg, int pn)
 	mx.set(x);
 	my.set(y);
 	for (int i = 0; i < 30; i++) {
-		check(mx, x);
+		CYBOZU_TEST_EQUAL(mx, x);
 		x += x;
 		fg.addMod_(mx.v, mx.v, mx.v);
 	}
 	for (int i = 0; i < 30; i++) {
-		check(mx, x);
+		CYBOZU_TEST_EQUAL(mx, x);
 		x += y;
 		fg.addMod_(mx.v, mx.v, my.v);
 	}
 	for (int i = 0; i < 30; i++) {
-		check(my, y);
+		CYBOZU_TEST_EQUAL(my, y);
 		y -= x;
 		fg.subMod_(my.v, my.v, mx.v);
 	}
@@ -142,11 +138,10 @@ void test(const char *pStr)
 	testAddSubMod(fg, pn);
 }
 
-int main()
+CYBOZU_TEST_AUTO(all)
 {
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(primeTable); i++) {
 		printf("test prime i=%d\n", (int)i);
 		test(primeTable[i]);
 	}
-	printf("errNum=%d\n", g_errNum);
 }
