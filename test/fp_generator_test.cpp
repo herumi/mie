@@ -1,35 +1,70 @@
+#include <mie/gmp_util.hpp>
 #include <stdint.h>
 #include <string>
 #include <cybozu/itoa.hpp>
 #include <mie/fp_generator.hpp>
-//#include <mie/fp.hpp>
-//#include <mie/gmp_util.hpp>
+#include <mie/fp.hpp>
+#include <iostream>
 
-//typedef mie::FpT<mie::Gmp> Fp;
+typedef mie::FpT<mie::Gmp> Fp;
 
-const struct {
-	int pn;
-	uint64_t p[4];
-} primeTable[] = {
-	{ 4, { uint64_t(0xa700000000000013ull), uint64_t(0x6121000000000013ull), uint64_t(0xba344d8000000008ull), uint64_t(0x2523648240000001ull) } },
-	{ 3, { uint64_t(0xfffffffeffffac73ull), uint64_t(0xffffffffffffffffull), uint64_t(0xffffffff) } },
-	{ 3, { uint64_t(0xfffffffeffffee37ull), uint64_t(0xffffffffffffffffull), uint64_t(0xffffffffffffffff) } },
+const int MAX_N = 4;
+
+const char *primeTable[] = {
+	"7fffffffffffffffffffffffffffffff", // 127bit(not full)
+	"ffffffffffffffffffffffffffffff61", // 128bit(full)
+	"fffffffffffffffffffffffffffffffffffffffeffffee37", // 192bit(full)
+	"2523648240000001ba344d80000000086121000000000013a700000000000013", // 254bit(not full)
 };
+
+/*
+	p is output buffer
+	pStr is hex
+	return the size of p
+*/
+int convertToArray(uint64_t *p, const mpz_class& x)
+{
+	const int pn = int(sizeof(mp_limb_t) * x.get_mpz_t()->_mp_size / sizeof(*p));
+	if (pn > MAX_N) {
+		printf("pn(%d) is too large\n", pn);
+		exit(1);
+	}
+	const uint64_t *q = (const uint64_t*)x.get_mpz_t()->_mp_d;
+	std::copy(q, q + pn, p);
+	std::fill(p + pn, p + MAX_N, 0);
+	return pn;
+}
+int convertToArray(uint64_t *p, const char *pStr)
+{
+	mpz_class x;
+	x.set_str(pStr, 16);
+	return convertToArray(p, x);
+}
 
 struct Int {
 	int vn;
-	uint64_t v[4];
+	uint64_t v[MAX_N];
+	Int()
+		: vn(0)
+	{
+	}
 	explicit Int(int vn)
 	{
-		if (vn > 4) {
+		if (vn > MAX_N) {
 			printf("vn(%d) is too large\n", vn);
 			exit(1);
 		}
 		this->vn = vn;
 	}
+	void set(const char *str) { fromStr(str); }
+	void set(const Fp& rhs) { convertToArray(v, rhs.getInnerValue()); }
 	void set(const uint64_t* x)
 	{
 		for (int i = 0; i < vn; i++) v[i] = x[i];
+	}
+	void fromStr(const char *str)
+	{
+		convertToArray(v, str);
 	}
 	std::string toStr() const
 	{
@@ -44,26 +79,74 @@ struct Int {
 		if (msg) printf("%s=", msg);
 		printf("%s\n", toStr().c_str());
 	}
+	bool operator==(const Int& rhs) const
+	{
+		if (vn != rhs.vn) return false;
+		for (int i = 0; i < vn; i++) {
+			if (v[i] != rhs.v[i]) return false;
+		}
+		return true;
+	}
+	bool operator!=(const Int& rhs) const { return !operator==(rhs); }
+	bool operator==(const Fp& rhs) const
+	{
+		Int t(vn);
+		t.set(rhs);
+		return operator==(t);
+	}
+	bool operator!=(const Fp& rhs) const { return !operator==(rhs); }
 };
 
-void test(const uint64_t *p, int pn)
+int g_errNum = 0;
+void check(const Int& lhs, const Fp& rhs)
 {
-	// init
+	if (lhs != rhs) {
+		std::cout << "err:" << lhs.toStr() << ", " << std::hex << rhs << std::endl;
+		g_errNum++;
+	}
+}
+
+void testAddSubMod(const mie::FpGenerator& fg, int pn)
+{
+	Fp x, y;
+	Int mx(pn), my(pn);
+	x.fromStr("0x8811aabb23427cc");
+	y.fromStr("0x8811aabb23427cc11");
+	mx.set(x);
+	my.set(y);
+	for (int i = 0; i < 30; i++) {
+		check(mx, x);
+		x += x;
+		fg.addMod_(mx.v, mx.v, mx.v);
+	}
+	for (int i = 0; i < 30; i++) {
+		check(mx, x);
+		x += y;
+		fg.addMod_(mx.v, mx.v, my.v);
+	}
+	for (int i = 0; i < 30; i++) {
+		check(my, y);
+		y -= x;
+		fg.subMod_(my.v, my.v, mx.v);
+	}
+}
+
+void test(const char *pStr)
+{
+	Fp::setModulo(pStr, 16);
+	uint64_t p[MAX_N];
+	const int pn = convertToArray(p, pStr);
 	printf("pn=%d\n", pn);
-//	Fp::
 	mie::FpGenerator fg;
 	fg.init(p, pn);
-	Int x(pn), z(pn);
-	x.set(p);
-	x.put("x");
-	fg.add_(z.v, x.v, x.v);
-	z.put("z");
+	testAddSubMod(fg, pn);
 }
 
 int main()
 {
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(primeTable); i++) {
 		printf("test prime i=%d\n", (int)i);
-		test(primeTable[i].p, primeTable[i].pn);
+		test(primeTable[i]);
 	}
+	printf("errNum=%d\n", g_errNum);
 }

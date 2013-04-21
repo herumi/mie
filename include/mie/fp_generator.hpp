@@ -51,6 +51,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		p_ = p;
 		pn_ = (int)pn;
 		isFullBit_ = (p_[pn_ - 1] >> 63) != 0;
+		printf("p=%p, pn_=%d, isFullBit_=%d\n", p_, pn_, isFullBit_);
 
 		align(16);
 		add_ = getCurr<bool3op>();
@@ -69,35 +70,35 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	{
 		StackFrame sf(this, 3);
 		if (isAdd) {
-			gen_raw_add(sf.p(0), sf.p(1), sf.p(2));
+			gen_raw_add(sf.p(0), sf.p(1), sf.p(2), rax);
 		} else {
-			gen_raw_sub(sf.p(0), sf.p(1), sf.p(2));
+			gen_raw_sub(sf.p(0), sf.p(1), sf.p(2), rax);
 		}
 		if (isFullBit_) {
 			setc(al);
 			movzx(eax, al);
 		}
 	}
-	void gen_raw_add(const Reg32e& pz, const Reg32e& px, const Reg32e& py)
+	void gen_raw_add(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
 	{
-		mov(rax, ptr [px]);
-		add(rax, ptr [py]);
-		mov(ptr [pz], rax);
+		mov(t, ptr [px]);
+		add(t, ptr [py]);
+		mov(ptr [pz], t);
 		for (int i = 1; i < pn_; i++) {
-			mov(rax, ptr [px + i * 8]);
-			adc(rax, ptr [py + i * 8]);
-			mov(ptr [pz + i * 8], rax);
+			mov(t, ptr [px + i * 8]);
+			adc(t, ptr [py + i * 8]);
+			mov(ptr [pz + i * 8], t);
 		}
 	}
-	void gen_raw_sub(const Reg32e& pz, const Reg32e& px, const Reg32e& py)
+	void gen_raw_sub(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
 	{
-		mov(rax, ptr [px]);
-		sub(rax, ptr [py]);
-		mov(ptr [pz], rax);
+		mov(t, ptr [px]);
+		sub(t, ptr [py]);
+		mov(ptr [pz], t);
 		for (int i = 1; i < pn_; i++) {
-			mov(rax, ptr [px + i * 8]);
-			sbb(rax, ptr [py + i * 8]);
-			mov(ptr [pz + i * 8], rax);
+			mov(t, ptr [px + i * 8]);
+			sbb(t, ptr [py + i * 8]);
+			mov(ptr [pz + i * 8], t);
 		}
 	}
 	// pz[0..n) <- px[0..n)
@@ -117,18 +118,18 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& py = sf.p(2);
 
 		inLocalLabel();
-		gen_raw_add(pz, px, py);
+		gen_raw_add(pz, px, py, rax);
 		mov(px, (size_t)p_); // destroy px
 		if (isFullBit_) {
 			jc(".over");
 		}
-		gen_raw_sub(rsp, pz, rax);
+		gen_raw_sub(rsp, pz, px, rax);
 		jc(".exit");
 		gen_mov(pz, rsp, rax, pn_);
 		if (isFullBit_) {
 			jmp(".exit");
 			L(".over");
-			gen_raw_sub(pz, pz, px);
+			gen_raw_sub(pz, pz, px, rax);
 		}
 		L(".exit");
 		outLocalLabel();
@@ -141,10 +142,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& py = sf.p(2);
 
 		inLocalLabel();
-		gen_raw_sub(pz, px, py);
+		gen_raw_sub(pz, px, py, rax);
 		jnc(".exit");
-		mov(rax, (size_t)p_);
-		gen_raw_add(pz, pz, rax);
+		mov(px, (size_t)p_);
+		gen_raw_add(pz, pz, px, rax);
 	L(".exit");
 		outLocalLabel();
 	}

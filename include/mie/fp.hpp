@@ -97,12 +97,12 @@ public:
 		T::setRaw(v, buf, n);
 		T::mod(v, v, m_);
 	}
-	static inline void setModulo(const std::string& mstr)
+	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		if (mstr.empty() || mstr[0] == '-') {
 			throw cybozu::Exception("fp:FpT:setModulo") << mstr;
 		}
-		FpT::fromStr(m_, mstr);
+		FpT::fromStr(m_, mstr, base);
 	}
 	static inline void getModulo(std::string& mstr)
 	{
@@ -182,6 +182,7 @@ public:
 	{
 		power_impl::power(z, x, y);
 	}
+	const ImplType& getInnerValue() const { return v; }
 private:
 	static ImplType m_;
 	ImplType v;
