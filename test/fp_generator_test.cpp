@@ -102,7 +102,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Int& x)
 	return os << x.toStr();
 }
 
-void testAddSubMod(const mie::FpGenerator& fg, int pn)
+void testAddSub(const mie::FpGenerator& fg, int pn)
 {
 	Fp x, y;
 	Int mx(pn), my(pn);
@@ -113,17 +113,17 @@ void testAddSubMod(const mie::FpGenerator& fg, int pn)
 	for (int i = 0; i < 30; i++) {
 		CYBOZU_TEST_EQUAL(mx, x);
 		x += x;
-		fg.addMod_(mx.v, mx.v, mx.v);
+		fg.add_(mx.v, mx.v, mx.v);
 	}
 	for (int i = 0; i < 30; i++) {
 		CYBOZU_TEST_EQUAL(mx, x);
 		x += y;
-		fg.addMod_(mx.v, mx.v, my.v);
+		fg.add_(mx.v, mx.v, my.v);
 	}
 	for (int i = 0; i < 30; i++) {
 		CYBOZU_TEST_EQUAL(my, y);
 		y -= x;
-		fg.subMod_(my.v, my.v, mx.v);
+		fg.sub_(my.v, my.v, mx.v);
 	}
 }
 
@@ -135,7 +135,7 @@ void test(const char *pStr)
 	printf("pn=%d\n", pn);
 	mie::FpGenerator fg;
 	fg.init(p, pn);
-	testAddSubMod(fg, pn);
+	testAddSub(fg, pn);
 }
 
 CYBOZU_TEST_AUTO(all)

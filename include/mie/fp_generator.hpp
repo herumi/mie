@@ -29,19 +29,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 	// mul without carry. return top of z
 	typedef uint64_t (*uint3opI)(uint64_t*, const uint64_t*, uint64_t);
-	bool3op add_;
-	bool3op sub_;
-	void3op addMod_;
-	void3op subMod_;
+	bool3op addNc_;
+	bool3op subNc_;
+	void3op add_;
+	void3op sub_;
 	uint3opI mulI_;
 	FpGenerator()
 		: p_(0)
 		, pn_(0)
 		, isFullBit_(0)
+		, addNc_(0)
+		, subNc_(0)
 		, add_(0)
 		, sub_(0)
-		, addMod_(0)
-		, subMod_(0)
 		, mulI_(0)
 	{
 	}
@@ -58,19 +58,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		printf("p=%p, pn_=%d, isFullBit_=%d\n", p_, pn_, isFullBit_);
 
 		align(16);
-		add_ = getCurr<bool3op>();
-		gen_addsub(true);
+		addNc_ = getCurr<bool3op>();
+		gen_addSubNc(true);
 		align(16);
-		sub_ = getCurr<bool3op>();
-		gen_addsub(false);
+		subNc_ = getCurr<bool3op>();
+		gen_addSubNc(false);
 		align(16);
-		addMod_ = getCurr<void3op>();
+		add_ = getCurr<void3op>();
 		gen_addMod();
 		align(16);
-		subMod_ = getCurr<void3op>();
-		gen_subMod();
+		sub_ = getCurr<void3op>();
+		gen_sub();
 	}
-	void gen_addsub(bool isAdd)
+	void gen_addSubNc(bool isAdd)
 	{
 		StackFrame sf(this, 3);
 		if (isAdd) {
@@ -154,7 +154,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		L(".exit");
 		outLocalLabel();
 	}
-	void gen_subMod()
+	void gen_sub()
 	{
 		StackFrame sf(this, 3);
 		const Reg64& pz = sf.p(0);
