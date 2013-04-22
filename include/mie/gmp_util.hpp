@@ -17,6 +17,7 @@
 	#pragma warning(disable : 4512)
 #endif
 #include <gmpxx.h>
+#include <stdint.h>
 #ifdef _WIN32
 	#pragma warning(pop)
 #endif
@@ -42,17 +43,18 @@ struct Gmp {
 	{
 		mpz_import(z.get_mpz_t(), n, -1, sizeof(*buf), 0, 0, buf);
 	}
-
-	static inline bool fromStr(mpz_class &z, const std::string& str, int base = 10)
+	static inline void set(mpz_class& z, uint64_t x)
+	{
+		setRaw(z, &x, 1);
+	}
+	static inline bool fromStr(mpz_class& z, const std::string& str, int base = 10)
 	{
 		return z.set_str(str, base) == 0;
 	}
-
 	static inline void toStr(std::string& str, const mpz_class& z, int base = 10)
 	{
 		str = z.get_str(base);
 	}
-
 	static inline void add(mpz_class& z, const mpz_class& x, const mpz_class& y)
 	{
 		mpz_add(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
@@ -61,7 +63,6 @@ struct Gmp {
 	{
 		mpz_add_ui(z.get_mpz_t(), x.get_mpz_t(), y);
 	}
-
 	static inline void sub(mpz_class& z, const mpz_class& x, const mpz_class& y)
 	{
 		mpz_sub(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());

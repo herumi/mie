@@ -311,6 +311,23 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EQUAL(x, 3);
 }
 
+CYBOZU_TEST_AUTO(set64bit)
+{
+	Fp::setModulo("0x10000000000000000000");
+	const struct {
+		const char *p;
+		uint64_t i;
+	} tbl[] = {
+		{ "0x1234567812345678", uint64_t(0x1234567812345678ull) },
+		{ "0xaaaaaaaaaaaaaaaa", uint64_t(0xaaaaaaaaaaaaaaaaull) },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Fp x(tbl[i].p);
+		Fp y(tbl[i].i);
+		CYBOZU_TEST_EQUAL(x, y);
+	}
+}
+
 #ifdef NDEBUG
 CYBOZU_TEST_AUTO(bench)
 {

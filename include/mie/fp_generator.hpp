@@ -10,6 +10,9 @@
 #include <assert.h>
 #include <cybozu/exception.hpp>
 #include <xbyak/xbyak.h>
+#ifdef XBYAK32
+	#error "not support 32-bit mode"
+#endif
 #include <xbyak/xbyak_util.h>
 
 namespace mie {

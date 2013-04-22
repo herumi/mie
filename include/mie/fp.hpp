@@ -30,6 +30,7 @@ public:
 	typedef typename T::ImplType ImplType;
 	FpT() {}
 	FpT(int x) { operator=(x); }
+	FpT(uint64_t x) { operator=(x); }
 	explicit FpT(const std::string& str)
 	{
 		fromStr(str);
@@ -52,6 +53,11 @@ public:
 		}
 		return *this;
 	}
+	FpT& operator=(uint64_t x)
+	{
+		T::set(v, x);
+		return *this;
+	}
 	void fromStr(const std::string& str, int base = 10)
 	{
 		if (str.empty() || str[0] == '-') {
@@ -59,6 +65,7 @@ public:
 		}
 		fromStr(v, str, base);
 	}
+	void set(const std::string& str, int base = 10) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10) const
 	{
 		T::toStr(str, v, base);

@@ -1,4 +1,7 @@
 #include <cybozu/test.hpp>
+#if CYBOZU_OS_BIT == 32
+// not support
+#else
 #include <mie/gmp_util.hpp>
 #include <stdint.h>
 #include <string>
@@ -165,3 +168,4 @@ CYBOZU_TEST_AUTO(all)
 		test(primeTable[i]);
 	}
 }
+#endif

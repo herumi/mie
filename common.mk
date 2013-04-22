@@ -3,12 +3,21 @@ ifeq ($(shell expr $(GCC_VER) \> 4.2.1),1)
   CFLAGS_OPT +=-march=native
 endif
 ifeq ($(shell uname -s),Linux)
-  LDFLAGS += -lrt -lgmp -lgmpxx
+  OS=Linux
+endif
+ifeq ($(CXX),clang++)
+  CFLAGS_OPT += -O3
+else
+  ifeq ($(shell expr $(GCC_VER) \> 4.6.0),1)
+    CFLAGS_OPT +=-Ofast
+  else
+    CFLAGS_OPT += -O3
+  endif
 endif
 BIT=64
-#CXX = g++
-#CXX = clang++ -x c++ -c
-#CC = gcc
+ifeq ($(shell uname -o),Cygwin)
+  BIT=32
+endif
 CP = cp -f
 AR = ar r
 MKDIR=mkdir -p
@@ -18,21 +27,23 @@ CFLAGS_OPT += -O3 -fomit-frame-pointer -DNDEBUG
 CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
 CFLAGS = -g -DXBYAK_NO_OP_NAMES -D_FILE_OFFSET_BITS=64 -msse4.2 -m$(BIT)
 CFLAGS+=$(CFLAGS_WARN)
-LDFLAGS += -lpthread -lssl -m$(BIT)
+LDFLAGS += -lpthread -lssl -m$(BIT) -lrt -lgmp -lgmpxx
 
 DEBUG=1
 ifeq ($(RELEASE),1)
-	DEBUG=0
+  DEBUG=0
 endif
 
 ifeq ($(DEBUG),0)
-	CFLAGS+=$(CFLAGS_OPT)
-	OBJDIR=release
-	OBJSUF=
+  CFLAGS+=$(CFLAGS_OPT)
+  OBJDIR=release
+  OBJSUF=
 else
-	LDFLAGS+=-rdynamic
-	OBJDIR=debug
-	OBJSUF=d
+  ifeq ($(OS),Linux)
+    LDFLAGS+=-rdynamic
+  endif
+  OBJDIR=debug
+  OBJSUF=d
 endif
 
 TOPDIR=$(shell 'pwd' | sed "s@mie/.*@mie/@")
