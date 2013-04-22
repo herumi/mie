@@ -128,11 +128,12 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t0, ptr [px]);
 		test(t0, t0);
 		jnz(".neg");
-		for (int i = 1; i < pn_; i++) {
-			or_(t0, ptr [px + i * 8]);
+		if (pn_ > 1) {
+			for (int i = 1; i < pn_; i++) {
+				or_(t0, ptr [px + i * 8]);
+			}
+			jnz(".neg");
 		}
-		test(t0, t0);
-		jnz(".neg");
 		// zero
 		for (int i = 0; i < pn_; i++) {
 			mov(ptr [pz + i * 8], t0);
