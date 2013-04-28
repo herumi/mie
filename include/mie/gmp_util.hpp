@@ -190,5 +190,5 @@ struct Gmp {
 	}
 };
 
-} // mie::gmp
+} // mie::Gmp
 

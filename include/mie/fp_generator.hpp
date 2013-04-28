@@ -17,6 +17,34 @@
 
 namespace mie {
 
+namespace montgomery {
+
+/*
+	get p' such that p * p' = -1 mod R,
+	where p is prime and R = 1 << 64(or 32).
+	@param pLow [in] p mod R
+	T is uint32_t or uint64_t
+*/
+template<class T>
+T getCoff(T pLow)
+{
+	T ret = 0;
+	T t = 0;
+	T x = 1;
+
+	for (size_t i = 0; i < sizeof(T) * 8; i++) {
+		if ((t & 1) == 0) {
+			t += pLow;
+			ret += x;
+		}
+		t >>= 1;
+		x <<= 1;
+	}
+	return ret;
+}
+
+} // montgomery
+
 struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::Reg32e Reg32e;
 	typedef Xbyak::Reg64 Reg64;
