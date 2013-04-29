@@ -9,6 +9,7 @@
 #include <mie/fp_generator.hpp>
 #include <mie/fp.hpp>
 #include <iostream>
+#include <cybozu/xorshift.hpp>
 
 typedef mie::FpT<mie::Gmp> Fp;
 
@@ -149,6 +150,25 @@ void testNeg(const mie::FpGenerator& fg, int pn)
 	}
 }
 
+void testMulI(const mie::FpGenerator& fg, int pn)
+{
+	cybozu::XorShift rg;
+	for (int i = 0; i < 100; i++) {
+		uint64_t x[MAX_N];
+		uint64_t z[MAX_N + 1];
+		rg.read(x, pn);
+		uint64_t y = rg.get64();
+		mpz_class mx;
+		mie::Gmp::setRaw(mx, x, pn);
+		mx *= y;
+		uint64_t d = fg.mulI_(z, x, y);
+		z[pn] = d;
+		mpz_class my;
+		mie::Gmp::setRaw(my, z, pn + 1);
+		CYBOZU_TEST_EQUAL(mx, my);
+	}
+}
+
 void test(const char *pStr)
 {
 	Fp::setModulo(pStr, 16);
@@ -159,6 +179,7 @@ void test(const char *pStr)
 	fg.init(p, pn);
 	testAddSub(fg, pn);
 	testNeg(fg, pn);
+	testMulI(fg, pn);
 }
 
 CYBOZU_TEST_AUTO(all)

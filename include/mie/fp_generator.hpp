@@ -49,6 +49,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::Reg32e Reg32e;
 	typedef Xbyak::Reg64 Reg64;
 	typedef Xbyak::util::StackFrame StackFrame;
+	static const int UseRDX = Xbyak::util::UseRDX;
+	static const int UseRCX = Xbyak::util::UseRCX;
 	const uint64_t *p_;
 	int pn_;
 	bool isFullBit_;
@@ -108,6 +110,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		neg_ = getCurr<void2op>();
 		gen_neg();
+		align(16);
+		mulI_ = getCurr<uint3opI>();
+		gen_mulI();
 	}
 	void gen_addSubNc(bool isAdd)
 	{
@@ -177,14 +182,53 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		outLocalLabel();
 	}
 	/*
-		(rax:pz[]) = px[] * y
-		use rax, rdx
+		(rdx:pz[]) = px[] * y
+		use rax, rdx, pw[]
+		@note this is general version(maybe not so fast)
 	*/
-#if 0
-	void gen_raw_mulI2(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg64& t0)
+	void gen_raw_mulI(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg32e& pw, const Reg64& t, int n)
 	{
+		assert(n >= 2);
+		if (n == 2) {
+			mov(rax, ptr [px]);
+			mul(y);
+			mov(ptr [pz], rax);
+			mov(t, rdx);
+			mov(rax, ptr [px + 8]);
+			mul(y);
+			add(rax, t);
+			adc(rdx, 0);
+			mov(ptr [pz + 8], rax);
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			mov(rax, ptr [px + i * 8]);
+			mul(y);
+			mov(ptr [pz + i * 8], rax);
+			if (i < n - 1) {
+				mov(ptr [pw + i * 8], rdx);
+			}
+		}
+		for (int i = 1; i < n; i++) {
+			mov(t, ptr [pz + i * 8]);
+			if (i == 1) {
+				add(t, ptr [pw + (i - 1) * 8]);
+			} else {
+				adc(t, ptr [pw + (i - 1) * 8]);
+			}
+			mov(ptr [pz + i * 8], t);
+		}
+		adc(rdx, 0);
 	}
-#endif
+	void gen_mulI()
+	{
+		StackFrame sf(this, 3, 1 | UseRDX, pn_ * 8);
+		const Reg64& pz = sf.p(0);
+		const Reg64& px = sf.p(1);
+		const Reg64& y = sf.p(2);
+		gen_raw_mulI(pz, px, y, rsp, sf.t(0), pn_);
+		mov(rax, rdx);
+	}
 	/*
 		pz[] = px[]
 	*/
