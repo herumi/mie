@@ -70,29 +70,53 @@ void bench(const char *pStr)
 
 	std::cout << std::hex;
 	{
+		Xbyak::util::Clock clk;
 		Fp x(xStr);
-		clock_t begin = clock();
+		clk.begin();
 		for (int i = 0; i < N; i++) {
 			x *= x;
 		}
-		clock_t end = clock();
-		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("mul  %7.2fnsec ", t);
+		clk.end();
+		printf("mul  %4.fclk ", clk.getClock() / double(N));
 		std::cout << x << std::endl;
 	}
 	{
+		Xbyak::util::Clock clk;
 		mpz_class p(pStr);
 		Montgomery mont(p);
 		mpz_class x(xStr);
 		mont.toMont(x);
-		clock_t begin = clock();
+		clk.begin();
 		for (int i = 0; i < N; i++) {
 			mont.mul(x, x, x);
 		}
-		clock_t end = clock();
+		clk.end();
 		mont.fromMont(x);
-		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("mont %7.2fnsec ", t);
+		printf("mont %4.fclk ", clk.getClock() / double(N));
+		std::cout << "0x" << x << std::endl;
+	}
+	{
+		Xbyak::util::Clock clk;
+		mpz_class p(pStr);
+		Montgomery mont(p);
+		mpz_class x(xStr);
+		mont.toMont(x);
+		const size_t aN = 4;
+		uint64_t xa[aN];
+		uint64_t pa[aN];
+		mie::Gmp::getRaw(xa, aN, x);
+		if (mie::Gmp::getRaw(pa, aN, p) != 4) return; // now only for size = 4
+		mie::FpGenerator fg;
+		mie::FpGenerator::void3op montMul = fg.getCurr<mie::FpGenerator::void3op>();
+		fg.gen_montMul4(pa, mont.pp_);
+		clk.begin();
+		for (int i = 0; i < N; i++) {
+			montMul(xa, xa, xa);
+		}
+		clk.end();
+		mie::Gmp::setRaw(x, xa, aN);
+		mont.fromMont(x);
+		printf("mont %4.fclk ", clk.getClock() / double(N));
 		std::cout << "0x" << x << std::endl;
 	}
 }
