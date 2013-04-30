@@ -25,7 +25,7 @@ RM=rm -fr
 CFLAGS_OPT += -O3 -fomit-frame-pointer -DNDEBUG
 #CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
 CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
-CFLAGS = -g3 -DXBYAK_NO_OP_NAMES -D_FILE_OFFSET_BITS=64 -msse4.2 -m$(BIT)
+CFLAGS = -g -DXBYAK_NO_OP_NAMES -D_FILE_OFFSET_BITS=64 -msse4.2 -m$(BIT)
 CFLAGS+=$(CFLAGS_WARN)
 LDFLAGS += -lpthread -lssl -m$(BIT) -lrt -lgmp -lgmpxx
 
