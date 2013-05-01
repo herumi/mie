@@ -6,6 +6,8 @@
 
 typedef mie::FpT<mie::Gmp> Fp;
 
+#define PUT(x) std::cout << #x << '=' << x << std::endl
+
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
 	mpz_class p_;
@@ -105,10 +107,21 @@ void bench(const char *pStr)
 		uint64_t xa[aN];
 		uint64_t pa[aN];
 		mie::Gmp::getRaw(xa, aN, x);
-		if (mie::Gmp::getRaw(pa, aN, p) != 4) return; // now only for size = 4
+		const size_t n = mie::Gmp::getRaw(pa, aN, p);
 		mie::FpGenerator fg;
 		mie::FpGenerator::void3op montMul = fg.getCurr<mie::FpGenerator::void3op>();
-		fg.gen_montMul4(pa, mont.pp_);
+
+		switch (n) {
+		case 3:
+			fg.gen_montMul3(pa, mont.pp_);
+			break;
+		case 4:
+			fg.gen_montMul4(pa, mont.pp_);
+			break;
+		default:
+			printf("not implemented for n=%d\n", (int)n);
+			return;
+		}
 		clk.begin();
 		for (int i = 0; i < N; i++) {
 			montMul(xa, xa, xa);
