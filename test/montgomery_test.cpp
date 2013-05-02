@@ -3,6 +3,8 @@
 #include <mie/fp_generator.hpp>
 #include <iostream>
 #include <time.h>
+#include <sstream>
+#include <cybozu/test.hpp>
 
 typedef mie::FpT<mie::Gmp> Fp;
 
@@ -71,6 +73,7 @@ void bench(const char *pStr)
 	const char *xStr = "2345678901234567900342423332197";
 
 	std::cout << std::hex;
+	std::string ret1, ret2, ret3;
 	{
 		Xbyak::util::Clock clk;
 		Fp x(xStr);
@@ -80,7 +83,10 @@ void bench(const char *pStr)
 		}
 		clk.end();
 		printf("mul  %4.fclk ", clk.getClock() / double(N));
-		std::cout << x << std::endl;
+		std::ostringstream os;
+		os << std::hex << x;
+		ret1 = os.str();
+		std::cout << ret1 << std::endl;
 	}
 	{
 		Xbyak::util::Clock clk;
@@ -95,7 +101,10 @@ void bench(const char *pStr)
 		clk.end();
 		mont.fromMont(x);
 		printf("mont %4.fclk ", clk.getClock() / double(N));
-		std::cout << "0x" << x << std::endl;
+		std::ostringstream os;
+		os << std::hex << "0x" << x;
+		ret2 = os.str();
+		std::cout << ret2 << std::endl;
 	}
 	{
 		Xbyak::util::Clock clk;
@@ -130,11 +139,16 @@ void bench(const char *pStr)
 		mie::Gmp::setRaw(x, xa, aN);
 		mont.fromMont(x);
 		printf("mont %4.fclk ", clk.getClock() / double(N));
-		std::cout << "0x" << x << std::endl;
+		std::ostringstream os;
+		os << std::hex << "0x" << x;
+		ret3 = os.str();
+		std::cout << ret3 << std::endl;
 	}
+	CYBOZU_TEST_EQUAL(ret1, ret2);
+	CYBOZU_TEST_EQUAL(ret1, ret3);
 }
 
-int main()
+CYBOZU_TEST_AUTO(main)
 {
 	const char *tbl[] = {
 		"0x2523648240000001ba344d80000000086121000000000013a700000000000013",
