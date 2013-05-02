@@ -118,19 +118,9 @@ void bench(const char *pStr)
 		mie::Gmp::getRaw(xa, aN, x);
 		const size_t n = mie::Gmp::getRaw(pa, aN, p);
 		mie::FpGenerator fg;
-		mie::FpGenerator::void3op montMul = fg.getCurr<mie::FpGenerator::void3op>();
+		fg.init(pa, n);
+		mie::FpGenerator::void3op montMul = fg.mul_;
 
-		switch (n) {
-		case 3:
-			fg.gen_montMul3(pa, mont.pp_);
-			break;
-		case 4:
-			fg.gen_montMul4(pa, mont.pp_);
-			break;
-		default:
-			printf("not implemented for n=%d\n", (int)n);
-			return;
-		}
 		clk.begin();
 		for (int i = 0; i < N; i++) {
 			montMul(xa, xa, xa);
@@ -152,7 +142,9 @@ CYBOZU_TEST_AUTO(main)
 {
 	const char *tbl[] = {
 		"0x2523648240000001ba344d80000000086121000000000013a700000000000013",
+		"0xf523648240000001ba344d80000000086121000000000013a700000000000013",
 		"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
+		"0x7ffffffffffffffffffffffffffffffffffffffeffffee37",
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		printf("i=%d\n", (int)i);

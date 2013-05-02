@@ -53,6 +53,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	static const int UseRDX = Xbyak::util::UseRDX;
 	static const int UseRCX = Xbyak::util::UseRCX;
 	const uint64_t *p_;
+	uint64_t pp_;
 	int pn_;
 	bool isFullBit_;
 	// add/sub without carry. return true if overflow
@@ -70,16 +71,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	bool3op subNc_;
 	void3op add_;
 	void3op sub_;
+	void3op mul_;
 	uint3opI mulI_;
 	void2op neg_;
 	FpGenerator()
 		: p_(0)
+		, pp_(0)
 		, pn_(0)
 		, isFullBit_(0)
 		, addNc_(0)
 		, subNc_(0)
 		, add_(0)
 		, sub_(0)
+		, mul_(0)
 		, mulI_(0)
 		, neg_(0)
 	{
@@ -92,9 +96,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	{
 		if (pn < 2) throw cybozu::Exception("mie::FpGenerator:small pn") << pn;
 		p_ = p;
+		pp_ = montgomery::getCoff(p[0]);
 		pn_ = (int)pn;
 		isFullBit_ = (p_[pn_ - 1] >> 63) != 0;
-		printf("p=%p, pn_=%d, isFullBit_=%d\n", p_, pn_, isFullBit_);
+//		printf("p=%p, pn_=%d, isFullBit_=%d\n", p_, pn_, isFullBit_);
 
 		align(16);
 		addNc_ = getCurr<bool3op>();
@@ -114,6 +119,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		mulI_ = getCurr<uint3opI>();
 		gen_mulI();
+		align(16);
+		mul_ = getCurr<void3op>();
+		gen_mul();
 	}
 	void gen_addSubNc(bool isAdd)
 	{
@@ -286,6 +294,20 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& px = sf.p[1];
 		gen_raw_neg(pz, px, sf.t[0], sf.t[1]);
 	}
+	void gen_mul()
+	{
+		switch (pn_) {
+		case 3:
+			gen_montMul3(p_, pp_);
+			break;
+		case 4:
+			gen_montMul4(p_, pp_);
+			break;
+		default:
+			printf("gen_mul is not implemented for n=%d\n", pn_);
+			break;
+		}
+	}
 	/*
 		input (z, x, y) = (p0, p1, p2)
 		z[0..3] <- montgomery(x[0..3], y[0..3])
@@ -333,6 +355,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t6, t2);
 		mov(rdx, t3);
 		sub_rm(Pack(t3, t2, t1, t0), p0);
+		if (isFullBit_) sbb(t7, 0);
 		cmovc(t0, t4);
 		cmovc(t1, t5);
 		cmovc(t2, t6);
@@ -381,7 +404,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t5, t1);
 		mov(t6, t2);
 		sub_rm(Pack(t2, t1, t0), t7);
-		sbb(t3, 0); // maybe remove this if not full
+		if (isFullBit_) sbb(t3, 0);
 		cmovc(t0, t4);
 		cmovc(t1, t5);
 		cmovc(t2, t6);
