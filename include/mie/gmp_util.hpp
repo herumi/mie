@@ -43,12 +43,18 @@ struct Gmp {
 	{
 		mpz_import(z.get_mpz_t(), n, -1, sizeof(*buf), 0, 0, buf);
 	}
+	/*
+		return positive written size
+		return 0 if failure
+	*/
 	template<class T>
 	static size_t getRaw(T *buf, size_t maxSize, const mpz_class& x)
 	{
+		const size_t totalSize = sizeof(T) * maxSize;
+		if (getBitLen(x) > totalSize * 8) return 0;
 		memset(buf, 0, sizeof(*buf) * maxSize);
 		size_t size;
-		mpz_export(buf, &size, -1, sizeof(*buf), 0, 0, x.get_mpz_t());
+		mpz_export(buf, &size, -1, sizeof(T), 0, 0, x.get_mpz_t());
 		// if x == 0, then size = 0 for gmp, size = 1 for mpir
 		return size == 0 ? 1 : size;
 	}
