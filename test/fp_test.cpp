@@ -3,7 +3,16 @@
 #include <mie/gmp_util.hpp>
 #include <time.h>
 
+#define USE_MONT_FP
+#ifdef USE_MONT_FP
+#include <mie/mont_fp.hpp>
+typedef mie::MontFpT<3> Fp2;
+#else
+typedef mie::FpT<mie::Gmp> Fp2;
+#endif
+
 typedef mie::FpT<mie::Gmp> Fp;
+
 
 const int m = 65537;
 struct Init {
@@ -356,9 +365,9 @@ CYBOZU_TEST_AUTO(getRaw)
 #ifdef NDEBUG
 CYBOZU_TEST_AUTO(bench)
 {
-	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+	Fp2::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
 	const int N = 5000000;
-	Fp x("12345678901234567900342423332197");
+	Fp2 x("12345678901234567900342423332197");
 	double base = 0;
 	{
 		clock_t begin = clock();
@@ -367,7 +376,7 @@ CYBOZU_TEST_AUTO(bench)
 		}
 		clock_t end = clock();
 		base = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("add %7.2fnsec\n", base);
+		printf("add %7.2fnsec %s\n", base, x.toStr().c_str());
 	}
 	{
 		clock_t begin = clock();
@@ -376,17 +385,17 @@ CYBOZU_TEST_AUTO(bench)
 		}
 		clock_t end = clock();
 		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("add %7.2fnsec(x%5.2f)\n", t, t / base);
+		printf("add %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
 	}
 	{
-		Fp y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		Fp2 y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
 		clock_t begin = clock();
 		for (int i = 0; i < N; i++) {
 			x -= y;
 		}
 		clock_t end = clock();
 		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("sub %7.2fnsec(x%5.2f)\n", t, t / base);
+		printf("sub %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
 	}
 	{
 		clock_t begin = clock();
@@ -395,17 +404,17 @@ CYBOZU_TEST_AUTO(bench)
 		}
 		clock_t end = clock();
 		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("mul %7.2fnsec(x%5.2f)\n", t, t / base);
+		printf("mul %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
 	}
 	{
-		Fp y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		Fp2 y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
 		clock_t begin = clock();
 		for (int i = 0; i < N; i++) {
 			x /= y;
 		}
 		clock_t end = clock();
 		double t = (end - begin) / double(CLOCKS_PER_SEC) / N * 1e9;
-		printf("div %7.2fnsec(x%5.2f)\n", t, t / base);
+		printf("div %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
 	}
 }
 #endif

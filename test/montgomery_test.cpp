@@ -5,8 +5,11 @@
 #include <time.h>
 #include <sstream>
 #include <cybozu/test.hpp>
+#include <mie/mont_fp.hpp>
 
 typedef mie::FpT<mie::Gmp> Fp;
+typedef mie::MontFpT<4> MontFp4;
+typedef mie::MontFpT<3> MontFp3;
 
 #define PUT(x) std::cout << #x << '=' << x << std::endl
 
@@ -73,7 +76,7 @@ void bench(const char *pStr)
 	const char *xStr = "2345678901234567900342423332197";
 
 	std::cout << std::hex;
-	std::string ret1, ret2, ret3;
+	std::string ret1;
 	{
 		Xbyak::util::Clock clk;
 		Fp x(xStr);
@@ -88,6 +91,7 @@ void bench(const char *pStr)
 		ret1 = os.str();
 		std::cout << ret1 << std::endl;
 	}
+	std::string ret2;
 	{
 		Xbyak::util::Clock clk;
 		mpz_class p(pStr);
@@ -106,6 +110,7 @@ void bench(const char *pStr)
 		ret2 = os.str();
 		std::cout << ret2 << std::endl;
 	}
+	std::string ret3;
 	{
 		Xbyak::util::Clock clk;
 		mpz_class p(pStr);
@@ -133,6 +138,49 @@ void bench(const char *pStr)
 		os << std::hex << "0x" << x;
 		ret3 = os.str();
 		std::cout << ret3 << std::endl;
+	}
+	std::string ret4;
+	{
+		Xbyak::util::Clock clk;
+		mpz_class p(pStr);
+		uint64_t xa[4];
+		size_t len = mie::Gmp::getRaw(xa, 4, p);
+
+		std::ostringstream os;
+		os << std::hex;
+		switch (len) {
+		case 3:
+			{
+				MontFp3::setModulo(pStr);
+				MontFp3 x(xStr);
+				clk.begin();
+				for (int i = 0; i < N; i++) {
+					x *= x;
+				}
+				clk.end();
+				printf("mul  %4.fclk ", clk.getClock() / double(N));
+				os << x;
+			}
+			break;
+		case 4:
+			{
+				MontFp4::setModulo(pStr);
+				MontFp4 x(xStr);
+				clk.begin();
+				for (int i = 0; i < N; i++) {
+					x *= x;
+				}
+				clk.end();
+				printf("mul  %4.fclk ", clk.getClock() / double(N));
+				os << x;
+			}
+			break;
+		default:
+			printf("not support %d\n", (int)len);
+			break;
+		}
+		ret1 = os.str();
+		std::cout << ret1 << std::endl;
 	}
 	CYBOZU_TEST_EQUAL(ret1, ret2);
 	CYBOZU_TEST_EQUAL(ret1, ret3);

@@ -101,6 +101,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		isFullBit_ = (p_[pn_ - 1] >> 63) != 0;
 //		printf("p=%p, pn_=%d, isFullBit_=%d\n", p_, pn_, isFullBit_);
 
+		setSize(0); // reset code
 		align(16);
 		addNc_ = getCurr<bool3op>();
 		gen_addSubNc(true);

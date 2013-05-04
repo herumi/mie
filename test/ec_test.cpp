@@ -5,7 +5,17 @@
 #include <mie/ecparam.hpp>
 #include <time.h>
 
+#define USE_MONT_FP
+#ifdef USE_MONT_FP
+#include <mie/mont_fp.hpp>
+typedef mie::MontFpT<3> Fp;
+#else
 typedef mie::FpT<mie::Gmp> Fp;
+#endif
+
+struct tagZn;
+typedef mie::FpT<mie::Gmp, tagZn> Zn;
+
 typedef mie::EcT<Fp> Ec;
 
 struct Test {
@@ -14,6 +24,7 @@ struct Test {
 		: para(para)
 	{
 		Fp::setModulo(para.p);
+		Zn::setModulo(para.p);
 		Ec::setParam(para.a, para.b);
 		printf("len=%d\n", (int)Fp(-1).getBitLen());
 	}
@@ -29,7 +40,7 @@ struct Test {
 	{
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
+		Zn n(para.n);
 		CYBOZU_TEST_ASSERT(Ec::isValid(x, y));
 		Ec P(x, y), Q, R, O;
 		{
@@ -80,7 +91,6 @@ struct Test {
 	{
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
 		Ec Q;
 		Ec R;
@@ -95,7 +105,6 @@ struct Test {
 	{
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
 		Ec Q;
 		Ec R;
@@ -110,12 +119,11 @@ struct Test {
 	{
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
 		Ec Q;
 		Ec R;
 		for (int i = 0; i < 100; i++) {
-			Ec::power(Q, P, Fp(i));
+			Ec::power(Q, P, Zn(i));
 			CYBOZU_TEST_EQUAL(Q, R);
 			R += P;
 		}
@@ -127,7 +135,6 @@ struct Test {
 		const int N = 100000;
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
 		Ec Q = P + P + P;
 		clock_t begin = clock();
@@ -154,7 +161,6 @@ struct Test {
 		const int N = 100000;
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
 		clock_t begin = clock();
 		for (int i = 0; i < N; i++) {
@@ -169,9 +175,8 @@ struct Test {
 		const int N = 1000;
 		Fp x(para.gx);
 		Fp y(para.gy);
-		Fp n(para.n);
 		Ec P(x, y);
-		Fp z("0x9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9");
+		Zn z("0x9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9");
 		clock_t begin = clock();
 		for (int i = 0; i < N; i++) {
 			Ec::power(P, P, z);
@@ -203,7 +208,7 @@ pow 499.00usec
 		neg_power();
 		puts("power_fp");
 		power_fp();
-#ifdef NDEUBG
+#ifdef NDEBUG
 		puts("bench");
 		addsub_bench();
 		dbl_bench();
