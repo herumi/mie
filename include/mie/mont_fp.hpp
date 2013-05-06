@@ -17,11 +17,11 @@
 namespace mie {
 
 template<size_t N, class tag = fp_local::TagDefault>
-class MontFpT : public ope::comparable<MontFpT<N, tag>,
+class MontFpT : public /*ope::comparable<MontFpT<N, tag>,*/
 	ope::addsub<MontFpT<N, tag>,
 	ope::mulable<MontFpT<N, tag>,
 	ope::invertible<MontFpT<N, tag>,
-	ope::hasNegative<MontFpT<N, tag> > > > > > {
+	ope::hasNegative<MontFpT<N, tag> > > > > /*>*/ {
 
 	static mpz_class pOrg_;
 	static MontFpT p_;
@@ -250,12 +250,7 @@ public:
 		}
 		return r == 0;
 	}
-	static inline size_t getBitLen(const MontFpT&)
-	{
-		return N * sizeof(uint64_t);
-	}
 	bool isZero() const { return isZero(*this); }
-	size_t getBitLen() const { return getBitLen(*this); }
 	friend inline std::ostream& operator<<(std::ostream& os, const MontFpT& self)
 	{
 		const int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
@@ -277,6 +272,8 @@ public:
 		power_impl::power(z, x, y);
 	}
 	const uint64_t* getInnerValue() const { return v_; }
+	bool operator==(const MontFpT& rhs) const { return compare(*this, rhs) == 0; }
+	bool operator!=(const MontFpT& rhs) const { return compare(*this, rhs) != 0; }
 };
 
 template<size_t N, class tag>mpz_class MontFpT<N, tag>::pOrg_;

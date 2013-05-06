@@ -26,7 +26,7 @@ struct Test {
 		Fp::setModulo(para.p);
 		Zn::setModulo(para.p);
 		Ec::setParam(para.a, para.b);
-		printf("len=%d\n", (int)Fp(-1).getBitLen());
+//		printf("len=%d\n", (int)Fp(-1).getBitLen());
 	}
 	void cstr() const
 	{
