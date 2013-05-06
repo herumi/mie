@@ -6,6 +6,8 @@
 
 typedef mie::FpT<mie::Gmp> Zn;
 
+#define PUT(x) std::cout << #x "=" << (x) << std::endl
+
 template<class T>
 mpz_class toGmp(const T& x)
 {
@@ -15,13 +17,13 @@ mpz_class toGmp(const T& x)
 	return t;
 }
 
-template<class T>
-T fromGmp(const mpz_class& x)
+template<class T, class U>
+T castTo(const U& x)
 {
-	std::string str;
-	mie::Gmp::toStr(str, x);
+	std::ostringstream os;
+	os << x;
 	T t;
-	t.fromStr(str);
+	t.fromStr(os.str());
 	return t;
 }
 
@@ -33,6 +35,7 @@ struct Test {
 	{
 		Fp::setModulo(p);
 		m = p;
+		Zn::setModulo(p);
 		cstr();
 		fromStr();
 		stream();
@@ -206,44 +209,44 @@ struct Test {
 	void ope()
 	{
 		const struct {
-			mpz_class x;
-			mpz_class y;
-			mpz_class add; // x + y
-			mpz_class sub; // x - y
-			mpz_class mul; // x * y
+			Zn x;
+			Zn y;
+			Zn add; // x + y
+			Zn sub; // x - y
+			Zn mul; // x * y
 		} tbl[] = {
-			{ 0, 1, 1, m - 1, 0 },
+			{ 0, 1, 1, -1, 0 },
 			{ 9, 5, 14, 4, 45 },
-			{ 10, 13, 23, m - 3, 130 },
-			{ 2000, m - 1000, 1000, 3000, m - 2000000 },
-			{ m - 12345, m - 9999, m - (12345 + 9999), m - 12345 + 9999, 12345 * 9999 },
+			{ 10, 13, 23, -3, 130 },
+			{ 2000, -1000, 1000, 3000, -2000000 },
+			{ -12345, -9999, -(12345 + 9999), - 12345 + 9999, 12345 * 9999 },
 		};
 		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-			const Fp x(fromGmp<Fp>(tbl[i].x));
-			const Fp y(fromGmp<Fp>(tbl[i].y));
+			const Fp x(castTo<Fp>(tbl[i].x));
+			const Fp y(castTo<Fp>(tbl[i].y));
 			Fp z;
 			Fp::add(z, x, y);
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].add);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].add));
 			Fp::sub(z, x, y);
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].sub);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].sub));
 			Fp::mul(z, x, y);
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].mul);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].mul));
 
 			Fp r;
 			Fp::inv(r, y);
 			Fp::mul(z, z, r);
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].x);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].x));
 
 			z = x + y;
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].add);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].add));
 			z = x - y;
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].sub);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].sub));
 			z = x * y;
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].mul);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].mul));
 
 			z = x / y;
 			z *= y;
-			CYBOZU_TEST_EQUAL(toGmp(z), tbl[i].x);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].x));
 		}
 	}
 
@@ -403,6 +406,7 @@ CYBOZU_TEST_AUTO(all)
 		"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl3); i++) {
+		printf("prime=%s\n", tbl3[i]);
 		test3.run(tbl3[i]);
 	}
 }
