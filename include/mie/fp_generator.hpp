@@ -388,19 +388,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& t8 = sf.t[8];
 		const Reg64& t9 = sf.t[9];
 
+		movq(xm0, p0); // save p0
 		mov(t7, (uint64_t)p);
 		mov(t9, ptr [p2]);
 		//                c3, c2, c1, c0, px, y,  p,
-		montgomery3_1(pp, t0, t3, t2, t1, p1, t9, t7, t4, t5, t6, t8, true);
+		montgomery3_1(pp, t0, t3, t2, t1, p1, t9, t7, t4, t5, t6, t8, p0, true);
 
 		mov(t9, ptr [p2 + 8]);
-		montgomery3_1(pp, t1, t0, t3, t2, p1, t9, t7, t4, t5, t6, t8, false);
+		montgomery3_1(pp, t1, t0, t3, t2, p1, t9, t7, t4, t5, t6, t8, p0, false);
 
 		mov(t9, ptr [p2 + 16]);
-		montgomery3_1(pp, t2, t1, t0, t3, p1, t9, t7, t4, t5, t6, t8, false);
+		montgomery3_1(pp, t2, t1, t0, t3, p1, t9, t7, t4, t5, t6, t8, p0, false);
 
 		// [t3:t2:t1:t0]
-
 		mov(t4, t0);
 		mov(t5, t1);
 		mov(t6, t2);
@@ -409,7 +409,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		cmovc(t0, t4);
 		cmovc(t1, t5);
 		cmovc(t2, t6);
-
+		movq(p0, xm0);
 		store_mr(p0, Pack(t2, t1, t0));
 	}
 private:
@@ -483,10 +483,11 @@ private:
 		@note use rax, rdx, destroy y
 		@note max([c3:c2:c1:c0]) = 2p - 1, ie. c3 = 0 or 1
 	*/
-	void montgomery3_1(uint64_t pp, /*const Reg64& c4,*/ const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
+	void montgomery3_1(uint64_t pp, const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
 		const Reg64& px, const Reg64& y, const Reg64& p,
-		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, /*const Reg64& t4,*/ bool isFirst)
+		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, const Reg64& t4, bool isFirst)
 	{
+		xor_(t4, t4);
 		if (isFirst) {
 			mul3x1(px, y, c2, c1, c0, c3);
 			mov(c3, rdx);
@@ -494,21 +495,21 @@ private:
 		} else {
 			mul3x1(px, y, t2, t1, t0, t3);
 			// [rdx:y:t1:t0] = px[2..0] * y
-			add_rr(Pack(y, c1, c0), Pack(c2, t1, t0));
-			adc(c3, rdx);
+			add_rr(Pack(c3, y, c1, c0), Pack(rdx, c2, t1, t0));
+			adc(t4, 0);
 		}
-		// [c3:y:c1:c0]
+		// [t4:c3:y:c1:c0]
 		mov(rax, pp);
 		mul(c0); // q = rax
 		mov(c2, rax);
 		mul3x1(p, c2, t2, t1, t0, t3);
 		// [rdx:c2:t1:t0] = p * q
-		add(c0, t0);
-		mov(c0, 0);
+		add(c0, t0); // always c0 is zero
+//		mov(c0, 0);
 		adc(c1, t1);
 		adc(c2, y);
 		adc(c3, rdx);
-		adc(c0, 0);
+		adc(c0, t4);
 	}
 	/*
 		[rdx:x:t2:t1:t0] <- py[3:2:1:0] * x
@@ -558,15 +559,15 @@ private:
 		} else {
 			mul4x1(px, y, t3, t2, t1, t0, t4);
 			// [rdx:y:t2:t1:t0] = px[3..0] * y
-			add_rr(Pack(y, c2, c1, c0), Pack(c3, t2, t1, t0));
-			adc(c4, rdx);
+			add_rr(Pack(c4, y, c2, c1, c0), Pack(rdx, c3, t2, t1, t0));
+			// QQQ : fix possible of carry over
 		}
 		mov(rax, pp);
 		mul(c0); // q = rax
 		mov(c3, rax);
 		mul4x1(p, c3, t3, t2, t1, t0, t4);
-		add(c0, t0);
-		mov(c0, 0);
+		add(c0, t0); // always c0 is zero
+//		mov(c0, 0);
 		adc(c1, t1);
 		adc(c2, t2);
 		adc(c3, y);

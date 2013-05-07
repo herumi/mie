@@ -57,6 +57,7 @@ class MontFpT : public /*ope::comparable<MontFpT<N, tag>,*/
 	typedef void (*void3op)(MontFpT&, const MontFpT&, const MontFpT&);
 	typedef void (*void2op)(MontFpT&, const MontFpT&);
 public:
+	static const size_t BlockSize = N;
 	typedef uint64_t BlockType;
 	MontFpT() {}
 	MontFpT(int x) { operator=(x); }

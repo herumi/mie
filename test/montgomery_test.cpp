@@ -11,6 +11,16 @@ typedef mie::FpT<mie::Gmp> Fp;
 typedef mie::MontFpT<4> MontFp4;
 typedef mie::MontFpT<3> MontFp3;
 
+template<class T>
+void putRaw(const T& x)
+{
+	const uint64_t *p = x.getInnerValue();
+	for (size_t i = 0, n = T::BlockSize; i < n; i++) {
+		printf("%016llx", p[n - 1 - i]);
+	}
+	printf("\n");
+}
+
 #define PUT(x) std::cout << #x << '=' << x << std::endl
 
 struct Montgomery {
@@ -68,6 +78,35 @@ struct Montgomery {
 	}
 
 };
+
+void test()
+{
+	const char *pStr = "0xfffffffffffffffffffffffffffffffffffffffeffffee37";
+	const char *xStr = "6277101735386680763835789423207666416102355444459739541045";
+	const char *yStr = "6277101735386680763835789423207666416102355444459739540047";
+	Fp::setModulo(pStr);
+	Fp s(xStr), t(yStr);
+	s *= t;
+	std::cout << s << std::endl;
+	{
+		puts("C");
+		mpz_class p(pStr);
+		Montgomery mont(p);
+		mpz_class x(xStr), y(yStr);
+		mont.toMont(x);
+		mont.toMont(y);
+		mpz_class z;
+		mont.mul(z, x, y);
+		mont.fromMont(z);
+		std::cout << z << std::endl;
+	}
+
+	puts("asm");
+	MontFp3::setModulo(pStr);
+	MontFp3 x(xStr), y(yStr);
+	x *= y;
+	std::cout << "x=" << x << std::endl;
+}
 
 void bench(const char *pStr)
 {
@@ -188,6 +227,7 @@ void bench(const char *pStr)
 
 CYBOZU_TEST_AUTO(main)
 {
+	test();
 	const char *tbl[] = {
 		"0x2523648240000001ba344d80000000086121000000000013a700000000000013",
 		"0xf523648240000001ba344d80000000086121000000000013a700000000000013",
