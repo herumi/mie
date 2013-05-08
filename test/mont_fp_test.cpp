@@ -36,6 +36,7 @@ struct Test {
 		Fp::setModulo(p);
 		m = p;
 		Zn::setModulo(p);
+		edge();
 		cstr();
 		fromStr();
 		stream();
@@ -146,6 +147,38 @@ struct Test {
 				CYBOZU_TEST_EQUAL(x, tbl[i].out16);
 			}
 		}
+	}
+	void edge()
+	{
+		std::cout << std::hex;
+		/*
+			real mont
+			   0    0
+			   1    R^-1
+			   R    1
+			  -1    -R^-1
+			  -R    -1
+		*/
+		mpz_class t = 1;
+		const mpz_class R = (t << (Fp::BlockSize * 64)) % m;
+		const mpz_class tbl[] = {
+			0, 1, R, m - 1, m - R
+		};
+		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+			const mpz_class& x = tbl[i];
+			for (size_t j = i; j < CYBOZU_NUM_OF_ARRAY(tbl); j++) {
+				const mpz_class& y = tbl[j];
+				mpz_class z = (x * y) % m;
+				Fp xx, yy;
+				Fp::toMont(xx, x);
+				Fp::toMont(yy, y);
+				Fp zz = xx * yy;
+				mpz_class t;
+				Fp::fromMont(t, zz);
+				CYBOZU_TEST_EQUAL(z, t);
+			}
+		}
+		std::cout << std::dec;
 	}
 
 	void conv()
@@ -395,18 +428,35 @@ struct Test {
 	}
 };
 
-CYBOZU_TEST_AUTO(all)
+CYBOZU_TEST_AUTO(test3)
 {
-	Test<3> test3;
-	const char *tbl3[] = {
-		"0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFAC73",
-		"0x100000000000000000001B8FA16DFAB9ACA16B6B3",
+	Test<3> test;
+	const char *tbl[] = {
+		"0xfffffffffffffffffffffffffffffffeffffac73",
+		"0xfffffffffffffffffffffffffffffffeffffac73",
+		"0x100000000000000000001b8fa16dfab9aca16b6b3",
 		"0x10000000000000000000000000000000000000007",
 		"1461501637330902918203683518218126812711137002561",
 		"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
+		"0xffffffffffffffffffffffffffffffffffffffffffffffff",
 	};
-	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl3); i++) {
-		printf("prime=%s\n", tbl3[i]);
-		test3.run(tbl3[i]);
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		printf("prime=%s\n", tbl[i]);
+		test.run(tbl[i]);
+	}
+}
+
+CYBOZU_TEST_AUTO(test4)
+{
+	Test<4> test;
+	const char *tbl[] = {
+		"0x2523648240000001ba344d80000000086121000000000013a700000000000013",
+		"0x7523648240000001ba344d80000000086121000000000013a700000000000013",
+		"0x8523648240000001ba344d80000000086121000000000013a700000000000013",
+		"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		printf("prime=%s\n", tbl[i]);
+		test.run(tbl[i]);
 	}
 }

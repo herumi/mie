@@ -233,6 +233,10 @@ CYBOZU_TEST_AUTO(main)
 		"0xf523648240000001ba344d80000000086121000000000013a700000000000013",
 		"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
 		"0x7ffffffffffffffffffffffffffffffffffffffeffffee37",
+		"0xffffffffffffffffffffffffffffffffffffffffffffffff",
+		"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+		"0x7fffffffffffffffffffffffffffffffffffffffffffffff",
+		"0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		printf("i=%d\n", (int)i);
