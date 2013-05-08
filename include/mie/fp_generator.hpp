@@ -20,9 +20,9 @@ namespace mie {
 namespace montgomery {
 
 /*
-	get p' such that p * p' = -1 mod R,
-	where p is prime and R = 1 << 64(or 32).
-	@param pLow [in] p mod R
+	get pp such that p * pp = -1 mod M,
+	where p is prime and M = 1 << 64(or 32).
+	@param pLow [in] p mod M
 	T is uint32_t or uint64_t
 */
 template<class T>

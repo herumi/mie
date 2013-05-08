@@ -25,8 +25,8 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static mpz_class pOrg_;
 	static MontFpT p_;
 	static MontFpT one_;
-	static MontFpT R_;
-	static MontFpT RR_;
+	static MontFpT R_; // (1 << (N * 64)) % p
+	static MontFpT RR_; // (R * R) % p
 	static FpGenerator fg_;
 	uint64_t v_[N];
 	/*

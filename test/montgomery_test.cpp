@@ -26,9 +26,9 @@ void putRaw(const T& x)
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
 	mpz_class p_;
-	mpz_class R_;
-	mpz_class RR_;
-	BlockType pp_; // p * pp = -1 mod R
+	mpz_class R_; // (1 << (pn_ * 64)) % p
+	mpz_class RR_; // (R * R) % p
+	BlockType pp_; // p * pp = -1 mod M = 1 << 64
 	size_t pn_;
 	Montgomery() {}
 	explicit Montgomery(const mpz_class& p)
