@@ -17,18 +17,21 @@
 namespace mie {
 
 template<size_t N, class tag = fp_local::TagDefault>
-class MontFpT : public /*ope::comparable<MontFpT<N, tag>,*/
-	ope::addsub<MontFpT<N, tag>,
+class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	ope::mulable<MontFpT<N, tag>,
 	ope::invertible<MontFpT<N, tag>,
-	ope::hasNegative<MontFpT<N, tag> > > > > /*>*/ {
+	ope::hasNegative<MontFpT<N, tag> > > > > {
 
 	static mpz_class pOrg_;
 	static MontFpT p_;
 	static MontFpT one_;
+	static MontFpT R_;
 	static MontFpT RR_;
 	static FpGenerator fg_;
 	uint64_t v_[N];
+	/*
+		QQQ:move to Gmp
+	*/
 	static inline void fromStr(mpz_class& z, const std::string& str, int base = 0)
 	{
 		const char *p = str.c_str();
@@ -46,12 +49,10 @@ class MontFpT : public /*ope::comparable<MontFpT<N, tag>,*/
 			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
 		}
 	}
-	static inline void fromStr(uint64_t *z, const std::string& str, int base = 0)
+	void fromRawGmp(const mpz_class& x)
 	{
-		mpz_class x;
-		fromStr(x, str, base);
-		if (Gmp::getRaw(z, N, x) == 0) {
-			throw cybozu::Exception("fp:MontFpT:fromStr:getRaw") << str;
+		if (Gmp::getRaw(v_, N, x) == 0) {
+			throw cybozu::Exception("MontFpT:fromRawGmp") << x;
 		}
 	}
 	typedef void (*void3op)(MontFpT&, const MontFpT&, const MontFpT&);
@@ -159,23 +160,18 @@ public:
 		if ((Gmp::getBitLen(pOrg_) + 63) / 64 != N) {
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
-		getRaw(p_, pOrg_);
+		p_.fromRawGmp(pOrg_);
 		mpz_class t = 1;
-		getRaw(one_, t);
+		one_.fromRawGmp(t);
 		t = (t << (N * 64)) % pOrg_;
+		R_.fromRawGmp(t);
 		t = (t * t) % pOrg_;
-		getRaw(RR_, t);
+		RR_.fromRawGmp(t);
 		fg_.init(p_.v_, N);
 		add = Xbyak::CastTo<void3op>(fg_.add_);
 		sub = Xbyak::CastTo<void3op>(fg_.sub_);
 		mul = Xbyak::CastTo<void3op>(fg_.mul_);
 		neg = Xbyak::CastTo<void2op>(fg_.neg_);
-	}
-	static inline void getRaw(MontFpT& z, const mpz_class& x)
-	{
-		if (Gmp::getRaw(z.v_, N, x) == 0) {
-			throw cybozu::Exception("MontFpT:getRaw") << x;
-		}
 	}
 	static inline void getModulo(std::string& pstr)
 	{
@@ -190,7 +186,7 @@ public:
 	static inline void toMont(MontFpT& z, const mpz_class& x)
 	{
 		MontFpT t;
-		getRaw(t, x);
+		t.fromRawGmp(x);
 		mul(z, t, RR_);
 	}
 	static void3op add;
@@ -280,6 +276,7 @@ public:
 template<size_t N, class tag>mpz_class MontFpT<N, tag>::pOrg_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::p_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::one_;
+template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::R_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::RR_;
 template<size_t N, class tag>FpGenerator MontFpT<N, tag>::fg_;
 
