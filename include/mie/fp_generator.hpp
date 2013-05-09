@@ -481,13 +481,11 @@ private:
 		output [c0:c3:c2:c1]
 
 		@note use rax, rdx, destroy y
-		@note max([c3:c2:c1:c0]) = 2p - 1, ie. c3 = 0 or 1
 	*/
 	void montgomery3_1(uint64_t pp, const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
 		const Reg64& px, const Reg64& y, const Reg64& p,
 		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, const Reg64& t4, bool isFirst)
 	{
-		xor_(t4, t4);
 		if (isFirst) {
 			mul3x1(px, y, c2, c1, c0, c3);
 			mov(c3, rdx);
@@ -495,21 +493,28 @@ private:
 		} else {
 			mul3x1(px, y, t2, t1, t0, t3);
 			// [rdx:y:t1:t0] = px[2..0] * y
+			if (isFullBit_) xor_(t4, t4);
 			add_rr(Pack(c3, y, c1, c0), Pack(rdx, c2, t1, t0));
-			adc(t4, 0);
+			if (isFullBit_) adc(t4, 0);
 		}
 		// [t4:c3:y:c1:c0]
+		// t4 = 0 or 1 if isFullBit_, = 0 otherwise
 		mov(rax, pp);
 		mul(c0); // q = rax
 		mov(c2, rax);
 		mul3x1(p, c2, t2, t1, t0, t3);
 		// [rdx:c2:t1:t0] = p * q
 		add(c0, t0); // always c0 is zero
-//		mov(c0, 0);
 		adc(c1, t1);
 		adc(c2, y);
 		adc(c3, rdx);
-		adc(c0, t4);
+		if (isFullBit_) {
+			if (isFirst) {
+				adc(c0, 0);
+			} else {
+				adc(c0, t4);
+			}
+		}
 	}
 	/*
 		[rdx:x:t2:t1:t0] <- py[3:2:1:0] * x
@@ -546,7 +551,6 @@ private:
 		output [c0:c4:c3:c2:c1]
 
 		@note use rax, rdx, destroy y
-		@note max([c4:c3:c2:c1:c0]) = 2p - 1, ie. c4 = 0 or 1
 	*/
 	void montgomery4_1(uint64_t pp, const Reg64& c4, const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
 		const Reg64& px, const Reg64& y, const Reg64& p,
@@ -559,20 +563,34 @@ private:
 		} else {
 			mul4x1(px, y, t3, t2, t1, t0, t4);
 			// [rdx:y:t2:t1:t0] = px[3..0] * y
+			if (isFullBit_) {
+				push(px);
+				xor_(px, px);
+			}
 			add_rr(Pack(c4, y, c2, c1, c0), Pack(rdx, c3, t2, t1, t0));
-			// QQQ : fix possible of carry over
+			if (isFullBit_) {
+				adc(px, 0);
+			}
 		}
+		// [px:c4:y:c2:c1:c0]
+		// px = 0 or 1 if isFullBit_, = 0 otherwise
 		mov(rax, pp);
 		mul(c0); // q = rax
 		mov(c3, rax);
 		mul4x1(p, c3, t3, t2, t1, t0, t4);
 		add(c0, t0); // always c0 is zero
-//		mov(c0, 0);
 		adc(c1, t1);
 		adc(c2, t2);
 		adc(c3, y);
 		adc(c4, rdx);
-		adc(c0, 0);
+		if (isFullBit_) {
+			if (isFirst) {
+				adc(c0, 0);
+			} else {
+				adc(c0, px);
+				pop(px);
+			}
+		}
 	}
 };
 
