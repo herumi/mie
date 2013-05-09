@@ -12,12 +12,12 @@ namespace mie { namespace ecparam {
 
 const struct mie::EcParam secp160k1 = {
 	"secp160k1",
-	"0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFAC73",
+	"0xfffffffffffffffffffffffffffffffeffffac73",
 	"0",
 	"7",
-	"0x3B4C382CE37AA192A4019E763036F4F5DD4D7EBB",
-	"0x938CF935318FDCED6BC28286531733C3F03C4FEE",
-	"0x100000000000000000001B8FA16DFAB9ACA16B6B3"
+	"0x3b4c382ce37aa192a4019e763036f4f5dd4d7ebb",
+	"0x938cf935318fdced6bc28286531733c3f03c4fee",
+	"0x100000000000000000001b8fa16dfab9aca16b6b3"
 };
 // p=2^160 + 7
 const struct mie::EcParam p160_1 = {
