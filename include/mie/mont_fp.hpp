@@ -109,6 +109,12 @@ public:
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10) const
 	{
+		if (base == 16) {
+			MontFpT t;
+			mul(t, *this, one_);
+			mie::fp_local::toStr16(str, t.v_, N);
+			return;
+		}
 		mpz_class t;
 		fromMont(t, *this);
 		Gmp::toStr(str, t, base);
