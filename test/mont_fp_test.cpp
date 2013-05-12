@@ -667,6 +667,7 @@ CYBOZU_TEST_AUTO(customTest)
 	}
 }
 
+#if 0
 CYBOZU_TEST_AUTO(test3)
 {
 	Test<3> test;
@@ -717,3 +718,42 @@ CYBOZU_TEST_AUTO(bench)
 		bench(tbl[i]);
 	}
 }
+#endif
+
+#ifdef NDEBUG
+CYBOZU_TEST_AUTO(toStr16)
+{
+	const char *tbl[] = {
+		"0x0",
+		"0x5",
+		"0x123",
+		"0x123456789012345679adbc",
+		"0xffffffff26f2fc170f69466a74defd8d",
+		"0x100000000000000000000000000000033",
+		"0x11ee12312312940000000000000000000000000002342343"
+	};
+	const int C = 500000;
+	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		clock_t begin = clock();
+		std::string str, str2;
+		MontFp3 x(tbl[i]);
+		for (int j = 0; j < C; j++) {
+			x.toStr(str, 16);
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
+		printf("Mont:toStr %7.2fnsec\n", t);
+		begin = clock();
+		mpz_class y(tbl[i]);
+		for (int j = 0; j < C; j++) {
+			mie::Gmp::toStr(str2, y, 16);
+		}
+		end = clock();
+		t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
+		printf("Gmp: toStr %7.2fnsec\n", t);
+		str2.insert(0, "0x");
+		CYBOZU_TEST_EQUAL(str, str2);
+	}
+}
+#endif

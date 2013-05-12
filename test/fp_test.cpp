@@ -3,7 +3,7 @@
 #include <mie/gmp_util.hpp>
 #include <time.h>
 
-#define USE_MONT_FP
+//#define USE_MONT_FP
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp2;
@@ -362,6 +362,29 @@ CYBOZU_TEST_AUTO(getRaw)
 	}
 }
 
+CYBOZU_TEST_AUTO(toStr)
+{
+	const char *tbl[] = {
+		"0x0",
+		"0x5",
+		"0x123",
+		"0x123456789012345679adbc",
+		"0xffffffff26f2fc170f69466a74defd8d",
+		"0x100000000000000000000000000000033",
+		"0x11ee12312312940000000000000000000000000002342343"
+	};
+	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		mpz_class x(tbl[i]);
+		Fp y(tbl[i]);
+		std::string xs, ys;
+		mie::Gmp::toStr(xs, x, 16);
+		xs.insert(0, "0x");
+		y.toStr(ys, 16);
+		CYBOZU_TEST_EQUAL(xs, ys);
+	}
+}
+
 #ifdef NDEBUG
 CYBOZU_TEST_AUTO(bench)
 {
@@ -418,4 +441,3 @@ CYBOZU_TEST_AUTO(bench)
 	}
 }
 #endif
-
