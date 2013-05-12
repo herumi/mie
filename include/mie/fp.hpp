@@ -10,6 +10,7 @@
 #include <vector>
 #include <cybozu/exception.hpp>
 #include <cybozu/hash.hpp>
+#include <cybozu/itoa.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
@@ -17,7 +18,30 @@ namespace mie {
 
 namespace fp_local {
 struct TagDefault;
+
+inline void toStr16(std::string& str, const uint64_t *x, size_t n)
+{
+	size_t fullN = 0;
+	if (n > 1) {
+		size_t pos = n - 1;
+		while (pos > 0) {
+			if (x[pos]) break;
+			pos--;
+		}
+		if (pos > 0) fullN = pos;
+	}
+	const uint64_t v = n == 0 ? 0 : x[fullN];
+	const size_t topLen = cybozu::getHexLength(v);
+	str.resize(2 + fullN * 16 + topLen); /* 2 means "0x" */
+	str[0] = '0';
+	str[1] = 'x';
+	for (size_t i = 0; i < fullN; i++) {
+		cybozu::itohex(&str[2 + topLen + i * 16], 16, x[fullN - 1 - i], false);
+	}
+	cybozu::itohex(&str[2], topLen, v, false);
 }
+
+} // fp_local
 
 template<class T, class tag = fp_local::TagDefault>
 class FpT : public ope::comparable<FpT<T, tag>,
@@ -68,6 +92,10 @@ public:
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10) const
 	{
+		if (base == 16) {
+			mie::fp_local::toStr16(str, getBlock(*this), getBlockSize(*this));
+			return;
+		}
 		T::toStr(str, v, base);
 		if (base == 16) {
 			str.insert(0, "0x");
