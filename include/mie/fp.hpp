@@ -16,10 +16,14 @@
 
 namespace mie {
 
-namespace fp_local {
-struct TagDefault;
+namespace fp {
 
-inline void toStr16(std::string& str, const uint64_t *x, size_t n)
+/*
+	convert x[0..n) to hex string
+	start "0x" if withPrefix
+*/
+template<class T>
+void toStr16(std::string& str, const T *x, size_t n, bool withPrefix = true)
 {
 	size_t fullN = 0;
 	if (n > 1) {
@@ -30,17 +34,25 @@ inline void toStr16(std::string& str, const uint64_t *x, size_t n)
 		}
 		if (pos > 0) fullN = pos;
 	}
-	const uint64_t v = n == 0 ? 0 : x[fullN];
+	const T v = n == 0 ? 0 : x[fullN];
 	const size_t topLen = cybozu::getHexLength(v);
-	str.resize(2 + fullN * 16 + topLen); /* 2 means "0x" */
-	str[0] = '0';
-	str[1] = 'x';
-	for (size_t i = 0; i < fullN; i++) {
-		cybozu::itohex(&str[2 + topLen + i * 16], 16, x[fullN - 1 - i], false);
+	const size_t startPos = withPrefix ? 2 : 0;
+	const size_t lenT = sizeof(T) * 2;
+	str.resize(startPos + fullN * lenT + topLen);
+	if (withPrefix) {
+		str[0] = '0';
+		str[1] = 'x';
 	}
-	cybozu::itohex(&str[2], topLen, v, false);
+	cybozu::itohex(&str[startPos], topLen, v, false);
+	for (size_t i = 0; i < fullN; i++) {
+		cybozu::itohex(&str[startPos + topLen + i * lenT], lenT, x[fullN - 1 - i], false);
+	}
 }
 
+} // fp
+
+namespace fp_local {
+struct TagDefault;
 } // fp_local
 
 template<class T, class tag = fp_local::TagDefault>
@@ -93,7 +105,7 @@ public:
 	void toStr(std::string& str, int base = 10) const
 	{
 		if (base == 16) {
-			mie::fp_local::toStr16(str, getBlock(*this), getBlockSize(*this));
+			mie::fp::toStr16(str, getBlock(*this), getBlockSize(*this));
 			return;
 		}
 		T::toStr(str, v, base);

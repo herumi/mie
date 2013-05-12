@@ -385,6 +385,26 @@ CYBOZU_TEST_AUTO(toStr)
 	}
 }
 
+CYBOZU_TEST_AUTO(toStr16)
+{
+	const struct {
+		uint32_t x[4];
+		size_t n;
+		const char *str;
+	} tbl[] = {
+		{ { 0, 0, 0, 0 }, 0, "0" },
+		{ { 0x123, 0, 0, 0 }, 1, "123" },
+		{ { 0x12345678, 0xaabbcc, 0, 0 }, 2, "aabbcc12345678" },
+		{ { 0, 0x12, 0x234a, 0 }, 3, "234a0000001200000000" },
+		{ { 1, 2, 0xffffffff, 0x123abc }, 4, "123abcffffffff0000000200000001" },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		std::string str;
+		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, false);
+		CYBOZU_TEST_EQUAL(str, tbl[i].str);
+	}
+}
+
 #ifdef NDEBUG
 CYBOZU_TEST_AUTO(bench)
 {

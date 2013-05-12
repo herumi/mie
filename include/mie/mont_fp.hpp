@@ -112,7 +112,7 @@ public:
 		if (base == 16) {
 			MontFpT t;
 			mul(t, *this, one_);
-			mie::fp_local::toStr16(str, t.v_, N);
+			mie::fp::toStr16(str, t.v_, N);
 			return;
 		}
 		mpz_class t;
