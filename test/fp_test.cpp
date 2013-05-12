@@ -349,7 +349,6 @@ CYBOZU_TEST_AUTO(getRaw)
 		{ "0xaabbccdd12345678", { 0x12345678, 0xaabbccdd, 0, 0 }, 2 },
 		{ "0x11112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222 }, 4 },
 	};
-	std::cout << std::hex;
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		mpz_class x(tbl[i].s);
 		const size_t bufN = 8;

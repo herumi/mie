@@ -667,7 +667,6 @@ CYBOZU_TEST_AUTO(customTest)
 	}
 }
 
-#if 0
 CYBOZU_TEST_AUTO(test3)
 {
 	Test<3> test;
@@ -718,7 +717,6 @@ CYBOZU_TEST_AUTO(bench)
 		bench(tbl[i]);
 	}
 }
-#endif
 
 #ifdef NDEBUG
 CYBOZU_TEST_AUTO(toStr16)
