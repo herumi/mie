@@ -97,16 +97,35 @@ public:
 		mul(*this, *this, RR_);
 		return *this;
 	}
-	void fromStr(const std::string& str, int base = 10)
+	void fromStr(const std::string& str, int base = 0)
 	{
 		if (str.empty() || str[0] == '-') {
 			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
+		}
+		{
+			const char *p = str.c_str();
+			size_t size = str.size();
+			if (p[0] == '0' && p[1] == 'x') {
+				if (base == 0) {
+					base = 16;
+				} else if (base != 16) {
+					throw cybozu::Exception("fp:MontFpT:fromStr:bad base") << base;
+				}
+				p += 2;
+				size -= 2;
+			}
+			if (base == 16) {
+				MontFpT t;
+				mie::fp::fromStr16(t.v_, N, p, size);
+				mul(*this, t, RR_);
+				return;
+			}
 		}
 		mpz_class t;
 		fromStr(t, str, base);
 		toMont(*this, t);
 	}
-	void set(const std::string& str, int base = 10) { fromStr(str, base); }
+	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10) const
 	{
 		if (base == 16) {

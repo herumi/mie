@@ -718,7 +718,6 @@ CYBOZU_TEST_AUTO(bench)
 	}
 }
 
-#ifdef NDEBUG
 CYBOZU_TEST_AUTO(toStr16)
 {
 	const char *tbl[] = {
@@ -754,4 +753,68 @@ CYBOZU_TEST_AUTO(toStr16)
 		CYBOZU_TEST_EQUAL(str, str2);
 	}
 }
-#endif
+
+CYBOZU_TEST_AUTO(fromStr16)
+{
+	const struct {
+		const char *str;
+		uint64_t x[4];
+	} tbl[] = {
+		{ "0", { 0, 0, 0, 0 } },
+		{ "5", { 5, 0, 0, 0 } },
+		{ "123", { 0x123, 0, 0, 0 } },
+		{ "123456789012345679adbc", { uint64_t(0x789012345679adbcull), 0x123456, 0, 0 } },
+		{ "ffffffff26f2fc170f69466a74defd8d", { uint64_t(0x0f69466a74defd8dull), uint64_t(0xffffffff26f2fc17ull), 0, 0 } },
+		{ "100000000000000000000000000000033", { uint64_t(0x0000000000000033ull), 0, 1, 0 } },
+		{ "11ee12312312940000000000000000000000000002342343", { uint64_t(0x0000000002342343ull), uint64_t(0x0000000000000000ull), uint64_t(0x11ee123123129400ull), 0 } },
+		{ "1234567890abcdefABCDEF123456789aba32134723424242424", { uint64_t(0x2134723424242424ull), uint64_t(0xDEF123456789aba3ull), uint64_t(0x4567890abcdefABCull), 0x123 } },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		const size_t xN = 4;
+		uint64_t x[xN];
+		mie::fp::fromStr16(x, xN, tbl[i].str, strlen(tbl[i].str));
+		for (size_t j = 0; j < xN; j++) {
+			CYBOZU_TEST_EQUAL(x[j], tbl[i].x[j]);
+		}
+	}
+}
+
+CYBOZU_TEST_AUTO(fromStr16bench)
+{
+	const char *tbl[] = {
+		"0x0",
+		"0x5",
+		"0x123",
+		"0x123456789012345679adbc",
+		"0xffffffff26f2fc170f69466a74defd8d",
+		"0x100000000000000000000000000000033",
+		"0x11ee12312312940000000000000000000000000002342343"
+	};
+	const int C = 500000;
+	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		clock_t begin = clock();
+		std::string str = tbl[i];
+		MontFp3 x;
+		for (int j = 0; j < C; j++) {
+			x.fromStr(str);
+		}
+		clock_t end = clock();
+		double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
+		printf("Mont:fromStr %7.2fnsec\n", t);
+		begin = clock();
+		mpz_class y;
+		str.erase(0, 2);
+		for (int j = 0; j < C; j++) {
+			mie::Gmp::fromStr(y, str, 16);
+		}
+		end = clock();
+		t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
+		printf("Gmp: fromStr %7.2fnsec\n", t);
+		x.toStr(str, 16);
+		std::string str2;
+		mie::Gmp::toStr(str2, y, 16);
+		str2.insert(0, "0x");
+		CYBOZU_TEST_EQUAL(str, str2);
+	}
+}
