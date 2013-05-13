@@ -97,6 +97,7 @@ public:
 		mul(*this, *this, RR_);
 		return *this;
 	}
+	// QQQ:refactor with fromStr(mpz_class)
 	void fromStr(const std::string& str, int base = 0)
 	{
 		if (str.empty() || str[0] == '-') {
@@ -105,14 +106,16 @@ public:
 		{
 			const char *p = str.c_str();
 			size_t size = str.size();
-			if (p[0] == '0' && p[1] == 'x') {
-				if (base == 0) {
+			if (p[0] == '0') {
+				if (p[1] == 'x') {
 					base = 16;
-				} else if (base != 16) {
-					throw cybozu::Exception("fp:MontFpT:fromStr:bad base") << base;
+					p += 2;
+					size -= 2;
+				} else if (p[1] == 'b') {
+					base = 2;
+					p += 2;
+					size -= 2;
 				}
-				p += 2;
-				size -= 2;
 			}
 			if (base == 16) {
 				MontFpT t;
