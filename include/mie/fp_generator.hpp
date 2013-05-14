@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <cybozu/exception.hpp>
+#ifndef XBYAK_NO_OP_NAMES
+	#define XBYAK_NO_OP_NAMES
+#endif
 #include <xbyak/xbyak.h>
 #ifdef XBYAK32
 	#error "not support 32-bit mode"
