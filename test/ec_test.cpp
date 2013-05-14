@@ -132,7 +132,7 @@ struct Test {
 	template<class F>
 	void test(F f, const char *msg) const
 	{
-		const int N = 100000;
+		const int N = 300000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Ec P(x, y);
@@ -158,7 +158,7 @@ struct Test {
 
 	void dbl_bench() const
 	{
-		const int N = 100000;
+		const int N = 300000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Ec P(x, y);
@@ -172,7 +172,7 @@ struct Test {
 
 	void power_bench() const
 	{
-		const int N = 1000;
+		const int N = 3000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Ec P(x, y);
