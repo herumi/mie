@@ -252,8 +252,42 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + i * 8], t);
 		}
 	}
+	void gen_addMod3()
+	{
+		StackFrame sf(this, 3, 7);
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		const Reg64& py = sf.p[2];
+
+		const Reg64& t0 = sf.t[0];
+		const Reg64& t1 = sf.t[1];
+		const Reg64& t2 = sf.t[2];
+		const Reg64& t3 = sf.t[3];
+		const Reg64& t4 = sf.t[4];
+		const Reg64& t5 = sf.t[5];
+		const Reg64& t6 = sf.t[6];
+
+		xor_(t6, t6);
+		load_rm(Pack(t2, t1, t0), px);
+		add_rm(Pack(t2, t1, t0), py);
+		mov_rr(Pack(t5, t4, t3), Pack(t2, t1, t0));
+		adc(t6, 0);
+		mov(rax, (size_t)p_);
+		sub_rm(Pack(t5, t4, t3), rax);
+		sbb(t6, 0);
+		cmovc(t5, t2);
+		cmovc(t4, t1);
+		cmovc(t3, t0);
+		store_mr(pz, Pack(t5, t4, t3));
+	}
 	void gen_addMod()
 	{
+#if 0
+		if (pn_ == 3) {
+			gen_addMod3();
+			return;
+		}
+#endif
 		StackFrame sf(this, 3, 0, pn_ * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
@@ -419,12 +453,31 @@ private:
 	FpGenerator(const FpGenerator&);
 	void operator=(const FpGenerator&);
 	/*
-		z[] = m[]
+		z[] = x[]
+	*/
+	void mov_rr(const Pack& z, const Pack& x)
+	{
+		assert(z.size() == x.size());
+		for (int i = 0, n = (int)x.size(); i < n; i++) {
+			mov(z[i], x[i]);
+		}
+	}
+	/*
+		m[] = x[]
 	*/
 	void store_mr(const Reg32e& m, const Pack& x)
 	{
 		for (int i = 0, n = (int)x.size(); i < n; i++) {
 			mov(ptr [m + 8 * i], x[i]);
+		}
+	}
+	/*
+		x[] = m[]
+	*/
+	void load_rm(const Pack& z, const Reg32e& m)
+	{
+		for (int i = 0, n = (int)z.size(); i < n; i++) {
+			mov(z[i], ptr [m + 8 * i]);
 		}
 	}
 	/*
@@ -436,6 +489,16 @@ private:
 		assert(z.size() == x.size());
 		for (size_t i = 1, n = z.size(); i < n; i++) {
 			adc(z[i], x[i]);
+		}
+	}
+	/*
+		z[] += m[]
+	*/
+	void add_rm(const Pack& z, const Reg32e& m)
+	{
+		add(z[0], ptr [m + 8 * 0]);
+		for (int i = 1, n = (int)z.size(); i < n; i++) {
+			adc(z[i], ptr [m + 8 * i]);
 		}
 	}
 	/*
