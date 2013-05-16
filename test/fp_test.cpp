@@ -4,8 +4,11 @@
 #include <cybozu/benchmark.hpp>
 #include <time.h>
 
-//#define USE_MONT_FP
+#if defined(_WIN64) || defined(__x86_64__)
+	#define USE_MONT_FP
+#endif
 #ifdef USE_MONT_FP
+#define XBYAK_NO_OP_NAMES
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp2;
 #else
@@ -13,7 +16,6 @@ typedef mie::FpT<mie::Gmp> Fp2;
 #endif
 
 typedef mie::FpT<mie::Gmp> Fp;
-
 
 const int m = 65537;
 struct Init {
