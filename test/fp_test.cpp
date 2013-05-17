@@ -8,7 +8,6 @@
 	#define USE_MONT_FP
 #endif
 #ifdef USE_MONT_FP
-#define XBYAK_NO_OP_NAMES
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp2;
 #else
