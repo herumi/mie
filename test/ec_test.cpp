@@ -1,11 +1,14 @@
 #include <cybozu/test.hpp>
+#include <cybozu/benchmark.hpp>
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
 #include <mie/ec.hpp>
 #include <mie/ecparam.hpp>
 #include <time.h>
 
-#define USE_MONT_FP
+#if defined(_WIN64) || defined(__x86_64__)
+	#define USE_MONT_FP
+#endif
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp;
@@ -150,39 +153,17 @@ struct Test {
 		dbl 9.59usec -> 7.75
 		pos 2730usec -> 2153
 	*/
-	void addsub_bench() const
+	void bench() const
 	{
-		test(Ec::add, "add");
-		test(Ec::sub, "sub");
-	}
-
-	void dbl_bench() const
-	{
-		const int N = 300000;
 		Fp x(para.gx);
 		Fp y(para.gy);
 		Ec P(x, y);
-		clock_t begin = clock();
-		for (int i = 0; i < N; i++) {
-			Ec::dbl(P, P);
-		}
-		clock_t end = clock();
-		printf("dbl %.2fusec\n", (end - begin) / double(CLOCKS_PER_SEC) / N * 1e6);
-	}
-
-	void power_bench() const
-	{
-		const int N = 3000;
-		Fp x(para.gx);
-		Fp y(para.gy);
-		Ec P(x, y);
+		Ec Q = P + P + P;
+		CYBOZU_BENCH("add", Ec::add, Q, P, Q);
+		CYBOZU_BENCH("sub", Ec::sub, Q, P, Q);
+		CYBOZU_BENCH("dbl", Ec::dbl, P, P);
 		Zn z("0x9b2f2f6d9c5628a7844163d015be86344082aa88d95e2f9");
-		clock_t begin = clock();
-		for (int i = 0; i < N; i++) {
-			Ec::power(P, P, z);
-		}
-		clock_t end = clock();
-		printf("pow %.2fusec\n", (end - begin) / double(CLOCKS_PER_SEC) / N * 1e6);
+		CYBOZU_BENCH("pow", Ec::power, P, P, z);
 	}
 /*
 Affine : sandy-bridge
@@ -210,9 +191,7 @@ pow 499.00usec
 		power_fp();
 #ifdef NDEBUG
 		puts("bench");
-		addsub_bench();
-		dbl_bench();
-		power_bench();
+		bench();
 #endif
 	}
 private:
