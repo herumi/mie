@@ -280,14 +280,36 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		cmovc(t3, t0);
 		store_mr(pz, Pack(t5, t4, t3));
 	}
+	void gen_subMod3()
+	{
+		StackFrame sf(this, 3, 5);
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		const Reg64& py = sf.p[2];
+
+		const Reg64& t0 = sf.t[0];
+		const Reg64& t1 = sf.t[1];
+		const Reg64& t2 = sf.t[2];
+		const Reg64& t3 = sf.t[3];
+		const Reg64& t4 = sf.t[4];
+
+		load_rm(Pack(px, t1, t0), px);
+		sub_rm(Pack(px, t1, t0), py);
+		sbb(py, py); // py = (x > y) ? 0 : -1
+		mov(rax, (size_t)p_);
+		load_rm(Pack(t4, t3, t2), rax);
+		and_(t4, py);
+		and_(t3, py);
+		and_(t2, py);
+		add_rr(Pack(px, t1, t0), Pack(t4, t3, t2));
+		store_mr(pz, Pack(px, t1, t0));
+	}
 	void gen_addMod()
 	{
-#if 1
 		if (pn_ == 3) {
 			gen_addMod3();
 			return;
 		}
-#endif
 		StackFrame sf(this, 3, 0, pn_ * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
@@ -312,6 +334,12 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_sub()
 	{
+#if 1
+		if (pn_ == 3) {
+			gen_subMod3();
+			return;
+		}
+#endif
 		StackFrame sf(this, 3);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
