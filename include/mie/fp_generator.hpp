@@ -282,7 +282,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_addMod()
 	{
-#if 0
+#if 1
 		if (pn_ == 3) {
 			gen_addMod3();
 			return;
