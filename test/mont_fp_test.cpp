@@ -1,4 +1,5 @@
 #include <cybozu/test.hpp>
+#include <cybozu/benchmark.hpp>
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
 #include <time.h>
@@ -123,7 +124,7 @@ struct Test {
 		setRaw();
 		set64bit();
 		getRaw();
-//		bench();
+		bench();
 	}
 	void cstr()
 	{
@@ -450,175 +451,14 @@ struct Test {
 	}
 	void bench()
 	{
-		const int C = 5000000;
 		Fp x("12345678901234567900342423332197");
-		double base = 0;
-		{
-			clock_t begin = clock();
-			for (int i = 0; i < C; i++) {
-				x += x;
-			}
-			clock_t end = clock();
-			base = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-			printf("add %7.2fnsec %s\n", base, x.toStr().c_str());
-		}
-		{
-			clock_t begin = clock();
-			for (int i = 0; i < C; i++) {
-				x += x;
-			}
-			clock_t end = clock();
-			double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-			printf("add %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
-		}
-		{
-			Fp y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
-			clock_t begin = clock();
-			for (int i = 0; i < C; i++) {
-				x -= y;
-			}
-			clock_t end = clock();
-			double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-			printf("sub %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
-		}
-		{
-			clock_t begin = clock();
-			for (int i = 0; i < C; i++) {
-				x *= x;
-			}
-			clock_t end = clock();
-			double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-			printf("mul %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
-		}
-		{
-			Fp y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
-			clock_t begin = clock();
-			for (int i = 0; i < C; i++) {
-				x /= y;
-			}
-			clock_t end = clock();
-			double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-			printf("div %7.2fnsec(x%5.2f) %s\n", t, t / base, x.toStr().c_str());
-		}
+		Fp y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		CYBOZU_BENCH("add", operator+, x, x);
+		CYBOZU_BENCH("sub", operator-, x, y);
+		CYBOZU_BENCH("mul", operator*, x, x);
+		CYBOZU_BENCH("div", operator/, x, y);
 	}
 };
-
-void bench(const char *pStr)
-{
-	const int N = 500000;
-	Zn::setModulo(pStr);
-	const char *xStr = "2345678901234567900342423332197";
-
-	std::cout << std::hex;
-	std::string ret1;
-	{
-		Xbyak::util::Clock clk;
-		Zn x(xStr);
-		clk.begin();
-		for (int i = 0; i < N; i++) {
-			x *= x;
-		}
-		clk.end();
-		printf("mul  %4.fclk ", clk.getClock() / double(N));
-		std::ostringstream os;
-		os << std::hex << x;
-		ret1 = os.str();
-		std::cout << ret1 << std::endl;
-	}
-	std::string ret2;
-	{
-		Xbyak::util::Clock clk;
-		mpz_class p(pStr);
-		Montgomery mont(p);
-		mpz_class x(xStr);
-		mont.toMont(x);
-		clk.begin();
-		for (int i = 0; i < N; i++) {
-			mont.mul(x, x, x);
-		}
-		clk.end();
-		mont.fromMont(x);
-		printf("mont %4.fclk ", clk.getClock() / double(N));
-		std::ostringstream os;
-		os << std::hex << "0x" << x;
-		ret2 = os.str();
-		std::cout << ret2 << std::endl;
-	}
-	std::string ret3;
-	{
-		Xbyak::util::Clock clk;
-		mpz_class p(pStr);
-		Montgomery mont(p);
-		mpz_class x(xStr);
-		mont.toMont(x);
-		const size_t aN = 4;
-		uint64_t xa[aN];
-		uint64_t pa[aN];
-		mie::Gmp::getRaw(xa, aN, x);
-		const size_t n = mie::Gmp::getRaw(pa, aN, p);
-		mie::FpGenerator fg;
-		fg.init(pa, n);
-		mie::FpGenerator::void3op montMul = fg.mul_;
-
-		clk.begin();
-		for (int i = 0; i < N; i++) {
-			montMul(xa, xa, xa);
-		}
-		clk.end();
-		mie::Gmp::setRaw(x, xa, aN);
-		mont.fromMont(x);
-		printf("mont %4.fclk ", clk.getClock() / double(N));
-		std::ostringstream os;
-		os << std::hex << "0x" << x;
-		ret3 = os.str();
-		std::cout << ret3 << std::endl;
-	}
-	std::string ret4;
-	{
-		Xbyak::util::Clock clk;
-		mpz_class p(pStr);
-		uint64_t xa[4];
-		size_t len = mie::Gmp::getRaw(xa, 4, p);
-
-		std::ostringstream os;
-		os << std::hex;
-		switch (len) {
-		case 3:
-			{
-				MontFp3::setModulo(pStr);
-				MontFp3 x(xStr);
-				clk.begin();
-				for (int i = 0; i < N; i++) {
-					x *= x;
-				}
-				clk.end();
-				printf("mul  %4.fclk ", clk.getClock() / double(N));
-				os << x;
-			}
-			break;
-		case 4:
-			{
-				MontFp4::setModulo(pStr);
-				MontFp4 x(xStr);
-				clk.begin();
-				for (int i = 0; i < N; i++) {
-					x *= x;
-				}
-				clk.end();
-				printf("mul  %4.fclk ", clk.getClock() / double(N));
-				os << x;
-			}
-			break;
-		default:
-			printf("not support %d\n", (int)len);
-			break;
-		}
-		ret1 = os.str();
-		std::cout << ret1 << std::endl;
-	}
-	CYBOZU_TEST_EQUAL(ret1, ret2);
-	CYBOZU_TEST_EQUAL(ret1, ret3);
-}
 
 void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
@@ -704,20 +544,6 @@ CYBOZU_TEST_AUTO(test4)
 	}
 }
 
-CYBOZU_TEST_AUTO(bench)
-{
-	const char *tbl[] = {
-		"0x00000000fffffffffffffffffffffffffffffffeffffac73",
-		"0xffffffffffffffffffffffffffffffffffffffffffffff13",
-		"0x2523648240000001ba344d80000000086121000000000013a700000000000013",
-		"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43",
-	};
-	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		printf("i=%d\n", (int)i);
-		bench(tbl[i]);
-	}
-}
-
 CYBOZU_TEST_AUTO(toStr16)
 {
 	const char *tbl[] = {
@@ -732,23 +558,11 @@ CYBOZU_TEST_AUTO(toStr16)
 	const int C = 500000;
 	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		clock_t begin = clock();
 		std::string str, str2;
 		MontFp3 x(tbl[i]);
-		for (int j = 0; j < C; j++) {
-			x.toStr(str, 16);
-		}
-		clock_t end = clock();
-		double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-		printf("Mont:toStr %7.2fnsec\n", t);
-		begin = clock();
+		CYBOZU_BENCH_C("Mont:toStr", C, x.toStr, str, 16);
 		mpz_class y(tbl[i]);
-		for (int j = 0; j < C; j++) {
-			mie::Gmp::toStr(str2, y, 16);
-		}
-		end = clock();
-		t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-		printf("Gmp: toStr %7.2fnsec\n", t);
+		CYBOZU_BENCH_C("Gmp:toStr ", C, mie::Gmp::toStr, str2, y, 16);
 		str2.insert(0, "0x");
 		CYBOZU_TEST_EQUAL(str, str2);
 	}
@@ -793,24 +607,13 @@ CYBOZU_TEST_AUTO(fromStr16bench)
 	const int C = 500000;
 	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		clock_t begin = clock();
 		std::string str = tbl[i];
 		MontFp3 x;
-		for (int j = 0; j < C; j++) {
-			x.fromStr(str);
-		}
-		clock_t end = clock();
-		double t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-		printf("Mont:fromStr %7.2fnsec\n", t);
-		begin = clock();
+		CYBOZU_BENCH_C("Mont:fromStr", C, x.fromStr, str);
+
 		mpz_class y;
 		str.erase(0, 2);
-		for (int j = 0; j < C; j++) {
-			mie::Gmp::fromStr(y, str, 16);
-		}
-		end = clock();
-		t = (end - begin) / double(CLOCKS_PER_SEC) / C * 1e9;
-		printf("Gmp: fromStr %7.2fnsec\n", t);
+		CYBOZU_BENCH_C("Gmp:fromStr ", C, mie::Gmp::fromStr, y, str, 16);
 		x.toStr(str, 16);
 		std::string str2;
 		mie::Gmp::toStr(str2, y, 16);
