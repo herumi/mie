@@ -45,7 +45,11 @@ struct StringCode : Xbyak::CodeGenerator {
 			return;
 		}
 		/* this check is adhoc */
-		const bool isSandyBridge = cpu.has(Xbyak::util::Cpu::tAVX);
+		/*
+			0x2A, 0x3A, 0x2D for Core i3, i7, etc
+			0x2C for Xeon X5650
+		*/
+		const bool isSandyBridge = cpu.displayModel != 0x2C;
 
 		gen_strstr(isSandyBridge);
 
