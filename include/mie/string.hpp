@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable : 4127) // constant condition
+#endif
 
 namespace mie {
 
@@ -737,3 +741,6 @@ inline char *findCaseStr(char*begin, const char *end, const char *key, size_t ke
 
 } // mie
 
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif
