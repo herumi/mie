@@ -55,6 +55,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::util::Pack Pack;
 	static const int UseRDX = Xbyak::util::UseRDX;
 	static const int UseRCX = Xbyak::util::UseRCX;
+	Xbyak::util::Cpu cpu_;
 	const uint64_t *p_;
 	uint64_t pp_;
 	int pn_;
@@ -233,8 +234,44 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		}
 		adc(rdx, 0);
 	}
+	/*
+		(rdx:pz[]) = px[] * y
+		use rax, rdx, pw[]
+	*/
+	void gen_raw_mulI_with_mulx(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg64& t0, const Reg64& t1, int n)
+	{
+		mov(rdx, ptr [px]);
+		mulx(rax, t0, y);
+		mov(ptr [pz], t0);
+		const Reg64 *pt0 = &rax;
+		const Reg64 *pt1 = &t1;
+		for (int i = 1; i < n; i++) {
+			mov(rdx, ptr [px + 8 * i]);
+			mulx(*pt1, t0, y);
+			if (i == 1) {
+				add(*pt0, t0);
+			} else {
+				adc(*pt0, t0);
+			}
+			mov(ptr [pz + 8 * i], *pt0);
+			std::swap(pt0, pt1);
+		}
+		if (pt1 == &rax) mov(rax, *pt0);
+		adc(rax, 0);
+	}
 	void gen_mulI()
 	{
+		const bool useMulx = cpu_.has(Xbyak::util::Cpu::tGPR2);
+		if (useMulx) {
+			printf("use mulx for mulI(%d)\n", pn_);
+			// mulx H, L, x ; [H:L] = x * rdx
+			StackFrame sf(this, 3, 2 | UseRDX);
+			const Reg64& pz = sf.p[0];
+			const Reg64& px = sf.p[1];
+			const Reg64& y = sf.p[2];
+			gen_raw_mulI_with_mulx(pz, px, y, sf.t[0], sf.t[1], pn_);
+			return;
+		}
 		StackFrame sf(this, 3, 1 | UseRDX, pn_ * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
