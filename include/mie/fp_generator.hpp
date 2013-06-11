@@ -49,7 +49,7 @@ T getCoff(T pLow)
 } // montgomery
 
 struct FpGenerator : Xbyak::CodeGenerator {
-	typedef Xbyak::Reg32e Reg32e;
+	typedef Xbyak::RegExp RegExp;
 	typedef Xbyak::Reg64 Reg64;
 	typedef Xbyak::util::StackFrame StackFrame;
 	typedef Xbyak::util::Pack Pack;
@@ -144,7 +144,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	/*
 		pz[] = px[] + py[]
 	*/
-	void gen_raw_add(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
+	void gen_raw_add(const RegExp& pz, const RegExp& px, const RegExp& py, const Reg64& t)
 	{
 		mov(t, ptr [px]);
 		add(t, ptr [py]);
@@ -158,7 +158,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	/*
 		pz[] = px[] - py[]
 	*/
-	void gen_raw_sub(const Reg32e& pz, const Reg32e& px, const Reg32e& py, const Reg64& t)
+	void gen_raw_sub(const RegExp& pz, const RegExp& px, const RegExp& py, const Reg64& t)
 	{
 		mov(t, ptr [px]);
 		sub(t, ptr [py]);
@@ -172,7 +172,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	/*
 		pz[] = -px[]
 	*/
-	void gen_raw_neg(const Reg32e& pz, const Reg32e& px, const Reg64& t0, const Reg64& t1)
+	void gen_raw_neg(const RegExp& pz, const RegExp& px, const Reg64& t0, const Reg64& t1)
 	{
 		inLocalLabel();
 		mov(t0, ptr [px]);
@@ -200,7 +200,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		use rax, rdx, pw[]
 		@note this is general version(maybe not so fast)
 	*/
-	void gen_raw_mulI(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg32e& pw, const Reg64& t, int n)
+	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const RegExp& pw, const Reg64& t, int n)
 	{
 		assert(n >= 2);
 		if (n == 2) {
@@ -238,7 +238,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		(rdx:pz[]) = px[] * y
 		use rax, rdx, pw[]
 	*/
-	void gen_raw_mulI_with_mulx(const Reg32e& pz, const Reg32e& px, const Reg64& y, const Reg64& t0, const Reg64& t1, int n)
+	void gen_raw_mulI_with_mulx(const RegExp& pz, const RegExp& px, const Reg64& y, const Reg64& t0, const Reg64& t1, int n)
 	{
 		mov(rdx, ptr [px]);
 		mulx(rax, t0, y);
@@ -282,7 +282,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	/*
 		pz[] = px[]
 	*/
-	void gen_mov(const Reg32e& pz, const Reg32e& px, const Reg64& t, int n)
+	void gen_mov(const RegExp& pz, const RegExp& px, const Reg64& t, int n)
 	{
 		for (int i = 0; i < n; i++) {
 			mov(t, ptr [px + i * 8]);
@@ -527,7 +527,7 @@ private:
 	/*
 		m[] = x[]
 	*/
-	void store_mr(const Reg32e& m, const Pack& x)
+	void store_mr(const RegExp& m, const Pack& x)
 	{
 		for (int i = 0, n = (int)x.size(); i < n; i++) {
 			mov(ptr [m + 8 * i], x[i]);
@@ -536,7 +536,7 @@ private:
 	/*
 		x[] = m[]
 	*/
-	void load_rm(const Pack& z, const Reg32e& m)
+	void load_rm(const Pack& z, const RegExp& m)
 	{
 		for (int i = 0, n = (int)z.size(); i < n; i++) {
 			mov(z[i], ptr [m + 8 * i]);
@@ -556,7 +556,7 @@ private:
 	/*
 		z[] += m[]
 	*/
-	void add_rm(const Pack& z, const Reg32e& m)
+	void add_rm(const Pack& z, const RegExp& m)
 	{
 		add(z[0], ptr [m + 8 * 0]);
 		for (int i = 1, n = (int)z.size(); i < n; i++) {
@@ -566,7 +566,7 @@ private:
 	/*
 		z[] -= m[]
 	*/
-	void sub_rm(const Pack& z, const Reg32e& m)
+	void sub_rm(const Pack& z, const RegExp& m)
 	{
 		sub(z[0], ptr [m + 8 * 0]);
 		for (int i = 1, n = (int)z.size(); i < n; i++) {
@@ -577,7 +577,7 @@ private:
 		[rdx:x:t1:t0] <- py[2:1:0] * x
 		destroy x, t
 	*/
-	void mul3x1(const Reg32e& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	void mul3x1(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
 	{
 		mov(rax, ptr [py]);
 		mul(x);
@@ -648,7 +648,7 @@ private:
 		[rdx:x:t2:t1:t0] <- py[3:2:1:0] * x
 		destroy x, t
 	*/
-	void mul4x1(const Reg32e& py, const Reg64& x, const Reg64& t3, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	void mul4x1(const RegExp& py, const Reg64& x, const Reg64& t3, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
 	{
 		mov(rax, ptr [py]);
 		mul(x);
