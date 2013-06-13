@@ -78,6 +78,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void3op mul_;
 	uint3opI mulI_;
 	void2op neg_;
+	void2op shr1_;
 	FpGenerator()
 		: p_(0)
 		, pp_(0)
@@ -90,6 +91,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		, mul_(0)
 		, mulI_(0)
 		, neg_(0)
+		, shr1_(0)
 	{
 	}
 	/*
@@ -127,6 +129,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		mul_ = getCurr<void3op>();
 		gen_mul();
+		align(16);
+		shr1_ = getCurr<void2op>();
+		gen_shr1();
 	}
 	void gen_addSubNc(bool isAdd)
 	{
@@ -393,6 +398,24 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		gen_raw_neg(pz, px, sf.t[0], sf.t[1]);
+	}
+	void gen_shr1()
+	{
+		const int c = 1;
+		StackFrame sf(this, 2, 1);
+		const Reg64 *t0 = &rax;
+		const Reg64 *t1 = &sf.t[0];
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		mov(*t0, ptr [px]);
+		for (int i = 0; i < pn_ - 1; i++) {
+			mov(*t1, ptr [px + 8 * (i + 1)]);
+			shrd(*t0, *t1, c);
+			mov(ptr [pz + i * 8], *t0);
+			std::swap(t0, t1);
+		}
+		shr(*t0, c);
+		mov(ptr [pz + (pn_ - 1) * 8], *t0);
 	}
 	void gen_mul()
 	{
