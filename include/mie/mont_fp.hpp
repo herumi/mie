@@ -10,9 +10,9 @@
 */
 #include <sstream>
 #include <vector>
+#include <mie/gmp_util.hpp>
 #include <mie/fp.hpp>
 #include <mie/fp_generator.hpp>
-#include <mie/gmp_util.hpp>
 
 namespace mie {
 
@@ -27,6 +27,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static MontFpT one_;
 	static MontFpT R_; // (1 << (N * 64)) % p
 	static MontFpT RR_; // (R * R) % p
+	static MontFpT invTbl_[N * 64 * 2];
 	static FpGenerator fg_;
 	uint64_t v_[N];
 	/*
@@ -53,6 +54,15 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	{
 		if (Gmp::getRaw(v_, N, x) == 0) {
 			throw cybozu::Exception("MontFpT:fromRawGmp") << x;
+		}
+	}
+	static void initInvTbl(MontFpT *invTbl)
+	{
+		MontFpT t(2);
+		const int n = N * 64 * 2;
+		for (int i = 0; i < n; i++) {
+			invTbl[n - 1 - i] = t;
+			t += t;
 		}
 	}
 	typedef void (*void3op)(MontFpT&, const MontFpT&, const MontFpT&);
@@ -200,6 +210,10 @@ public:
 		sub = Xbyak::CastTo<void3op>(fg_.sub_);
 		mul = Xbyak::CastTo<void3op>(fg_.mul_);
 		neg = Xbyak::CastTo<void2op>(fg_.neg_);
+		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
+		addNc = Xbyak::CastTo<void3op>(fg_.addNc_);
+		subNc = Xbyak::CastTo<void3op>(fg_.subNc_);
+		initInvTbl(invTbl_);
 	}
 	static inline void getModulo(std::string& pstr)
 	{
@@ -221,16 +235,59 @@ public:
 	static void3op sub;
 	static void3op mul;
 	static void2op neg;
+	static void2op shr1;
+	static void3op addNc;
+	static void3op subNc;
 	static inline void square(MontFpT& z, const MontFpT& x)
 	{
 		mul(z, x, x);
 	}
 	static inline void inv(MontFpT& z, const MontFpT& x)
 	{
+#if 0
+		MontFpT u, v, r, s;
+		u = p_;
+		v = x;
+		r.clear();
+		s.clear(); s.v_[0] = 1; // s is real 1
+		int k = 0;
+		while (!v.isZero()) {
+			if ((u.v_[0] & 1) == 0) {
+				shr1(u, u);
+				addNc(s, s, s);
+			} else if ((v.v_[0] & 1) == 0) {
+				shr1(v, v);
+				addNc(r, r, r);
+			} else if (compare(v, u) >= 0) {
+				subNc(v, v, u);
+				addNc(s, s, r);
+				shr1(v, v);
+				addNc(r, r, r);
+			} else {
+				subNc(u, u, v);
+				addNc(r, r, s);
+				shr1(u, u);
+				addNc(s, s, s);
+			}
+			k++;
+		}
+		if (compare(r, p_) >= 0) {
+			subNc(r, r, p_);
+		}
+		assert(!r.isZero());
+		subNc(r, p_, r);
+		/*
+			xr = 2^k
+			R = 2^256
+			get r2^(-k)R^2 = r 2^(512 - k)
+		*/
+		mul(z, r, invTbl_[k]);
+#else
 		mpz_class t;
 		fromMont(t, x);
 		Gmp::invMod(t, t, pOrg_);
 		toMont(z, t);
+#endif
 	}
 	static inline void div(MontFpT& z, const MontFpT& x, const MontFpT& y)
 	{
@@ -259,8 +316,8 @@ public:
 	static inline int compare(const MontFpT& x, const MontFpT& y)
 	{
 		for (size_t i = 0; i < N; i++) {
-			const uint64_t a = x.v_[i];
-			const uint64_t b = y.v_[i];
+			const uint64_t a = x.v_[N - 1 - i];
+			const uint64_t b = y.v_[N - 1 - i];
 			if (a > b) return 1;
 			if (a < b) return -1;
 		}
@@ -306,12 +363,16 @@ template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::p_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::one_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::R_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::RR_;
+template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::invTbl_[N * 64 * 2];
 template<size_t N, class tag>FpGenerator MontFpT<N, tag>::fg_;
 
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::add;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::sub;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::mul;
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::neg;
+template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::shr1;
+template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::addNc;
+template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::subNc;
 
 } // mie
 
