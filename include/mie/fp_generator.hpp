@@ -144,6 +144,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (isFullBit_) {
 			setc(al);
 			movzx(eax, al);
+		} else {
+			xor_(eax, eax);
 		}
 	}
 	/*

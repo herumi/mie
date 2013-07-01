@@ -66,6 +66,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 		}
 	}
 	typedef void (*void3op)(MontFpT&, const MontFpT&, const MontFpT&);
+	typedef bool (*bool3op)(MontFpT&, const MontFpT&, const MontFpT&);
 	typedef void (*void2op)(MontFpT&, const MontFpT&);
 public:
 	static const size_t BlockSize = N;
@@ -211,8 +212,8 @@ public:
 		mul = Xbyak::CastTo<void3op>(fg_.mul_);
 		neg = Xbyak::CastTo<void2op>(fg_.neg_);
 		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
-		addNc = Xbyak::CastTo<void3op>(fg_.addNc_);
-		subNc = Xbyak::CastTo<void3op>(fg_.subNc_);
+		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
+		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
 		initInvTbl(invTbl_);
 	}
 	static inline void getModulo(std::string& pstr)
@@ -236,8 +237,8 @@ public:
 	static void3op mul;
 	static void2op neg;
 	static void2op shr1;
-	static void3op addNc;
-	static void3op subNc;
+	static bool3op addNc;
+	static bool3op subNc;
 	static inline void square(MontFpT& z, const MontFpT& x)
 	{
 		mul(z, x, x);
@@ -251,26 +252,38 @@ public:
 		r.clear();
 		s.clear(); s.v_[0] = 1; // s is real 1
 		int k = 0;
-		while (!v.isZero()) {
-			if ((u.v_[0] & 1) == 0) {
-				shr1(u, u);
-				addNc(s, s, s);
-			} else if ((v.v_[0] & 1) == 0) {
-				shr1(v, v);
-				addNc(r, r, r);
-			} else if (compare(v, u) >= 0) {
-				subNc(v, v, u);
-				addNc(s, s, r);
-				shr1(v, v);
-				addNc(r, r, r);
-			} else {
-				subNc(u, u, v);
-				addNc(r, r, s);
-				shr1(u, u);
-				addNc(s, s, s);
-			}
-			k++;
+bool b;
+	LP:
+		if (v.isZero()) goto EXIT;
+		if ((u.v_[0] & 1) == 0) {
+			goto EVEN_U;
 		}
+		if ((v.v_[0] & 1) == 0) {
+			goto EVEN_V;
+		}
+		if (compare(v, u) < 0) {
+			goto OTHER;
+		}
+		subNc(v, v, u);
+b=		addNc(s, s, r);
+if (b) { subNc(s, s, p_); }
+	EVEN_V:
+		shr1(v, v);
+b=		addNc(r, r, r);
+if (b) { subNc(r, r, p_); }
+		k++;
+		goto LP;
+	OTHER:
+		subNc(u, u, v);
+b=		addNc(r, r, s);
+if (b) { subNc(r, r, p_); }
+	EVEN_U:
+		shr1(u, u);
+b=		addNc(s, s, s);
+if (b) { subNc(s, s, p_); }
+		k++;
+		goto LP;
+	EXIT:;
 		if (compare(r, p_) >= 0) {
 			subNc(r, r, p_);
 		}
@@ -371,8 +384,8 @@ template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::mul;
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::neg;
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::shr1;
-template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::addNc;
-template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::subNc;
+template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::addNc;
+template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::subNc;
 
 } // mie
 

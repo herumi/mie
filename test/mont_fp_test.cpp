@@ -1,3 +1,4 @@
+#define PUT(x) std::cout << #x "=" << (x) << std::endl
 #include <cybozu/test.hpp>
 #include <cybozu/benchmark.hpp>
 #include <mie/fp.hpp>
@@ -8,8 +9,6 @@
 typedef mie::FpT<mie::Gmp> Zn;
 typedef mie::MontFpT<4> MontFp4;
 typedef mie::MontFpT<3> MontFp3;
-
-#define PUT(x) std::cout << #x "=" << (x) << std::endl
 
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
