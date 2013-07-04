@@ -715,8 +715,8 @@ int main(int argc, char *argv[])
 		findChar_range_test(text);
 		findStr_test(text);
 		return 0;
-	} catch (Xbyak::Error err) {
-		printf("ERR:%s(%d)\n", Xbyak::ConvertErrorToString(err), err);
+	} catch (std::exception& e) {
+		printf("ERR:%s\n", e.what());
 	} catch (...) {
 		printf("unknown error\n");
 	}

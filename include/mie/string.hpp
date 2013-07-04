@@ -82,8 +82,8 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(findCaseStrOffset);
 		gen_findStr(isSandyBridge, true);
-	} catch (Xbyak::Error err) {
-		printf("ERR:%s(%d)\n", Xbyak::ConvertErrorToString(err), err);
+	} catch (std::exception& e) {
+		printf("ERR:%s\n", e.what());
 		::exit(1);
 	}
 private:
