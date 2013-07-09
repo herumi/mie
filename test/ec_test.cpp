@@ -205,7 +205,7 @@ CYBOZU_TEST_AUTO(all)
 #ifdef USE_MONT_FP
 	puts("use MontFp");
 #else
-	puts("use gmp");
+	puts("use GMP");
 #endif
 	const struct mie::EcParam params[] = {
 		mie::ecparam::p160_1,
