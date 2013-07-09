@@ -1,3 +1,4 @@
+#include <cybozu/inttype.hpp>
 #include <cybozu/test.hpp>
 #include <mie/math.hpp>
 
