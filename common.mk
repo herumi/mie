@@ -27,10 +27,9 @@ CFLAGS_OPT += -O3 -fomit-frame-pointer -DNDEBUG
 CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith #-Wswitch-enum -Wstrict-aliasing=2
 CFLAGS = -g -D_FILE_OFFSET_BITS=64 -msse4.2 -m$(BIT)
 CFLAGS+=$(CFLAGS_WARN)
-ifeq ($(shell uname -s),Darwin)
-  LDFLAGS += -lpthread -lssl -m$(BIT) -lgmp -lgmpxx
-else
-  LDFLAGS += -lpthread -lssl -m$(BIT) -lrt -lgmp -lgmpxx
+LDFLAGS += -lpthread -lssl -m$(BIT) -lgmp -lgmpxx
+ifneq ($(shell uname -s),Darwin)
+  LDFLAGS += -lrt
 endif
 
 DEBUG=1
