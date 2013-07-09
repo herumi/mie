@@ -160,10 +160,11 @@ void testMulI(const mie::FpGenerator& fg, int pn)
 		uint64_t y = rg.get64();
 		mpz_class mx;
 		mie::Gmp::setRaw(mx, x, pn);
-		mx *= y;
+		mpz_class my;
+		mie::Gmp::set(my, y);
+		mx *= my;
 		uint64_t d = fg.mulI_(z, x, y);
 		z[pn] = d;
-		mpz_class my;
 		mie::Gmp::setRaw(my, z, pn + 1);
 		CYBOZU_TEST_EQUAL(mx, my);
 	}
