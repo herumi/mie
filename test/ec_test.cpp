@@ -7,7 +7,7 @@
 #include <time.h>
 
 #if defined(_WIN64) || defined(__x86_64__)
-	#define USE_MONT_FP
+//	#define USE_MONT_FP
 #endif
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
@@ -202,10 +202,24 @@ private:
 
 CYBOZU_TEST_AUTO(all)
 {
-	puts("p160_1");
-	Test(mie::ecparam::p160_1).run();
-	puts("secp160k1");
-	Test(mie::ecparam::secp160k1).run();
-	puts("secp192k1");
-	Test(mie::ecparam::secp192k1).run();
+#ifdef USE_MONT_FP
+	puts("use MontFp");
+#else
+	puts("use gmp");
+#endif
+	const struct mie::EcParam params[] = {
+		mie::ecparam::p160_1,
+		mie::ecparam::secp160k1,
+		mie::ecparam::secp192k1,
+#ifndef USE_MONT_FP
+		mie::ecparam::secp224k1,
+		mie::ecparam::secp256k1,
+		mie::ecparam::secp384r1,
+		mie::ecparam::secp521r1
+#endif
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(params); i++) {
+		puts(params[i].name);
+		Test(params[i]).run();
+	}
 }
