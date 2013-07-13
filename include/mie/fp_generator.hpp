@@ -141,12 +141,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			gen_raw_sub(sf.p[0], sf.p[1], sf.p[2], rax);
 		}
-		if (isFullBit_) {
-			setc(al);
-			movzx(eax, al);
-		} else {
-			xor_(eax, eax);
-		}
+		setc(al);
+		movzx(eax, al);
 	}
 	/*
 		pz[] = px[] + py[]
