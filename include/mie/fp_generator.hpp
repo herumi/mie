@@ -542,7 +542,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	static inline void put_debug_inner(uint64_t k, const uint64_t *ptr, int n)
 	{
-		printf("A %3d  ", k);
+		printf("A %3d  ", (int)k);
 		for (int i = n - 1; i >= 0; i--) {
 			printf("%016llx", (long long)ptr[i]);
 		}
