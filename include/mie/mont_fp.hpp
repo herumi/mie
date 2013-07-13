@@ -68,6 +68,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	typedef void (*void3op)(MontFpT&, const MontFpT&, const MontFpT&);
 	typedef bool (*bool3op)(MontFpT&, const MontFpT&, const MontFpT&);
 	typedef void (*void2op)(MontFpT&, const MontFpT&);
+	typedef int (*int2op)(MontFpT&, const MontFpT&);
 public:
 	static const size_t BlockSize = N;
 	typedef uint64_t BlockType;
@@ -138,6 +139,13 @@ public:
 		mpz_class t;
 		fromStr(t, str, base);
 		toMont(*this, t);
+	}
+	void put() const
+	{
+		for (int i = N - 1; i >= 0; i--) {
+			printf("%016llx ", v_[i]);
+		}
+		printf("\n");
 	}
 	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10) const
@@ -214,6 +222,7 @@ public:
 		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
 		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
 		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
+		preInv = Xbyak::CastTo<int2op>(fg_.preInv_);
 		initInvTbl(invTbl_);
 	}
 	static inline void getModulo(std::string& pstr)
@@ -239,56 +248,71 @@ public:
 	static void2op shr1;
 	static bool3op addNc;
 	static bool3op subNc;
+	static int2op preInv;
 	static inline void square(MontFpT& z, const MontFpT& x)
 	{
 		mul(z, x, x);
 	}
-	static inline void inv(MontFpT& z, const MontFpT& x)
+	static inline int preInvC(MontFpT& r, const MontFpT& x)
 	{
-#if 0
-		MontFpT u, v, r, s;
+		MontFpT u, v, s;
 		u = p_;
 		v = x;
 		r.clear();
 		s.clear(); s.v_[0] = 1; // s is real 1
 		int k = 0;
-bool b;
+		// u, v : Pack, r, s : mem
+		bool rTop = false;
 	LP:
 		if (v.isZero()) goto EXIT;
 		if ((u.v_[0] & 1) == 0) {
-			goto EVEN_U;
+			goto U_EVEN;
 		}
 		if ((v.v_[0] & 1) == 0) {
-			goto EVEN_V;
+			goto V_EVEN;
 		}
 		if (compare(v, u) < 0) {
-			goto OTHER;
+			goto V_LT_U;
 		}
-		subNc(v, v, u);
-b=		addNc(s, s, r);
-if (b) { subNc(s, s, p_); }
-	EVEN_V:
-		shr1(v, v);
-b=		addNc(r, r, r);
-if (b) { subNc(r, r, p_); }
+		subNc(v, v, u); // sub_rr
+		addNc(s, s, r); // add_mm
+	V_EVEN:
+		shr1(v, v); // shr1_r
+		rTop = addNc(r, r, r); // twice_m
 		k++;
 		goto LP;
-	OTHER:
-		subNc(u, u, v);
-b=		addNc(r, r, s);
-if (b) { subNc(r, r, p_); }
-	EVEN_U:
-		shr1(u, u);
-b=		addNc(s, s, s);
-if (b) { subNc(s, s, p_); }
+	V_LT_U:
+		subNc(u, u, v); // sub_rr
+		rTop = addNc(r, r, s); // add_mm
+	U_EVEN:
+		shr1(u, u); // shr1_r
+		addNc(s, s, s); // twice_m
 		k++;
 		goto LP;
 	EXIT:;
-		if (compare(r, p_) >= 0) {
-			subNc(r, r, p_);
+		if (rTop) subNc(r, r, p_);
+		if (subNc(r, p_, r)) {
+			addNc(r, r, p_);
 		}
-		assert(!r.isZero());
-		subNc(r, p_, r);
+		return k;
+	}
+	static inline void inv(MontFpT& z, const MontFpT& x)
+	{
+#if 1
+		MontFpT r;
+		int k = preInv(r, x);
+#if 0
+		MontFpT s;
+		int h = preInvC(s, x);
+		if (r != s || k != h) {
+			std::cout << std::hex;
+			PUT(x);
+			PUT(r);
+			PUT(s);
+			printf("k=%d, h=%d\n", k, h);
+			exit(1);
+		}
+#endif
 		/*
 			xr = 2^k
 			R = 2^256
@@ -386,6 +410,7 @@ template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::shr1;
 template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::addNc;
 template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::subNc;
+template<size_t N, class tag>typename MontFpT<N, tag>::int2op MontFpT<N, tag>::preInv;
 
 } // mie
 

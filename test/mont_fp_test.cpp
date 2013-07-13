@@ -554,14 +554,13 @@ CYBOZU_TEST_AUTO(toStr16)
 		"0x100000000000000000000000000000033",
 		"0x11ee12312312940000000000000000000000000002342343"
 	};
-	const int C = 500000;
 	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		std::string str, str2;
 		MontFp3 x(tbl[i]);
-		CYBOZU_BENCH_C("Mont:toStr", C, x.toStr, str, 16);
+		x.toStr(str, 16);
 		mpz_class y(tbl[i]);
-		CYBOZU_BENCH_C("Gmp:toStr ", C, mie::Gmp::toStr, str2, y, 16);
+		mie::Gmp::toStr(str2, y, 16);
 		str2.insert(0, "0x");
 		CYBOZU_TEST_EQUAL(str, str2);
 	}
@@ -589,6 +588,31 @@ CYBOZU_TEST_AUTO(fromStr16)
 		for (size_t j = 0; j < xN; j++) {
 			CYBOZU_TEST_EQUAL(x[j], tbl[i].x[j]);
 		}
+	}
+}
+
+#if 0
+CYBOZU_TEST_AUTO(toStr16bench)
+{
+	const char *tbl[] = {
+		"0x0",
+		"0x5",
+		"0x123",
+		"0x123456789012345679adbc",
+		"0xffffffff26f2fc170f69466a74defd8d",
+		"0x100000000000000000000000000000033",
+		"0x11ee12312312940000000000000000000000000002342343"
+	};
+	const int C = 500000;
+	MontFp3::setModulo("0xffffffffffffffffffffffffffffffffffffffffffffff13");
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		std::string str, str2;
+		MontFp3 x(tbl[i]);
+		CYBOZU_BENCH_C("Mont:toStr", C, x.toStr, str, 16);
+		mpz_class y(tbl[i]);
+		CYBOZU_BENCH_C("Gmp:toStr ", C, mie::Gmp::toStr, str2, y, 16);
+		str2.insert(0, "0x");
+		CYBOZU_TEST_EQUAL(str, str2);
 	}
 }
 
@@ -620,3 +644,4 @@ CYBOZU_TEST_AUTO(fromStr16bench)
 		CYBOZU_TEST_EQUAL(str, str2);
 	}
 }
+#endif
