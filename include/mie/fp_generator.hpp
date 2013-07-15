@@ -789,13 +789,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_preInv()
 	{
-		assert(pn_ > 2);
+		assert(pn_ >= 2);
 		const int freeRegNum = 13;
 		if (pn_ > 8) {
 			fprintf(stderr, "pn_ = %d is not supported\n", pn_);
 			exit(1);
 		}
-		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, (pn_ * 5 - freeRegNum + 1 + (isFullBit_ ? 1 : 0)) * 8);
+		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, (std::max(0, pn_ * 5 - freeRegNum) + 1 + (isFullBit_ ? 1 : 0)) * 8);
 		const Reg64& pr = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& t = rcx;
@@ -812,9 +812,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const MixPack vv(&v, 0, 0);
 
 		Pack remain = sf.t.sub(pn_);
-		remain.append(rdx).append(pr).append(px);
+		if (pn_ > 2) {
+			remain.append(rdx).append(pr).append(px);
+		}
 
-		assert(remain.size() == 13 - pn_);
 		const int uRegNum = std::min((int)remain.size(), pn_);
 		const int uMemNum = pn_ - uRegNum;
 		const Pack u = remain.sub(0, uRegNum);
@@ -823,7 +824,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		rspPos += uMemNum * 8;
 
 		remain = remain.sub(uRegNum);
-		assert(remain.size() == 13 - pn_ - uRegNum);
 
 		const int rRegNum = std::min((int)remain.size(), pn_);
 		const int rMemNum = pn_ - rRegNum;
@@ -848,7 +848,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const MixPack keep_v(&keep, &keepMem, keepMemNum);
 		rspPos += keepMemNum * 8;
 		remain = remain.sub(keepRegNum);
-		assert(remain.size() == 0);
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
