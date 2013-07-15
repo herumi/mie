@@ -807,7 +807,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 #if 1
 		int rspPos = 0;
 
-		assert(sf.t.size() >= pn_);
+		assert((int)sf.t.size() >= pn_);
 		const Pack v = sf.t.sub(0, pn_);
 		const MixPack vv(&v, 0, 0);
 
