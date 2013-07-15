@@ -51,6 +51,37 @@ void toStr16(std::string& str, const T *x, size_t n, bool withPrefix = true)
 }
 
 /*
+	convert x[0..n) to bin string
+	start "0b" if withPrefix
+*/
+template<class T>
+void toStr2(std::string& str, const T *x, size_t n, bool withPrefix = true)
+{
+	size_t fullN = 0;
+	if (n > 1) {
+		size_t pos = n - 1;
+		while (pos > 0) {
+			if (x[pos]) break;
+			pos--;
+		}
+		if (pos > 0) fullN = pos;
+	}
+	const T v = n == 0 ? 0 : x[fullN];
+	const size_t topLen = cybozu::getBinLength(v);
+	const size_t startPos = withPrefix ? 2 : 0;
+	const size_t lenT = sizeof(T) * 8;
+	str.resize(startPos + fullN * lenT + topLen);
+	if (withPrefix) {
+		str[0] = '0';
+		str[1] = 'b';
+	}
+	cybozu::itobin(&str[startPos], topLen, v);
+	for (size_t i = 0; i < fullN; i++) {
+		cybozu::itobin(&str[startPos + topLen + i * lenT], lenT, x[fullN - 1 - i]);
+	}
+}
+
+/*
 	convert hex string to x[0..xn)
 	hex string = [0-9a-fA-F]+
 */
@@ -129,25 +160,26 @@ public:
 		fromStr(v, str, base);
 	}
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
-	void toStr(std::string& str, int base = 10) const
+	void toStr(std::string& str, int base = 10, bool withPrefix = true) const
 	{
-		if (base == 16) {
-			mie::fp::toStr16(str, getBlock(*this), getBlockSize(*this));
+		switch (base) {
+		case 10:
+			T::toStr(str, v, base);
 			return;
-		}
-		T::toStr(str, v, base);
-		if (base == 16) {
-			str.insert(0, "0x");
-		} else if (base == 2) {
-			str.insert(0, "0b");
-		} else if (base != 10) {
+		case 16:
+			mie::fp::toStr16(str, getBlock(*this), getBlockSize(*this), withPrefix);
+			return;
+		case 2:
+			mie::fp::toStr2(str, getBlock(*this), getBlockSize(*this), withPrefix);
+			return;
+		default:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
 		}
 	}
-	std::string toStr(int base = 10) const
+	std::string toStr(int base = 10, bool withPrefix = true) const
 	{
 		std::string str;
-		toStr(str, base);
+		toStr(str, base, withPrefix);
 		return str;
 	}
 	void clear()
