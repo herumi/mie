@@ -24,7 +24,7 @@ namespace fp {
 	start "0x" if withPrefix
 */
 template<class T>
-void toStr16(std::string& str, const T *x, size_t n, bool withPrefix = true)
+void toStr16(std::string& str, const T *x, size_t n, bool withPrefix)
 {
 	size_t fullN = 0;
 	if (n > 1) {
@@ -55,7 +55,7 @@ void toStr16(std::string& str, const T *x, size_t n, bool withPrefix = true)
 	start "0b" if withPrefix
 */
 template<class T>
-void toStr2(std::string& str, const T *x, size_t n, bool withPrefix = true)
+void toStr2(std::string& str, const T *x, size_t n, bool withPrefix)
 {
 	size_t fullN = 0;
 	if (n > 1) {
@@ -160,7 +160,7 @@ public:
 		fromStr(v, str, base);
 	}
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
-	void toStr(std::string& str, int base = 10, bool withPrefix = true) const
+	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
 		switch (base) {
 		case 10:
@@ -176,7 +176,7 @@ public:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
 		}
 	}
-	std::string toStr(int base = 10, bool withPrefix = true) const
+	std::string toStr(int base = 10, bool withPrefix = false) const
 	{
 		std::string str;
 		toStr(str, base, withPrefix);

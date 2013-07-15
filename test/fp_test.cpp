@@ -161,11 +161,11 @@ CYBOZU_TEST_AUTO(conv)
 	CYBOZU_TEST_EQUAL(b, d);
 
 	std::string str;
-	b.toStr(str, 2);
+	b.toStr(str, 2, true);
 	CYBOZU_TEST_EQUAL(str, bin);
 	b.toStr(str);
 	CYBOZU_TEST_EQUAL(str, dec);
-	b.toStr(str, 16);
+	b.toStr(str, 16, true);
 	CYBOZU_TEST_EQUAL(str, hex);
 }
 
@@ -385,7 +385,6 @@ CYBOZU_TEST_AUTO(toStr)
 		Fp y(tbl[i]);
 		std::string xs, ys;
 		mie::Gmp::toStr(xs, x, 16);
-		xs.insert(0, "0x");
 		y.toStr(ys, 16);
 		CYBOZU_TEST_EQUAL(xs, ys);
 	}
@@ -408,7 +407,7 @@ CYBOZU_TEST_AUTO(toStr16)
 		std::string str;
 		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, false);
 		CYBOZU_TEST_EQUAL(str, tbl[i].str);
-		mie::fp::toStr16(str, tbl[i].x, tbl[i].n);
+		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, true);
 		CYBOZU_TEST_EQUAL(str, std::string("0x") + tbl[i].str);
 	}
 }
