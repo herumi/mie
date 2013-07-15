@@ -24,7 +24,7 @@ namespace fp {
 	start "0x" if withPrefix
 */
 template<class T>
-void toStr16(std::string& str, const T *x, size_t n, bool withPrefix)
+void toStr16(std::string& str, const T *x, size_t n, bool withPrefix = false)
 {
 	size_t fullN = 0;
 	if (n > 1) {
@@ -125,9 +125,9 @@ public:
 	FpT() {}
 	FpT(int x) { operator=(x); }
 	FpT(uint64_t x) { operator=(x); }
-	explicit FpT(const std::string& str)
+	explicit FpT(const std::string& str, int base = 10)
 	{
-		fromStr(str);
+		fromStr(str, base);
 	}
 	FpT(const FpT& x)
 		: v(x.v)
@@ -154,9 +154,8 @@ public:
 	}
 	void fromStr(const std::string& str, int base = 10)
 	{
-		if (str.empty() || str[0] == '-') {
-			throw cybozu::Exception("fp:FpT:fromStr") << str;
-		}
+		if (str.empty()) throw cybozu::Exception("fp:FpT:fromStr:str is empty");
+		if (str[0] == '-') throw cybozu::Exception("fp:FpT:fromStr:negative str is not supported") << str;
 		fromStr(v, str, base);
 	}
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
@@ -292,7 +291,7 @@ public:
 private:
 	static ImplType m_;
 	ImplType v;
-	static inline void fromStr(ImplType& t, const std::string& str, int base = 0)
+	static inline void fromStr(ImplType& t, const std::string& str, int base)
 	{
 		const char *p = str.c_str();
 		if (str.size() > 2 && str[0] == '0') {
