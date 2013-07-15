@@ -586,6 +586,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		pop(rax);
 	}
 #endif
+	/*
+		QQQ
+		refactor this code. this is very complex
+	*/
 	struct MixPack {
 		const Pack *p;
 		int pn;
@@ -651,6 +655,45 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		}
 	}
 	/*
+		z += x
+	*/
+	void add_mp(const MixPack& z, const MixPack& x, const Reg64& t)
+	{
+		assert(z.size() == x.size());
+		if (z.isReg(0)) {
+			if (x.isReg(0)) {
+				add(z.getReg(0), x.getReg(0));
+			} else {
+				add(z.getReg(0), ptr [x.getMem()]);
+			}
+		} else {
+			mov(t, ptr [z.getMem()]);
+			if (x.isReg(0)) {
+				add(t, x.getReg(0));
+			} else {
+				add(t, ptr [x.getMem()]);
+			}
+			mov(ptr [z.getMem()], t);
+		}
+		for (int i = 1, n = z.size(); i < n; i++) {
+			if (z.isReg(i)) {
+				if (x.isReg(i)) {
+					adc(z.getReg(i), x.getReg(i));
+				} else {
+					adc(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
+				}
+			} else {
+				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
+				if (x.isReg(i)) {
+					adc(t, x.getReg(i));
+				} else {
+					adc(t, ptr [x.getMem() + (i - x.pn) * 8]);
+				}
+				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+			}
+		}
+	}
+	/*
 		z -= x
 	*/
 	void sub_mp(const MixPack& z, const MixPack& x, const Reg64& t)
@@ -676,16 +719,16 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				if (x.isReg(i)) {
 					sbb(z.getReg(i), x.getReg(i));
 				} else {
-					sbb(z.getReg(i), ptr [x.getMem() + i * 8]);
+					sbb(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
 				}
 			} else {
-				mov(t, ptr [z.getMem() + i * 8]);
+				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
 				if (x.isReg(i)) {
 					sbb(t, x.getReg(i));
 				} else {
-					sbb(t, ptr [x.getMem() + i * 8]);
+					sbb(t, ptr [x.getMem() + (i - x.pn) * 8]);
 				}
-				mov(ptr [z.getMem() + i * 8], t);
+				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
 			}
 		}
 	}
@@ -695,7 +738,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (z.isReg(i)) {
 				mov(ptr [m + i * 8], z.getReg(i));
 			} else {
-				mov(t, ptr [z.getMem() + i * 8]);
+				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
 				mov(ptr [m + i * 8], t);
 			}
 		}
@@ -707,7 +750,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				mov(z.getReg(i), ptr [m + i * 8]);
 			} else {
 				mov(t, ptr [m + i * 8]);
-				mov(ptr [z.getMem() + i * 8], t);
+				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
 			}
 		}
 	}
@@ -717,7 +760,26 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (z.isReg(i)) {
 				mov(z.getReg(i), t);
 			} else {
-				mov(ptr [z.getMem() + i * 8], t);
+				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+			}
+		}
+	}
+	void mov_mp(const MixPack& z, const MixPack& x, const Reg64& t)
+	{
+		for (int i = 0, n = z.size(); i < n; i++) {
+			if (z.isReg(i)) {
+				if (x.isReg(i)) {
+					mov(z.getReg(i), x.getReg(i));
+				} else {
+					mov(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
+				}
+			} else {
+				if (x.isReg(i)) {
+					mov(ptr [z.getMem() + (i - z.pn) * 8], x.getReg(i));
+				} else {
+					mov(t, ptr [x.getMem() + (i - x.pn) * 8]);
+					mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				}
 			}
 		}
 	}
@@ -727,22 +789,74 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_preInv()
 	{
-		if (pn_ > 5) {
+		assert(pn_ > 2);
+		const int freeRegNum = 13;
+		if (pn_ > 8) {
 			fprintf(stderr, "pn_ = %d is not supported\n", pn_);
 			exit(1);
 		}
-		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, (pn_ * 3 + 1 + (isFullBit_ ? 1 : 0)) * 8);
+		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, (pn_ * 5 - freeRegNum + 1 + (isFullBit_ ? 1 : 0)) * 8);
 		const Reg64& pr = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& t = rcx;
 		/*
 			rax, : k, rcx : temporary
 			use rdx, pr, px in main loop, so we can use 13 registers
-			v = t[0, pn_), u = t[pn_, 2pn_), r = esp[0, pn_), s = rsp[pn_, 2pn_)
+			v = t[0, pn_) : all registers
 		*/
+#if 1
+		int rspPos = 0;
 
-		const RegExp keep_v = rsp + 0;
-		const RegExp r = keep_v + pn_ * 8;
+		assert(sf.t.size() >= pn_);
+		const Pack v = sf.t.sub(0, pn_);
+		const MixPack vv(&v, 0, 0);
+
+		Pack remain = sf.t.sub(pn_);
+		remain.append(rdx).append(pr).append(px);
+
+		assert(remain.size() == 13 - pn_);
+		const int uRegNum = std::min((int)remain.size(), pn_);
+		const int uMemNum = pn_ - uRegNum;
+		const Pack u = remain.sub(0, uRegNum);
+		const RegExp uMem = rsp + rspPos;
+		const MixPack uu(&u, &uMem, uMemNum);
+		rspPos += uMemNum * 8;
+
+		remain = remain.sub(uRegNum);
+		assert(remain.size() == 13 - pn_ - uRegNum);
+
+		const int rRegNum = std::min((int)remain.size(), pn_);
+		const int rMemNum = pn_ - rRegNum;
+		const Pack r = remain.sub(0, rRegNum);
+		const RegExp rMem = rsp + rspPos;
+		const MixPack rr(&r, &rMem, rMemNum);
+		rspPos += rMemNum * 8;
+		remain = remain.sub(rRegNum);
+
+		const int sRegNum = std::min((int)remain.size(), pn_);
+		const int sMemNum = pn_ - sRegNum;
+		const Pack s = remain.sub(0, sRegNum);
+		const RegExp sMem = rsp + rspPos;
+		const MixPack ss(&s, &sMem, sMemNum);
+		rspPos += sMemNum * 8;
+		remain = remain.sub(sRegNum);
+
+		const int keepRegNum = std::min((int)remain.size(), pn_);
+		const int keepMemNum = pn_ - keepRegNum;
+		const Pack keep = remain.sub(0, keepRegNum);
+		const RegExp keepMem = rsp + rspPos;
+		const MixPack keep_v(&keep, &keepMem, keepMemNum);
+		rspPos += keepMemNum * 8;
+		remain = remain.sub(keepRegNum);
+		assert(remain.size() == 0);
+
+		const RegExp keep_pr = rsp + rspPos;
+		rspPos += 8;
+		const RegExp rTop = rsp + rspPos; // used if isFullBit_
+#else
+		const RegExp keep = rsp + 0;
+		const MixPack keep_v(0, &keep, pn_);
+		const RegExp r = keep + pn_ * 8;
 		const RegExp s = r + pn_ * 8;
 		const RegExp keep_pr = s + pn_ * 8;
 		const RegExp rTop = keep_pr + 8; // used if isFullBit_
@@ -752,12 +866,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const MixPack uu(&u, 0, 0);
 		const MixPack rr(0, &r, pn_);
 		const MixPack ss(0, &s, pn_);
+#endif
 		inLocalLabel();
 		mov(ptr [keep_pr], pr);
-		mov(rax, (size_t)p_);
-		load_rm(u, rax); // u = p_
 		load_rm(v, px); // v = x
 		// px is free frome here
+		mov(rax, (size_t)p_);
+		load_rm(u, rax); // u = p_
 		// k = 0
 		xor_(rax, rax);
 		// rTop = 0
@@ -768,7 +883,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		set_mp(rr, rax);
 		// s = 1
 		set_mp(ss, rax);
-		mov(qword [s], 1);
+		if (ss.isReg(0)) {
+			mov(ss.getReg(0), 1);
+		} else {
+			mov(qword [ss.getMem()], 1);
+		}
 	L(".lp");
 		or_r(t, v);
 		jz(".exit", T_NEAR);
@@ -777,10 +896,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		jz(".u_even", T_NEAR);
 		test(v[0], 1);
 		jz(".v_even", T_NEAR);
-		store_mp(keep_v, vv, t);
+		mov_mp(keep_v, vv, t);
 		sub_mp(vv, uu, t);
 		jc(".v_lt_u", T_NEAR);
-		add_mm(s, r, pn_, t);
+		add_mp(ss, rr, t);
 	L(".v_even");
 		shr_mp(vv, 1, t);
 		twice_mp(rr, t);
@@ -791,9 +910,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		inc(rax);
 		jmp(".lp", T_NEAR);
 	L(".v_lt_u");
-		load_mp(vv, keep_v, t);
+		mov_mp(vv, keep_v, t);
 		sub_mp(uu, vv, t);
-		add_mm(r, s, pn_, t);
+		add_mp(rr, ss, t);
 		if (isFullBit_) {
 			sbb(t, t);
 			mov(ptr [rTop], t);
@@ -818,8 +937,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t, (size_t)p_);
 		add_rm(v, t);
 	L("@@");
-		mov(pr, ptr [keep_pr]);
-		store_mr(pr, v);
+		mov(rcx, ptr [keep_pr]);
+		store_mr(rcx, v);
 		outLocalLabel();
 	}
 private:
