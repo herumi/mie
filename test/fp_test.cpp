@@ -408,6 +408,8 @@ CYBOZU_TEST_AUTO(toStr16)
 		std::string str;
 		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, false);
 		CYBOZU_TEST_EQUAL(str, tbl[i].str);
+		mie::fp::toStr16(str, tbl[i].x, tbl[i].n);
+		CYBOZU_TEST_EQUAL(str, std::string("0x") + tbl[i].str);
 	}
 }
 
