@@ -151,6 +151,10 @@ public:
 	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
+		if (isZero()) {
+			str = "0";
+			return;
+		}
 		if (base == 16 || base == 2) {
 			MontFpT t;
 			mul(t, *this, one_);

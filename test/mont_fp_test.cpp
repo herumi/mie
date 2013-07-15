@@ -111,6 +111,7 @@ struct Test {
 		Zn::setModulo(p);
 		edge();
 		cstr();
+		toStr();
 		fromStr();
 		stream();
 		conv();
