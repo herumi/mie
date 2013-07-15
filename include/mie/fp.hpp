@@ -118,7 +118,8 @@ class FpT : public ope::comparable<FpT<T, tag>,
 	ope::addsub<FpT<T, tag>,
 	ope::mulable<FpT<T, tag>,
 	ope::invertible<FpT<T, tag>,
-	ope::hasNegative<FpT<T, tag> > > > > > {
+	ope::hasNegative<FpT<T, tag>,
+	ope::hasIO<FpT<T, tag> > > > > > > {
 public:
 	typedef typename T::BlockType BlockType;
 	typedef typename T::ImplType ImplType;
@@ -267,21 +268,6 @@ public:
 	}
 	bool isZero() const { return isZero(*this); }
 	size_t getBitLen() const { return getBitLen(*this); }
-	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
-	{
-		const int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
-		std::string str;
-		self.toStr(str, base);
-		return os << str;
-	}
-	friend inline std::istream& operator>>(std::istream& is, FpT& self)
-	{
-		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
-		std::string str;
-		is >> str;
-		self.fromStr(str, base);
-		return is;
-	}
 	template<class N>
 	static void power(FpT& z, const FpT& x, const N& y)
 	{

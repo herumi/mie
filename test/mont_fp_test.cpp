@@ -170,6 +170,49 @@ struct Test {
 		}
 		CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "fromStr");
 	}
+	void toStr()
+	{
+		Fp x(0);
+		std::string str;
+		str = x.toStr();
+		CYBOZU_TEST_EQUAL(str, "0");
+		str = x.toStr(2, true);
+		CYBOZU_TEST_EQUAL(str, "0");
+		str = x.toStr(2, false);
+		CYBOZU_TEST_EQUAL(str, "0");
+		str = x.toStr(16, true);
+		CYBOZU_TEST_EQUAL(str, "0");
+		str = x.toStr(16, false);
+		CYBOZU_TEST_EQUAL(str, "0");
+
+		x = 123;
+		str = x.toStr();
+		CYBOZU_TEST_EQUAL(str, "123");
+		str = x.toStr(2, true);
+		CYBOZU_TEST_EQUAL(str, "0b1111011");
+		str = x.toStr(2, false);
+		CYBOZU_TEST_EQUAL(str, "1111011");
+		str = x.toStr(16, true);
+		CYBOZU_TEST_EQUAL(str, "0x7b");
+		str = x.toStr(16, false);
+		CYBOZU_TEST_EQUAL(str, "7b");
+
+		{
+			std::ostringstream os;
+			os << x;
+			CYBOZU_TEST_EQUAL(os.str(), "123");
+		}
+		{
+			std::ostringstream os;
+			os << std::hex << std::showbase << x;
+			CYBOZU_TEST_EQUAL(os.str(), "0x7b");
+		}
+		{
+			std::ostringstream os;
+			os << std::hex << x;
+			CYBOZU_TEST_EQUAL(os.str(), "7b");
+		}
+	}
 
 	void fromStr()
 	{
@@ -266,11 +309,11 @@ struct Test {
 		CYBOZU_TEST_EQUAL(b, d);
 
 		std::string str;
-		b.toStr(str, 2);
+		b.toStr(str, 2, true);
 		CYBOZU_TEST_EQUAL(str, bin);
 		b.toStr(str);
 		CYBOZU_TEST_EQUAL(str, dec);
-		b.toStr(str, 16);
+		b.toStr(str, 16, true);
 		CYBOZU_TEST_EQUAL(str, hex);
 	}
 
@@ -561,7 +604,6 @@ CYBOZU_TEST_AUTO(toStr16)
 		x.toStr(str, 16);
 		mpz_class y(tbl[i]);
 		mie::Gmp::toStr(str2, y, 16);
-		str2.insert(0, "0x");
 		CYBOZU_TEST_EQUAL(str, str2);
 	}
 }

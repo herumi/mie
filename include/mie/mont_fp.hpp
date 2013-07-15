@@ -20,7 +20,8 @@ template<size_t N, class tag = fp_local::TagDefault>
 class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	ope::mulable<MontFpT<N, tag>,
 	ope::invertible<MontFpT<N, tag>,
-	ope::hasNegative<MontFpT<N, tag> > > > > {
+	ope::hasNegative<MontFpT<N, tag>,
+	ope::hasIO<MontFpT<N, tag> > > > > > {
 
 	static mpz_class pOrg_;
 	static MontFpT p_;
@@ -148,29 +149,28 @@ public:
 		printf("\n");
 	}
 	void set(const std::string& str, int base = 0) { fromStr(str, base); }
-	void toStr(std::string& str, int base = 10) const
+	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
-		if (base == 16) {
+		if (base == 16 || base == 2) {
 			MontFpT t;
 			mul(t, *this, one_);
-			mie::fp::toStr16(str, t.v_, N);
+			if (base == 16) {
+				mie::fp::toStr16(str, t.v_, N, withPrefix);
+			} else {
+				mie::fp::toStr2(str, t.v_, N, withPrefix);
+			}
 			return;
 		}
+		if (base != 10) throw cybozu::Exception("fp:MontFpT:toStr:bad base") << base;
+		// QQQ : remove conversion to gmp
 		mpz_class t;
 		fromMont(t, *this);
 		Gmp::toStr(str, t, base);
-		if (base == 16) {
-			str.insert(0, "0x");
-		} else if (base == 2) {
-			str.insert(0, "0b");
-		} else if (base != 10) {
-			throw cybozu::Exception("fp:MontFpT:toStr:bad base") << base;
-		}
 	}
-	std::string toStr(int base = 10) const
+	std::string toStr(int base = 10, bool withPrefix = false) const
 	{
 		std::string str;
-		toStr(str, base);
+		toStr(str, base, withPrefix);
 		return str;
 	}
 	void clear()
@@ -370,21 +370,6 @@ public:
 		return r == 0;
 	}
 	bool isZero() const { return isZero(*this); }
-	friend inline std::ostream& operator<<(std::ostream& os, const MontFpT& self)
-	{
-		const int base = (os.flags() & std::ios_base::hex) ? 16 : 10;
-		std::string str;
-		self.toStr(str, base);
-		return os << str;
-	}
-	friend inline std::istream& operator>>(std::istream& is, MontFpT& self)
-	{
-		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
-		std::string str;
-		is >> str;
-		self.fromStr(str, base);
-		return is;
-	}
 	template<class Z>
 	static void power(MontFpT& z, const MontFpT& x, const Z& y)
 	{

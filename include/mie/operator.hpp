@@ -6,6 +6,8 @@
 	@license modified new BSD license
 	http://opensource.org/licenses/BSD-3-Clause
 */
+#include <ios>
+
 #ifdef _WIN32
 	#ifndef MIE_FORCE_INLINE
 		#define MIE_FORCE_INLINE __forceinline
@@ -72,6 +74,28 @@ struct invertible : E {
 template<class T, class E = Empty<T> >
 struct hasNegative : E {
 	MIE_FORCE_INLINE T operator-() const { T c; T::neg(c, static_cast<const T&>(*this)); return c; }
+};
+
+template<class T, class E = Empty<T> >
+struct hasIO : E {
+	friend inline std::ostream& operator<<(std::ostream& os, const T& self)
+	{
+		const std::ios_base::fmtflags f = os.flags();
+		if (f & std::ios_base::oct) throw cybozu::Exception("fpT:operator<<:oct is not supported");
+		const int base = (f & std::ios_base::hex) ? 16 : 10;
+		const bool showBase = (f & std::ios_base::showbase) != 0;
+		std::string str;
+		self.toStr(str, base, showBase);
+		return os << str;
+	}
+	friend inline std::istream& operator>>(std::istream& is, T& self)
+	{
+		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
+		std::string str;
+		is >> str;
+		self.fromStr(str, base);
+		return is;
+	}
 };
 
 } } // mie::ope
