@@ -302,8 +302,8 @@ public:
 			size_t pos = str.find('_');
 			if (pos == std::string::npos) throw cybozu::Exception("EcT:bad format") << str;
 			str[pos] = '\0';
-			self.x.fromStr(&str[0]);
-			self.y.fromStr(&str[pos + 1]);
+			self.x.fromStr(&str[0], 16);
+			self.y.fromStr(&str[pos + 1], 16);
 		}
 		return is;
 	}
