@@ -887,6 +887,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(qword [ss.getMem()], 1);
 		}
+		jmp(".lp");
+		align(16);
 	L(".lp");
 		or_r(t, v);
 		jz(".exit", T_NEAR);
