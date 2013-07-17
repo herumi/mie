@@ -107,6 +107,33 @@ void fromStr16(T *x, size_t xn, const char *str, size_t strLen)
 	for (size_t i = requireSize; i < xn; i++) x[i] = 0;
 }
 
+/*
+	@param base [inout]
+*/
+inline const char *verifyStr(int& base, const std::string& str)
+{
+	if (str.empty()) throw cybozu::Exception("fp:verifyStr:str is empty");
+	if (str[0] == '-') throw cybozu::Exception("fp:verifyStr:negative str is not supported") << str;
+	const char *p = str.c_str();
+	if (str.size() > 2 && str[0] == '0') {
+		if (str[1] == 'x') {
+			if (base != 0 && base != 16) {
+				throw cybozu::Exception("fp:verifyStr:bad base") << base << str;
+			}
+			base = 16;
+			p += 2;
+		} else if (str[1] == 'b') {
+			if (base != 0 && base != 2) {
+				throw cybozu::Exception("fp:verifyStr:bad base") << base << str;
+			}
+			base = 2;
+			p += 2;
+		}
+	}
+	if (base == 0) base = 10;
+	return p;
+}
+
 } // fp
 
 namespace fp_local {
@@ -126,7 +153,7 @@ public:
 	FpT() {}
 	FpT(int x) { operator=(x); }
 	FpT(uint64_t x) { operator=(x); }
-	explicit FpT(const std::string& str, int base = 10)
+	explicit FpT(const std::string& str, int base = 0)
 	{
 		fromStr(str, base);
 	}
@@ -153,10 +180,8 @@ public:
 		T::set(v, x);
 		return *this;
 	}
-	void fromStr(const std::string& str, int base = 10)
+	void fromStr(const std::string& str, int base = 0)
 	{
-		if (str.empty()) throw cybozu::Exception("fp:FpT:fromStr:str is empty");
-		if (str[0] == '-') throw cybozu::Exception("fp:FpT:fromStr:negative str is not supported") << str;
 		fromStr(v, str, base);
 	}
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
@@ -205,9 +230,6 @@ public:
 	}
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
-		if (mstr.empty() || mstr[0] == '-') {
-			throw cybozu::Exception("fp:FpT:setModulo") << mstr;
-		}
 		FpT::fromStr(m_, mstr, base);
 	}
 	static inline void getModulo(std::string& mstr)
@@ -279,17 +301,7 @@ private:
 	ImplType v;
 	static inline void fromStr(ImplType& t, const std::string& str, int base)
 	{
-		const char *p = str.c_str();
-		if (str.size() > 2 && str[0] == '0') {
-			if (str[1] == 'x') {
-				base = 16;
-				p += 2;
-			} else if (str[1] == 'b') {
-				base = 2;
-				p += 2;
-			}
-		}
-		if (base == 0) base = 10;
+		const char *p = fp::verifyStr(base, str);
 		if (!T::fromStr(t, p, base)) {
 			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}

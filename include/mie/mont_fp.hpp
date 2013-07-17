@@ -31,26 +31,6 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static MontFpT invTbl_[N * 64 * 2];
 	static FpGenerator fg_;
 	uint64_t v_[N];
-	/*
-		QQQ:move to Gmp
-	*/
-	static inline void fromStr(mpz_class& z, const std::string& str, int base = 0)
-	{
-		const char *p = str.c_str();
-		if (str.size() > 2 && str[0] == '0') {
-			if (str[1] == 'x') {
-				base = 16;
-				p += 2;
-			} else if (str[1] == 'b') {
-				base = 2;
-				p += 2;
-			}
-		}
-		if (base == 0) base = 10;
-		if (!Gmp::fromStr(z, p, base)) {
-			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
-		}
-	}
 	void fromRawGmp(const mpz_class& x)
 	{
 		if (Gmp::getRaw(v_, N, x) == 0) {
@@ -76,9 +56,9 @@ public:
 	MontFpT() {}
 	MontFpT(int x) { operator=(x); }
 	MontFpT(uint64_t x) { operator=(x); }
-	explicit MontFpT(const std::string& str)
+	explicit MontFpT(const std::string& str, int base = 0)
 	{
-		fromStr(str);
+		fromStr(str, base);
 	}
 	MontFpT(const MontFpT& x)
 	{
@@ -110,35 +90,19 @@ public:
 		mul(*this, *this, RR_);
 		return *this;
 	}
-	// QQQ:refactor with fromStr(mpz_class)
 	void fromStr(const std::string& str, int base = 0)
 	{
-		if (str.empty() || str[0] == '-') {
-			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
-		}
-		{
-			const char *p = str.c_str();
-			size_t size = str.size();
-			if (p[0] == '0') {
-				if (p[1] == 'x') {
-					base = 16;
-					p += 2;
-					size -= 2;
-				} else if (p[1] == 'b') {
-					base = 2;
-					p += 2;
-					size -= 2;
-				}
-			}
-			if (base == 16) {
-				MontFpT t;
-				mie::fp::fromStr16(t.v_, N, p, size);
-				mul(*this, t, RR_);
-				return;
-			}
+		const char *p = fp::verifyStr(base, str);
+		if (base == 16) {
+			MontFpT t;
+			mie::fp::fromStr16(t.v_, N, p, str.size() - (p - &str[0]));
+			mul(*this, t, RR_);
+			return;
 		}
 		mpz_class t;
-		fromStr(t, str, base);
+		if (!Gmp::fromStr(t, p, base)) {
+			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
+		}
 		toMont(*this, t);
 	}
 	void put() const
@@ -204,10 +168,10 @@ public:
 	}
 	static inline void setModulo(const std::string& pstr, int base = 0)
 	{
-		if (pstr.empty() || pstr[0] == '-') {
-			throw cybozu::Exception("MontFpT:setModulo") << pstr;
+		const char *p = fp::verifyStr(base, pstr);
+		if (!Gmp::fromStr(pOrg_, p, base)) {
+			throw cybozu::Exception("fp:MontFpT:setModulo") << pstr << base;
 		}
-		fromStr(pOrg_, pstr, base);
 		if ((Gmp::getBitLen(pOrg_) + 63) / 64 != N) {
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
@@ -241,6 +205,7 @@ public:
 	}
 	static inline void toMont(MontFpT& z, const mpz_class& x)
 	{
+		if (x >= pOrg_) throw cybozu::Exception("fp:MontFpT:toMont:large x") << x;
 		MontFpT t;
 		t.fromRawGmp(x);
 		mul(z, t, RR_);

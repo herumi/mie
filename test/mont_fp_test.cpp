@@ -169,7 +169,7 @@ struct Test {
 			x.toStr(str);
 			CYBOZU_TEST_EQUAL(str, os.str());
 		}
-		CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "fromStr");
+		CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "negative");
 	}
 	void toStr()
 	{
@@ -227,9 +227,7 @@ struct Test {
 			{ "100", 256, 16 },
 			{ "0b100", 4, 0 },
 			{ "0b100", 4, 2 },
-			{ "0b100", 4, 16 }, // ignore base
 			{ "0x100", 256, 0 },
-			{ "0x100", 256, 2 }, // ignore base
 			{ "0x100", 256, 16 },
 		};
 		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
@@ -237,6 +235,10 @@ struct Test {
 			x.fromStr(tbl[i].in, tbl[i].base);
 			CYBOZU_TEST_EQUAL(x, tbl[i].out);
 		}
+		// conflict prefix with base
+		Fp x;
+		CYBOZU_TEST_EXCEPTION(x.fromStr("0b100", 16), cybozu::Exception);
+		CYBOZU_TEST_EXCEPTION(x.fromStr("0x100", 2), cybozu::Exception);
 	}
 
 	void stream()
@@ -247,8 +249,7 @@ struct Test {
 			int out16;
 		} tbl[] = {
 			{ "100", 100, 256 }, // set base = 10 if base = 0
-			{ "0b100", 4, 4 },
-			{ "0x100", 256, 256 }, // ignore base
+			{ "0x100", 256, 256 },
 		};
 		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 			{
@@ -264,6 +265,9 @@ struct Test {
 				CYBOZU_TEST_EQUAL(x, tbl[i].out16);
 			}
 		}
+		std::istringstream is("0b100");
+		Fp x;
+		CYBOZU_TEST_EXCEPTION(is >> std::hex >> x, cybozu::Exception);
 	}
 	void edge()
 	{

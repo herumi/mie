@@ -62,7 +62,7 @@ struct Gmp {
 	{
 		setRaw(z, &x, 1);
 	}
-	static inline bool fromStr(mpz_class& z, const std::string& str, int base = 10)
+	static inline bool fromStr(mpz_class& z, const std::string& str, int base = 0)
 	{
 		return z.set_str(str, base) == 0;
 	}

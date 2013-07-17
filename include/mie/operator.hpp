@@ -90,7 +90,9 @@ struct hasIO : E {
 	}
 	friend inline std::istream& operator>>(std::istream& is, T& self)
 	{
-		const int base = (is.flags() & std::ios_base::hex) ? 16 : 0;
+		const std::ios_base::fmtflags f = is.flags();
+		if (f & std::ios_base::oct) throw cybozu::Exception("fpT:operator>>:oct is not supported");
+		const int base = (f & std::ios_base::hex) ? 16 : 0;
 		std::string str;
 		is >> str;
 		self.fromStr(str, base);
