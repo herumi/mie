@@ -49,7 +49,8 @@ else
   OBJSUF=d
 endif
 
-TOPDIR=$(shell 'pwd' | sed "s@mie/.*@mie/@")
+#TOPDIR=$(shell 'pwd' | sed "s@mie/.*@mie/@")
+TOPDIR=$(shell 'pwd' | awk 'END{for(e=NF;$$e != DIR;e--); for(i=1;i<=e;i++) p=p $$i "/";print p}' FS='/' DIR='mie')
 EXTDIR=$(TOPDIR)../cybozulib_ext/
 #CFLAGS+= -I$(TOPDIR)include -I$(EXTDIR)icu4c/icu/include -I$(EXTDIR)openssl/openssl/include
 #LDFLAGS+= -L$(TOPDIR)lib -lssl -lcrypto -ldl -licuuc -licudata -licui18n -lz -Wl,-rpath,'$$ORIGIN/../lib'
