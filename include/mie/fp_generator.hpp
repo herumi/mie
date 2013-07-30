@@ -18,6 +18,7 @@
 #endif
 #include <xbyak/xbyak_util.h>
 
+
 namespace mie {
 
 namespace montgomery {
@@ -48,12 +49,96 @@ T getCoff(T pLow)
 
 } // montgomery
 
+namespace fp_gen_local {
+
+class MemReg {
+	const Xbyak::Reg64 *r_;
+	const Xbyak::RegExp *m_;
+	int offset_;
+public:
+	MemReg(const Xbyak::Reg64 *r, const Xbyak::RegExp *m, int offset) : r_(r), m_(m), offset_(offset) {}
+	bool isReg() const { return r_ != 0; }
+	const Xbyak::Reg64& getReg() const { return *r_; }
+	Xbyak::RegExp getMem() const { return *m_ + offset_ * (int)sizeof(size_t); }
+};
+
+struct MixPack {
+	const Xbyak::util::Pack *p;
+	int pn;
+	const Xbyak::RegExp *m;
+	int mn;
+	MixPack(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
+		: p(p), pn(p ? (int)p->size() : 0), m(m), mn(mn)
+	{
+	}
+	int size() const { return pn + mn; }
+	bool isReg(int n) const { return n < pn; }
+	const Xbyak::Reg64& getReg(int n) const
+	{
+		assert(n < pn);
+		return (*p)[n];
+	}
+	Xbyak::RegExp getMem(int n) const
+	{
+		assert(pn <= n && n < mn);
+		return *m + (n - pn) * (int)sizeof(size_t);
+	}
+	MemReg operator[](int n) const
+	{
+		return MemReg((n < pn) ? &(*p)[n] : 0, (n < pn) ? 0 : m, n - pn);
+	}
+};
+
+} // fp_gen_local
+
+/*
+	op(r, rm);
+	r  : reg
+	rm : Reg/Mem
+*/
+#define MIE_FP_GEN_OP_RM(op, r, rm) \
+if (rm.isReg()) { \
+	op(r, rm.getReg()); \
+} else { \
+	op(r, ptr [rm.getMem()]); \
+}
+
+/*
+	op(rm, r);
+	rm : Reg/Mem
+	r  : reg
+*/
+#define MIE_FP_GEN_OP_MR(op, rm, r) \
+if (rm.isReg()) { \
+	op(rm.getReg(), r); \
+} else { \
+	op(ptr [rm.getMem()], r); \
+}
+
+/*
+	op(p1, p2); for p1, p2 are Reg/Mem
+	t is a temporary register
+*/
+#define MIE_FP_GEN_OP(op, p1, p2, t) \
+{ \
+	const fp_gen_local::MemReg mr1 = p1, mr2 = p2; \
+	if (p1.isReg()) { \
+		MIE_FP_GEN_OP_RM(op, p1.getReg(), p2) \
+	} else { \
+		mov(t, ptr [p1.getMem()]); \
+		MIE_FP_GEN_OP_RM(op, t, p2) \
+		mov(ptr [p1.getMem()], t); \
+	} \
+}
+
 struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::RegExp RegExp;
 	typedef Xbyak::Reg64 Reg64;
 	typedef Xbyak::Operand Operand;
 	typedef Xbyak::util::StackFrame StackFrame;
 	typedef Xbyak::util::Pack Pack;
+	typedef fp_gen_local::MixPack MixPack;
+	typedef fp_gen_local::MemReg MemReg;
 	static const int UseRDX = Xbyak::util::UseRDX;
 	static const int UseRCX = Xbyak::util::UseRCX;
 	Xbyak::util::Cpu cpu_;
@@ -587,32 +672,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 #endif
 	/*
-		QQQ
-		refactor this code. this is very complex
-	*/
-	struct MixPack {
-		const Pack *p;
-		int pn;
-		const RegExp *m;
-		int mn;
-		MixPack(const Pack *p, const RegExp *m, int mn)
-			: p(p), pn(p ? (int)p->size() : 0), m(m), mn(mn)
-		{
-		}
-		int size() const { return pn + mn; }
-		bool isReg(int n) const { return n < pn; }
-		const Reg64& getReg(int n) const
-		{
-			assert(n < pn);
-			return (*p)[n];
-		}
-		RegExp getMem(int n) const
-		{
-			assert(pn <= n && n < mn);
-			return *m + (n - pn) * (int)sizeof(size_t);
-		}
-	};
-	/*
 		z >>= c
 	*/
 	void shr_mp(const MixPack& z, uint8_t c, const Reg64& t)
@@ -640,22 +699,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void twice_mp(const MixPack& z, const Reg64& t)
 	{
-		if (z.isReg(0)) {
-			add(z.getReg(0), z.getReg(0));
-		} else {
-			mov(t, ptr [z.getMem(0)]);
-			add(t, t);
-			mov(ptr [z.getMem(0)], t);
-		}
+		MIE_FP_GEN_OP(add, z[0], z[0], t);
 		const int n = z.size();
 		for (int i = 1; i < n; i++) {
-			if (z.isReg(i)) {
-				adc(z.getReg(i), z.getReg(i));
-			} else {
-				mov(t, ptr [z.getMem(i)]);
-				adc(t, t);
-				mov(ptr [z.getMem(i)], t);
-			}
+			MIE_FP_GEN_OP(adc, z[i], z[i], t);
 		}
 	}
 	/*
@@ -664,37 +711,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void add_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
 		assert(z.size() == x.size());
-		if (z.isReg(0)) {
-			if (x.isReg(0)) {
-				add(z.getReg(0), x.getReg(0));
-			} else {
-				add(z.getReg(0), ptr [x.getMem(0)]);
-			}
-		} else {
-			mov(t, ptr [z.getMem(0)]);
-			if (x.isReg(0)) {
-				add(t, x.getReg(0));
-			} else {
-				add(t, ptr [x.getMem(0)]);
-			}
-			mov(ptr [z.getMem(0)], t);
-		}
+		MIE_FP_GEN_OP(add, z[0], x[0], t);
 		for (int i = 1, n = z.size(); i < n; i++) {
-			if (z.isReg(i)) {
-				if (x.isReg(i)) {
-					adc(z.getReg(i), x.getReg(i));
-				} else {
-					adc(z.getReg(i), ptr [x.getMem(i)]);
-				}
-			} else {
-				mov(t, ptr [z.getMem(i)]);
-				if (x.isReg(i)) {
-					adc(t, x.getReg(i));
-				} else {
-					adc(t, ptr [x.getMem(i)]);
-				}
-				mov(ptr [z.getMem(i)], t);
-			}
+			MIE_FP_GEN_OP(adc, z[i], x[i], t);
 		}
 	}
 	/*
@@ -703,37 +722,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void sub_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
 		assert(z.size() == x.size());
-		if (z.isReg(0)) {
-			if (x.isReg(0)) {
-				sub(z.getReg(0), x.getReg(0));
-			} else {
-				sub(z.getReg(0), ptr [x.getMem(0)]);
-			}
-		} else {
-			mov(t, ptr [z.getMem(0)]);
-			if (x.isReg(0)) {
-				sub(t, x.getReg(0));
-			} else {
-				sub(t, ptr [x.getMem(0)]);
-			}
-			mov(ptr [z.getMem(0)], t);
-		}
+		MIE_FP_GEN_OP(sub, z[0], x[0], t);
 		for (int i = 1, n = z.size(); i < n; i++) {
-			if (z.isReg(i)) {
-				if (x.isReg(i)) {
-					sbb(z.getReg(i), x.getReg(i));
-				} else {
-					sbb(z.getReg(i), ptr [x.getMem(i)]);
-				}
-			} else {
-				mov(t, ptr [z.getMem(i)]);
-				if (x.isReg(i)) {
-					sbb(t, x.getReg(i));
-				} else {
-					sbb(t, ptr [x.getMem(i)]);
-				}
-				mov(ptr [z.getMem(i)], t);
-			}
+			MIE_FP_GEN_OP(sbb, z[i], x[i], t);
 		}
 	}
 	void store_mp(const RegExp& m, const MixPack& z, const Reg64& t)
@@ -761,22 +752,15 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void set_mp(const MixPack& z, const Reg64& t)
 	{
 		for (int i = 0, n = z.size(); i < n; i++) {
-			if (z.isReg(i)) {
-				mov(z.getReg(i), t);
-			} else {
-				mov(ptr [z.getMem(i)], t);
-			}
+			MIE_FP_GEN_OP_MR(mov, z[i], t)
 		}
 	}
 	void mov_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
 		for (int i = 0, n = z.size(); i < n; i++) {
+			const MemReg zi = z[i], xi = x[i];
 			if (z.isReg(i)) {
-				if (x.isReg(i)) {
-					mov(z.getReg(i), x.getReg(i));
-				} else {
-					mov(z.getReg(i), ptr [x.getMem(i)]);
-				}
+				MIE_FP_GEN_OP_RM(mov, zi.getReg(), xi)
 			} else {
 				if (x.isReg(i)) {
 					mov(ptr [z.getMem(i)], x.getReg(i));
