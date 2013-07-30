@@ -606,7 +606,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			assert(n < pn);
 			return (*p)[n];
 		}
-		const RegExp& getMem() const { return *m; }
+		RegExp getMem(int n) const
+		{
+			assert(pn <= n && n < mn);
+			return *m + (n - pn) * (int)sizeof(size_t);
+		}
 	};
 	/*
 		z >>= c
@@ -618,17 +622,17 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (z.isReg(i + 1)) {
 				shrd(z.getReg(i), z.getReg(i + 1), c);
 			} else if (z.isReg(i)) {
-				mov(t, ptr [z.getMem() + (i + 1 - z.pn) * 8]);
+				mov(t, ptr [z.getMem(i + 1)]);
 				shrd(z.getReg(i), t, c);
 			} else {
-				mov(t, ptr [z.getMem() + (i + 1 - z.pn) * 8]);
-				shrd(ptr [z.getMem() + (i + 1 - z.pn) * 8], t, c);
+				mov(t, ptr [z.getMem(i + 1)]);
+				shrd(ptr [z.getMem(i + 1)], t, c);
 			}
 		}
 		if (z.isReg(n - 1)) {
 			shr(z.getReg(n - 1), c);
 		} else {
-			shr(qword [z.getMem() + (n - 1 - z.pn) * 8], c);
+			shr(qword [z.getMem(n - 1)], c);
 		}
 	}
 	/*
@@ -639,18 +643,18 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (z.isReg(0)) {
 			add(z.getReg(0), z.getReg(0));
 		} else {
-			mov(t, ptr [z.getMem()]);
+			mov(t, ptr [z.getMem(0)]);
 			add(t, t);
-			mov(ptr [z.getMem()], t);
+			mov(ptr [z.getMem(0)], t);
 		}
 		const int n = z.size();
 		for (int i = 1; i < n; i++) {
 			if (z.isReg(i)) {
 				adc(z.getReg(i), z.getReg(i));
 			} else {
-				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
+				mov(t, ptr [z.getMem(i)]);
 				adc(t, t);
-				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				mov(ptr [z.getMem(i)], t);
 			}
 		}
 	}
@@ -664,32 +668,32 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (x.isReg(0)) {
 				add(z.getReg(0), x.getReg(0));
 			} else {
-				add(z.getReg(0), ptr [x.getMem()]);
+				add(z.getReg(0), ptr [x.getMem(0)]);
 			}
 		} else {
-			mov(t, ptr [z.getMem()]);
+			mov(t, ptr [z.getMem(0)]);
 			if (x.isReg(0)) {
 				add(t, x.getReg(0));
 			} else {
-				add(t, ptr [x.getMem()]);
+				add(t, ptr [x.getMem(0)]);
 			}
-			mov(ptr [z.getMem()], t);
+			mov(ptr [z.getMem(0)], t);
 		}
 		for (int i = 1, n = z.size(); i < n; i++) {
 			if (z.isReg(i)) {
 				if (x.isReg(i)) {
 					adc(z.getReg(i), x.getReg(i));
 				} else {
-					adc(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
+					adc(z.getReg(i), ptr [x.getMem(i)]);
 				}
 			} else {
-				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
+				mov(t, ptr [z.getMem(i)]);
 				if (x.isReg(i)) {
 					adc(t, x.getReg(i));
 				} else {
-					adc(t, ptr [x.getMem() + (i - x.pn) * 8]);
+					adc(t, ptr [x.getMem(i)]);
 				}
-				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				mov(ptr [z.getMem(i)], t);
 			}
 		}
 	}
@@ -703,32 +707,32 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (x.isReg(0)) {
 				sub(z.getReg(0), x.getReg(0));
 			} else {
-				sub(z.getReg(0), ptr [x.getMem()]);
+				sub(z.getReg(0), ptr [x.getMem(0)]);
 			}
 		} else {
-			mov(t, ptr [z.getMem()]);
+			mov(t, ptr [z.getMem(0)]);
 			if (x.isReg(0)) {
 				sub(t, x.getReg(0));
 			} else {
-				sub(t, ptr [x.getMem()]);
+				sub(t, ptr [x.getMem(0)]);
 			}
-			mov(ptr [z.getMem()], t);
+			mov(ptr [z.getMem(0)], t);
 		}
 		for (int i = 1, n = z.size(); i < n; i++) {
 			if (z.isReg(i)) {
 				if (x.isReg(i)) {
 					sbb(z.getReg(i), x.getReg(i));
 				} else {
-					sbb(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
+					sbb(z.getReg(i), ptr [x.getMem(i)]);
 				}
 			} else {
-				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
+				mov(t, ptr [z.getMem(i)]);
 				if (x.isReg(i)) {
 					sbb(t, x.getReg(i));
 				} else {
-					sbb(t, ptr [x.getMem() + (i - x.pn) * 8]);
+					sbb(t, ptr [x.getMem(i)]);
 				}
-				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				mov(ptr [z.getMem(i)], t);
 			}
 		}
 	}
@@ -738,7 +742,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (z.isReg(i)) {
 				mov(ptr [m + i * 8], z.getReg(i));
 			} else {
-				mov(t, ptr [z.getMem() + (i - z.pn) * 8]);
+				mov(t, ptr [z.getMem(i)]);
 				mov(ptr [m + i * 8], t);
 			}
 		}
@@ -750,7 +754,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				mov(z.getReg(i), ptr [m + i * 8]);
 			} else {
 				mov(t, ptr [m + i * 8]);
-				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				mov(ptr [z.getMem(i)], t);
 			}
 		}
 	}
@@ -760,7 +764,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			if (z.isReg(i)) {
 				mov(z.getReg(i), t);
 			} else {
-				mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+				mov(ptr [z.getMem(i)], t);
 			}
 		}
 	}
@@ -771,14 +775,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				if (x.isReg(i)) {
 					mov(z.getReg(i), x.getReg(i));
 				} else {
-					mov(z.getReg(i), ptr [x.getMem() + (i - x.pn) * 8]);
+					mov(z.getReg(i), ptr [x.getMem(i)]);
 				}
 			} else {
 				if (x.isReg(i)) {
-					mov(ptr [z.getMem() + (i - z.pn) * 8], x.getReg(i));
+					mov(ptr [z.getMem(i)], x.getReg(i));
 				} else {
-					mov(t, ptr [x.getMem() + (i - x.pn) * 8]);
-					mov(ptr [z.getMem() + (i - z.pn) * 8], t);
+					mov(t, ptr [x.getMem(i)]);
+					mov(ptr [z.getMem(i)], t);
 				}
 			}
 		}
@@ -885,7 +889,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (ss.isReg(0)) {
 			mov(ss.getReg(0), 1);
 		} else {
-			mov(qword [ss.getMem()], 1);
+			mov(qword [ss.getMem(0)], 1);
 		}
 		jmp(".lp");
 		align(16);
