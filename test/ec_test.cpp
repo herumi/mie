@@ -11,17 +11,20 @@
 #endif
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
-typedef mie::MontFpT<3> Fp;
+typedef mie::MontFpT<3> Fp_3;
+typedef mie::MontFpT<4> Fp_4;
 #else
-typedef mie::FpT<mie::Gmp> Fp;
+typedef mie::FpT<mie::Gmp> Fp_3;
+typedef mie::FpT<mie::Gmp> Fp_4;
+typedef mie::FpT<mie::Gmp> Fp_ext;
 #endif
 
 struct tagZn;
 typedef mie::FpT<mie::Gmp, tagZn> Zn;
 
-typedef mie::EcT<Fp> Ec;
-
+template<class Fp>
 struct Test {
+	typedef mie::EcT<Fp> Ec;
 	const mie::EcParam& para;
 	Test(const mie::EcParam& para)
 		: para(para)
@@ -199,6 +202,14 @@ private:
 	void operator=(const Test&);
 };
 
+template<class Fp>
+void test_sub(const mie::EcParam *para, size_t paraNum)
+{
+	for (size_t i = 0; i < paraNum; i++) {
+		puts(para[i].name);
+		Test<Fp>(para[i]).run();
+	}
+}
 
 CYBOZU_TEST_AUTO(all)
 {
@@ -207,19 +218,23 @@ CYBOZU_TEST_AUTO(all)
 #else
 	puts("use GMP");
 #endif
-	const struct mie::EcParam params[] = {
+	const struct mie::EcParam para3[] = {
 		mie::ecparam::p160_1,
 		mie::ecparam::secp160k1,
 		mie::ecparam::secp192k1,
-#ifndef USE_MONT_FP
+	};
+	test_sub<Fp_3>(para3, CYBOZU_NUM_OF_ARRAY(para3));
+
+	const struct mie::EcParam para4[] = {
 		mie::ecparam::secp224k1,
 		mie::ecparam::secp256k1,
+	};
+	test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
+#ifndef USE_MONT_FP
+	const struct mie::EcParam para_ext[] = {
 		mie::ecparam::secp384r1,
 		mie::ecparam::secp521r1
-#endif
 	};
-	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(params); i++) {
-		puts(params[i].name);
-		Test(params[i]).run();
-	}
+	test_sub<Fp_ext>(para_ext, CYBOZU_NUM_OF_ARRAY(para_ext));
+#endif
 }
