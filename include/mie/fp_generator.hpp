@@ -397,20 +397,29 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		cmovc(t3, t0);
 		store_mr(pz, Pack(t5, t4, t3));
 	}
-	void gen_subMod3()
+	void gen_subMod_le4(int n)
 	{
-		StackFrame sf(this, 3, 4);
+		assert(2 <= n && n <= 4);
+		StackFrame sf(this, 3, (n - 1) * 2);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
 
-		Pack r1 = sf.t.sub(0, 2);
+		Pack r1 = sf.t.sub(0, n - 1);
 		r1.append(px); // r1 = [px, t1, t0]
-		Pack r2 = sf.t.sub(2, 2);
+		Pack r2 = sf.t.sub(n - 1, n - 1);
 		r2.append(rax); // r2 = [rax, t3, t2]
 
 		load_rm(r1, px); // destroy px
 		sub_rm(r1, py);
+#if 0
+		sbb(r2[0], r2[0]); // r1[0] = (x > y) ? 0 : -1
+		for (int i = 1; i < n; i++) mov(r2[i], r2[0]);
+		mov(py, (size_t)p_);
+		for (int i = 0; i < n; i++) and_(r2[i], qword [py + 8 * i]);
+		add_rr(r1, r2);
+#else
+		// a little faster
 		sbb(py, py); // py = (x > y) ? 0 : -1
 		mov(rax, (size_t)p_);
 		load_rm(r2, rax); // destroy rax
@@ -418,6 +427,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			and_(r2[i], py);
 		}
 		add_rr(r1, r2);
+#endif
 		store_mr(pz, r1);
 	}
 	void gen_addMod()
@@ -450,8 +460,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_sub()
 	{
-		if (pn_ == 3) {
-			gen_subMod3();
+		if (pn_ <= 4) {
+			gen_subMod_le4(pn_);
 			return;
 		}
 		StackFrame sf(this, 3);
