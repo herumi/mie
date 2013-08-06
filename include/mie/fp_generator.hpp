@@ -998,17 +998,6 @@ private:
 		}
 	}
 	/*
-		z[] -= x[]
-	*/
-	void sub_rr(const Pack& z, const Pack& x)
-	{
-		sub(z[0], x[0]);
-		assert(z.size() == x.size());
-		for (size_t i = 1, n = z.size(); i < n; i++) {
-			sbb(z[i], x[i]);
-		}
-	}
-	/*
 		z[] -= m[]
 	*/
 	void sub_rm(const Pack& z, const RegExp& m)
@@ -1031,71 +1020,6 @@ private:
 			mov(t, x[0]);
 			for (int i = 1; i < n; i++) {
 				or_(t, x[i]);
-			}
-		}
-	}
-	/*
-		m[] *= 2
-	*/
-	void twice_m(const RegExp& m, int n, const Reg64& t)
-	{
-		for (int i = 0; i < n; i++) {
-			mov(t, ptr [m + i * 8]);
-			if (i == 0) {
-				add(t, t);
-			} else {
-				adc(t, t);
-			}
-			mov(ptr [m + i * 8], t);
-		}
-	}
-	/*
-		z[] *= 2
-	*/
-	void twice_r(const Pack& z)
-	{
-		const int n = (int)z.size();
-		add(z[0], z[0]);
-		for (int i = 1; i < n; i++) {
-			adc(z[i], z[i]);
-		}
-	}
-	/*
-		z[] >>= c
-	*/
-	void shr_r(const Pack& z, uint8_t c)
-	{
-		const int n = (int)z.size();
-		for (int i = 0; i < n - 1; i++) {
-			shrd(z[i], z[i + 1], c);
-		}
-		shr(z[n - 1], c);
-	}
-	/*
-		mz[] += mx[]
-	*/
-	void add_mm(const RegExp& mz, const RegExp& mx, int n, const Reg64& t)
-	{
-		for (int i = 0; i < n; i++) {
-			mov(t, ptr [mx + i * 8]);
-			if (i == 0) {
-				add(ptr [mz + i * 8], t);
-			} else {
-				adc(ptr [mz + i * 8], t);
-			}
-		}
-	}
-	/*
-		mz[] -= mx[]
-	*/
-	void sub_mm(const RegExp& mz, const RegExp& mx, int n, const Reg64& t)
-	{
-		for (int i = 0; i < n; i++) {
-			mov(t, ptr [mx + i * 8]);
-			if (i == 0) {
-				sub(ptr [mz + i * 8], t);
-			} else {
-				sbb(ptr [mz + i * 8], t);
 			}
 		}
 	}
