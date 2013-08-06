@@ -115,22 +115,6 @@ if (rm.isReg()) { \
 	op(ptr [rm.getMem()], r); \
 }
 
-/*
-	op(p1, p2); for p1, p2 are Reg/Mem
-	t is a temporary register
-*/
-#define MIE_FP_GEN_OP(op, p1, p2, t) \
-{ \
-	const fp_gen_local::MemReg mr1 = p1, mr2 = p2; \
-	if (p1.isReg()) { \
-		MIE_FP_GEN_OP_RM(op, p1.getReg(), p2) \
-	} else { \
-		mov(t, ptr [p1.getMem()]); \
-		MIE_FP_GEN_OP_RM(op, t, p2) \
-		mov(ptr [p1.getMem()], t); \
-	} \
-}
-
 struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::RegExp RegExp;
 	typedef Xbyak::Reg64 Reg64;
@@ -699,10 +683,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void twice_mp(const MixPack& z, const Reg64& t)
 	{
-		MIE_FP_GEN_OP(add, z[0], z[0], t);
+		g_add(z[0], z[0], t);
 		const int n = z.size();
 		for (int i = 1; i < n; i++) {
-			MIE_FP_GEN_OP(adc, z[i], z[i], t);
+			g_adc(z[i], z[i], t);
 		}
 	}
 	/*
@@ -711,9 +695,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void add_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
 		assert(z.size() == x.size());
-		MIE_FP_GEN_OP(add, z[0], x[0], t);
+		g_add(z[0], x[0], t);
 		for (int i = 1, n = z.size(); i < n; i++) {
-			MIE_FP_GEN_OP(adc, z[i], x[i], t);
+			g_adc(z[i], x[i], t);
 		}
 	}
 	/*
@@ -722,9 +706,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void sub_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
 		assert(z.size() == x.size());
-		MIE_FP_GEN_OP(sub, z[0], x[0], t);
+		g_sub(z[0], x[0], t);
 		for (int i = 1, n = z.size(); i < n; i++) {
-			MIE_FP_GEN_OP(sbb, z[i], x[i], t);
+			g_sbb(z[i], x[i], t);
 		}
 	}
 	void store_mp(const RegExp& m, const MixPack& z, const Reg64& t)
@@ -933,6 +917,37 @@ struct FpGenerator : Xbyak::CodeGenerator {
 private:
 	FpGenerator(const FpGenerator&);
 	void operator=(const FpGenerator&);
+	void make_op_rm(void (Xbyak::CodeGenerator::*op)(const Xbyak::Operand&, const Xbyak::Operand&), const Reg64& op1, const MemReg& op2)
+	{
+		if (op2.isReg()) {
+			(this->*op)(op1, op2.getReg());
+		} else {
+			(this->*op)(op1, ptr [op2.getMem()]);
+		}
+	}
+	void make_op_mr(void (Xbyak::CodeGenerator::*op)(const Xbyak::Operand&, const Xbyak::Operand&), const MemReg& op1, const Reg64& op2)
+	{
+		if (op1.isReg()) {
+			(this->*op)(op1.getReg(), op2);
+		} else {
+			(this->*op)(ptr [op1.getMem()], op2);
+		}
+	}
+	void make_op(void (Xbyak::CodeGenerator::*op)(const Xbyak::Operand&, const Xbyak::Operand&), const MemReg& op1, const MemReg& op2, const Reg64& t)
+	{
+		if (op1.isReg()) {
+			make_op_rm(op, op1.getReg(), op2);
+		} else if (op2.isReg()) {
+			(this->*op)(ptr [op1.getMem()], op2.getReg());
+		} else {
+			mov(t, ptr [op2.getMem()]);
+			(this->*op)(ptr [op1.getMem()], t);
+		}
+	}
+	void g_add(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::add, op1, op2, t); }
+	void g_adc(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::adc, op1, op2, t); }
+	void g_sub(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sub, op1, op2, t); }
+	void g_sbb(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sbb, op1, op2, t); }
 	/*
 		z[] = x[]
 	*/
