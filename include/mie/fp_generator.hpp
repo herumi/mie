@@ -405,30 +405,30 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
 
-		Pack r1 = sf.t.sub(0, n - 1);
-		r1.append(px); // r1 = [px, t1, t0]
-		Pack r2 = sf.t.sub(n - 1, n - 1);
-		r2.append(rax); // r2 = [rax, t3, t2]
+		Pack rx = sf.t.sub(0, n - 1);
+		rx.append(px); // rx = [px, t1, t0]
+		Pack ry = sf.t.sub(n - 1, n - 1);
+		ry.append(rax); // ry = [rax, t3, t2]
 
-		load_rm(r1, px); // destroy px
-		sub_rm(r1, py);
+		load_rm(rx, px); // destroy px
+		sub_rm(rx, py);
 #if 0
-		sbb(r2[0], r2[0]); // r1[0] = (x > y) ? 0 : -1
-		for (int i = 1; i < n; i++) mov(r2[i], r2[0]);
+		sbb(ry[0], ry[0]); // rx[0] = (x > y) ? 0 : -1
+		for (int i = 1; i < n; i++) mov(ry[i], ry[0]);
 		mov(py, (size_t)p_);
-		for (int i = 0; i < n; i++) and_(r2[i], qword [py + 8 * i]);
-		add_rr(r1, r2);
+		for (int i = 0; i < n; i++) and_(ry[i], qword [py + 8 * i]);
+		add_rr(rx, ry);
 #else
 		// a little faster
 		sbb(py, py); // py = (x > y) ? 0 : -1
 		mov(rax, (size_t)p_);
-		load_rm(r2, rax); // destroy rax
-		for (size_t i = 0; i < r2.size(); i++) {
-			and_(r2[i], py);
+		load_rm(ry, rax); // destroy rax
+		for (size_t i = 0; i < ry.size(); i++) {
+			and_(ry[i], py);
 		}
-		add_rr(r1, r2);
+		add_rr(rx, ry);
 #endif
-		store_mr(pz, r1);
+		store_mr(pz, rx);
 	}
 	void gen_addMod()
 	{
