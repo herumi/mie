@@ -80,7 +80,7 @@ struct MixPack {
 	}
 	Xbyak::RegExp getMem(int n) const
 	{
-		assert(pn <= n && n < mn);
+		assert(pn <= n && n < size());
 		return *m + (n - pn) * (int)sizeof(size_t);
 	}
 	MemReg operator[](int n) const
