@@ -344,6 +344,7 @@ struct EcParam {
 	const char *gx;
 	const char *gy;
 	const char *n;
+	size_t bitLen; // bit length of p
 };
 
 } // mie
