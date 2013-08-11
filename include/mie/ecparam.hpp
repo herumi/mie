@@ -82,4 +82,22 @@ const struct mie::EcParam secp521r1 = {
 	521
 };
 
-} } // mie::ecparam
+} // mie::ecparam
+
+static inline const mie::EcParam* getEcParam(const std::string& name)
+{
+	static const mie::EcParam *tbl[] = {
+		&ecparam::secp160k1,
+		&ecparam::secp192k1,
+		&ecparam::secp224k1,
+		&ecparam::secp256k1,
+		&ecparam::secp384r1,
+		&ecparam::secp521r1,
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		if (name == tbl[i]->name) return tbl[i];
+	}
+	throw cybozu::Exception("mie::getEcParam:not support name") << name;
+}
+
+} // mie
