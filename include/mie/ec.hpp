@@ -23,8 +23,8 @@ template<class _Fp>
 class EcT : public ope::addsub<EcT<_Fp>,
 	ope::comparable<EcT<_Fp>,
 	ope::hasNegative<EcT<_Fp> > > > {
-	typedef _Fp Fp;
 public:
+	typedef _Fp Fp;
 #ifdef MIE_EC_USE_JACOBI
 	mutable Fp x, y, z;
 #else
