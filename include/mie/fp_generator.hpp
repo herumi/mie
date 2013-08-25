@@ -341,7 +341,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_mulI()
 	{
-		const bool useMulx = cpu_.has(Xbyak::util::Cpu::tGPR2);
+		const bool useMulx = cpu_.has(Xbyak::util::Cpu::tBMI2);
 		if (useMulx) {
 			printf("use mulx for mulI(%d)\n", pn_);
 			// mulx H, L, x ; [H:L] = x * rdx
