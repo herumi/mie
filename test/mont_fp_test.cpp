@@ -521,6 +521,17 @@ struct Test {
 void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
 #if 0
+	{
+		MontFp9::setModulo(pStr);
+		static uint64_t x[9] = { 0x80000000000000 };
+		uint64_t z[9];
+std::cout<<std::hex;
+		MontFp9::setModulo(pStr);
+		MontFp9::inv(*(MontFp9*)z, *(const MontFp9*)x);
+		exit(1);
+	}
+#endif
+#if 0
 	std::cout << std::hex;
 	uint64_t x[9] = { 0xff7fffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x1ff };
 	uint64_t y[9] = { 0xff7fffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x1ff };
@@ -638,6 +649,7 @@ CYBOZU_TEST_AUTO(test6)
 	}
 }
 
+#if 0
 CYBOZU_TEST_AUTO(test9)
 {
 	Test<9> test;
@@ -649,6 +661,7 @@ CYBOZU_TEST_AUTO(test9)
 		test.run(tbl[i]);
 	}
 }
+#endif
 
 CYBOZU_TEST_AUTO(toStr16)
 {

@@ -817,7 +817,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			use rdx, pr, px in main loop, so we can use 13 registers
 			v = t[0, pn_) : all registers
 		*/
-#if 1
 		int rspPos = 0;
 
 		assert((int)sf.t.size() >= pn_);
@@ -865,20 +864,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
 		const RegExp rTop = rsp + rspPos; // used if isFullBit_
-#else
-		const RegExp keep = rsp + 0;
-		const MixPack keep_v(0, &keep, pn_);
-		const RegExp r = keep + pn_ * 8;
-		const RegExp s = r + pn_ * 8;
-		const RegExp keep_pr = s + pn_ * 8;
-		const RegExp rTop = keep_pr + 8; // used if isFullBit_
-		const Pack v = sf.t.sub(0, pn_);
-		const Pack u = sf.t.sub(pn_, pn_);
-		const MixPack vv(&v, 0, 0);
-		const MixPack uu(&u, 0, 0);
-		const MixPack rr(0, &r, pn_);
-		const MixPack ss(0, &s, pn_);
-#endif
+
 		inLocalLabel();
 		mov(ptr [keep_pr], pr);
 		load_rm(v, px); // v = x
