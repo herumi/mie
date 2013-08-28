@@ -9,6 +9,7 @@
 typedef mie::FpT<mie::Gmp> Zn;
 typedef mie::MontFpT<4> MontFp4;
 typedef mie::MontFpT<3> MontFp3;
+typedef mie::MontFpT<6> MontFp6;
 
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
@@ -519,13 +520,12 @@ struct Test {
 void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
 #if 0
-	pStr = "0xfffffffffffffffffffffffffffffffffffffffeffffee37";
 	std::cout << std::hex;
-	uint64_t x[3] = { 0x8200090812, 0, 0 };
-	uint64_t y[3] = { 0xd89d89d827626df2, 0x9d89d89d89d89d89, 0x89d89d89d89d89d8 };
-	uint64_t z1[3], z2[3];
-	MontFp3::setModulo(pStr);
-	MontFp3::fg_.mul_(z2, x, y);
+	uint64_t x[6] = { 0x00000002fffffffd, 0xfffffffd00000000, 0xfffffffffffffffc, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff };
+	uint64_t y[6] = { 0x000003e8fffffc17, 0xfffffc1700000000, 0xfffffffffffffc16, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff };
+	uint64_t z1[6], z2[6];
+	MontFp6::setModulo(pStr);
+	MontFp6::fg_.mul_(z2, x, y);
 	put(z2);
 	{
 		puts("C");
@@ -559,8 +559,8 @@ void customTest(const char *pStr, const char *xStr, const char *yStr)
 	}
 
 	puts("asm");
-	MontFp3::setModulo(pStr);
-	MontFp3 x(xStr), y(yStr);
+	MontFp6::setModulo(pStr);
+	MontFp6 x(xStr), y(yStr);
 	x *= y;
 	rAsm = toStr(x);
 	CYBOZU_TEST_EQUAL(rOrg, rC);
@@ -576,7 +576,8 @@ CYBOZU_TEST_AUTO(customTest)
 		const char *y;
 	} tbl[] = {
 		{
-			"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
+			"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
+//			"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
 			"6277101735386680763835789423207666416102355444459739541045",
 			"6277101735386680763835789423207666416102355444459739540047"
 		},

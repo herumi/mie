@@ -518,21 +518,20 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		}
 	}
 	/*
-		input (z, x, y) = (p[0], p[1], p[2])
-		z[0..n-1] <- montgomery(x[0..n-1], y[0..n-1])
-		destroy gt0, ..., gt9, xm0, xm1, p2
+		input (pz[], px[], py[])
+		z[] <- montgomery(x[], y[])
 	*/
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
-		StackFrame sf(this, 3, 3 | UseRDX, (n * 3 + 1) * 8);
+		StackFrame sf(this, 3, 3 | UseRDX, (n * 3 + 2) * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
 		const Reg64& t = sf.t[0];
 		const Reg64& y = sf.t[1];
 		const Reg64& pAddr = sf.t[2];
-		const RegExp pw1 = rsp; // pw1[0..n]
-		const RegExp pw2 = pw1 + n * 8; // pw2[0..n]
+		const RegExp pw1 = rsp; // pw1[0..n-1]
+		const RegExp pw2 = pw1 + n * 8; // pw2[0..n-1]
 		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
 		mov(pAddr, (size_t)p);
 
@@ -1099,7 +1098,7 @@ private:
 		q = uint64_t(c0 * pp)
 		c = (c + q * p) >> 64
 		input  [c3:c2:c1:c0], px, y, p
-		output [c0:c3:c2:c1]
+		output [c0:c3:c2:c1] ; c0 is not used unless isFullBit_
 
 		@note use rax, rdx, destroy y
 	*/
@@ -1143,7 +1142,8 @@ private:
 		q = uint64_t(pc[0] * pp)
 		pc[] = (pc[] + q * p) >> 64
 		input : pc[], px[], y, p[], pw1[], pw2[]
-		output : pc[]
+		output : pc[0..n]   ; if isFullBit_
+		         pc[0..n-1] ; if !isFullBit_
 		destroy y
 	*/
 	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Reg64& t, const RegExp& pw1, const RegExp& pw2, bool isFirst)
@@ -1152,10 +1152,6 @@ private:
 		if (isFirst) {
 			gen_raw_mulI(pc, px, y, pw1, t, n);
 			mov(ptr [pc + n * 8], rdx);
-			if (isFullBit_) {
-				xor_(rax, rax);
-				mov(ptr [pc + (n + 1) * 8], rax);
-			}
 		} else {
 			gen_raw_mulI(pw2, px, y, pw1, t, n);
 			mov(t, ptr [pw2 + 0 * 8]);
@@ -1166,7 +1162,9 @@ private:
 			}
 			adc(ptr [pc + n * 8], rdx);
 			if (isFullBit_) {
-				adc(qword [pc + (n + 1) * 8], 0);
+				mov(t, 0);
+				adc(t, 0);
+				mov(qword [pc + (n + 1) * 8], t);
 			}
 		}
 		mov(rax, pp);
@@ -1184,12 +1182,14 @@ private:
 		adc(rdx, ptr [pc + n * 8]);
 		mov(ptr [pc + (n - 1) * 8], rdx);
 		if (isFullBit_) {
-			mov(t, ptr [pc + (n + 1) * 8]);
-		} else {
-			mov(t, 0);
+			if (isFirst) {
+				mov(t, 0);
+			} else {
+				mov(t, ptr [pc + (n + 1) * 8]);
+			}
+			adc(t, 0);
+			mov(qword [pc + n * 8], t);
 		}
-		adc(t, 0);
-		mov(qword [pc + n * 8], t);
 	}
 	/*
 		[rdx:x:t2:t1:t0] <- py[3:2:1:0] * x
