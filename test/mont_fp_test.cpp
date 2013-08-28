@@ -10,6 +10,7 @@ typedef mie::FpT<mie::Gmp> Zn;
 typedef mie::MontFpT<4> MontFp4;
 typedef mie::MontFpT<3> MontFp3;
 typedef mie::MontFpT<6> MontFp6;
+typedef mie::MontFpT<9> MontFp9;
 
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
@@ -521,11 +522,11 @@ void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
 #if 0
 	std::cout << std::hex;
-	uint64_t x[6] = { 0x00000002fffffffd, 0xfffffffd00000000, 0xfffffffffffffffc, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff };
-	uint64_t y[6] = { 0x000003e8fffffc17, 0xfffffc1700000000, 0xfffffffffffffc16, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff };
-	uint64_t z1[6], z2[6];
-	MontFp6::setModulo(pStr);
-	MontFp6::fg_.mul_(z2, x, y);
+	uint64_t x[9] = { 0xff7fffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x1ff };
+	uint64_t y[9] = { 0xff7fffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x1ff };
+	uint64_t z1[9], z2[9];
+	MontFp9::setModulo(pStr);
+	MontFp9::fg_.mul_(z2, x, y);
 	put(z2);
 	{
 		puts("C");
@@ -559,8 +560,8 @@ void customTest(const char *pStr, const char *xStr, const char *yStr)
 	}
 
 	puts("asm");
-	MontFp6::setModulo(pStr);
-	MontFp6 x(xStr), y(yStr);
+	MontFp9::setModulo(pStr);
+	MontFp9 x(xStr), y(yStr);
 	x *= y;
 	rAsm = toStr(x);
 	CYBOZU_TEST_EQUAL(rOrg, rC);
@@ -576,10 +577,11 @@ CYBOZU_TEST_AUTO(customTest)
 		const char *y;
 	} tbl[] = {
 		{
-			"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
+			"0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+//			"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
 //			"0xfffffffffffffffffffffffffffffffffffffffeffffee37",
-			"6277101735386680763835789423207666416102355444459739541045",
-			"6277101735386680763835789423207666416102355444459739540047"
+			"0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+			"0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
 		},
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
@@ -636,7 +638,6 @@ CYBOZU_TEST_AUTO(test6)
 	}
 }
 
-#if 0
 CYBOZU_TEST_AUTO(test9)
 {
 	Test<9> test;
@@ -648,7 +649,6 @@ CYBOZU_TEST_AUTO(test9)
 		test.run(tbl[i]);
 	}
 }
-#endif
 
 CYBOZU_TEST_AUTO(toStr16)
 {

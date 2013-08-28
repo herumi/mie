@@ -176,7 +176,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void init(const uint64_t *p, size_t pn)
 	{
-		if (pn < 2) throw cybozu::Exception("mie::FpGenerator:small pn") << pn;
+		if (pn < 2) throw cybozu::Exception("mie:FpGenerator:small pn") << pn;
 		p_ = p;
 		pp_ = montgomery::getCoff(p[0]);
 		pn_ = (int)pn;
@@ -511,10 +511,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			gen_montMul3(p_, pp_);
 		} else if (pn_ == 4) {
 			gen_montMul4(p_, pp_);
-		} else if (pn_ <= 8) {
+		} else if (pn_ <= 9) {
 			gen_montMulN(p_, pp_, pn_);
 		} else {
-			throw cybozu::Exception("mie::FpGenerator:gen_mul:not implemented for") << pn_;
+			throw cybozu::Exception("mie:FpGenerator:gen_mul:not implemented for") << pn_;
 		}
 	}
 	/*
@@ -805,9 +805,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	{
 		assert(pn_ >= 2);
 		const int freeRegNum = 13;
-		if (pn_ > 8) {
-			fprintf(stderr, "pn_ = %d is not supported\n", pn_);
-			exit(1);
+		if (pn_ > 9) {
+			throw cybozu::Exception("mie:FpGenerator:gen_preInv:large pn_") << pn_;
 		}
 		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, (std::max(0, pn_ * 5 - freeRegNum) + 1 + (isFullBit_ ? 1 : 0)) * 8);
 		const Reg64& pr = sf.p[0];
@@ -1098,7 +1097,7 @@ private:
 		q = uint64_t(c0 * pp)
 		c = (c + q * p) >> 64
 		input  [c3:c2:c1:c0], px, y, p
-		output [c0:c3:c2:c1] ; c0 is not used unless isFullBit_
+		output [c0:c3:c2:c1] ; c0 == 0 unless isFullBit_
 
 		@note use rax, rdx, destroy y
 	*/
@@ -1189,6 +1188,9 @@ private:
 			}
 			adc(t, 0);
 			mov(qword [pc + n * 8], t);
+		} else {
+			xor_(eax, eax);
+			mov(ptr [pc + n * 8], rax);
 		}
 	}
 	/*

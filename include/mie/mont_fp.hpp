@@ -271,10 +271,12 @@ public:
 	{
 #if 1
 		MontFpT r;
+#if 1
 		int k = preInv(r, x);
-#if 0
+#else
 		MontFpT s;
 		int h = preInvC(s, x);
+		int k = preInv(r, x);
 		if (r != s || k != h) {
 			std::cout << std::hex;
 			PUT(x);
@@ -286,8 +288,8 @@ public:
 #endif
 		/*
 			xr = 2^k
-			R = 2^256
-			get r2^(-k)R^2 = r 2^(512 - k)
+			R = 2^(N * 64)
+			get r2^(-k)R^2 = r 2^(N * 64 * 2 - k)
 		*/
 		mul(z, r, invTbl_[k]);
 #else
