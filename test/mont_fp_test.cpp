@@ -101,6 +101,15 @@ void putRaw(const T& x)
 }
 
 template<size_t N>
+void put(const uint64_t (&x)[N])
+{
+	for (size_t i = 0; i < N; i++) {
+		printf("%016llx", x[N - 1 - i]);
+	}
+	printf("\n");
+}
+
+template<size_t N>
 struct Test {
 	typedef mie::MontFpT<N> Fp;
 	mpz_class m;
@@ -509,6 +518,28 @@ struct Test {
 
 void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
+#if 0
+	pStr = "0xfffffffffffffffffffffffffffffffffffffffeffffee37";
+	std::cout << std::hex;
+	uint64_t x[3] = { 0x8200090812, 0, 0 };
+	uint64_t y[3] = { 0xd89d89d827626df2, 0x9d89d89d89d89d89, 0x89d89d89d89d89d8 };
+	uint64_t z1[3], z2[3];
+	MontFp3::setModulo(pStr);
+	MontFp3::fg_.mul_(z2, x, y);
+	put(z2);
+	{
+		puts("C");
+		mpz_class p(pStr);
+		Montgomery mont(p);
+		mpz_class xx, yy;
+		mie::Gmp::setRaw(xx, x, CYBOZU_NUM_OF_ARRAY(x));
+		mie::Gmp::setRaw(yy, y, CYBOZU_NUM_OF_ARRAY(y));
+		mpz_class z;
+		mont.mul(z, xx, yy);
+		std::cout << std::hex << z << std::endl;
+	}
+	exit(1);
+#else
 	std::string rOrg, rC, rAsm;
 	Zn::setModulo(pStr);
 	Zn s(xStr), t(yStr);
@@ -534,6 +565,7 @@ void customTest(const char *pStr, const char *xStr, const char *yStr)
 	rAsm = toStr(x);
 	CYBOZU_TEST_EQUAL(rOrg, rC);
 	CYBOZU_TEST_EQUAL(rOrg, rAsm);
+#endif
 }
 
 CYBOZU_TEST_AUTO(customTest)
@@ -590,6 +622,32 @@ CYBOZU_TEST_AUTO(test4)
 		test.run(tbl[i]);
 	}
 }
+
+CYBOZU_TEST_AUTO(test6)
+{
+	Test<6> test;
+	const char *tbl[] = {
+		"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		printf("prime=%s\n", tbl[i]);
+		test.run(tbl[i]);
+	}
+}
+
+#if 0
+CYBOZU_TEST_AUTO(test9)
+{
+	Test<9> test;
+	const char *tbl[] = {
+		"0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		printf("prime=%s\n", tbl[i]);
+		test.run(tbl[i]);
+	}
+}
+#endif
 
 CYBOZU_TEST_AUTO(toStr16)
 {

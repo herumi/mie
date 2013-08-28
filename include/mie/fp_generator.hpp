@@ -154,7 +154,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void2op shr1_;
 	int2op preInv_;
 	FpGenerator()
-		: p_(0)
+		: CodeGenerator(4096 * 4)
+		, p_(0)
 		, pp_(0)
 		, pn_(0)
 		, isFullBit_(0)
@@ -440,18 +441,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
+		const Xbyak::CodeGenerator::LabelType jmpMode = pn_ < 5 ? T_AUTO : T_NEAR;
 
 		inLocalLabel();
 		gen_raw_add(pz, px, py, rax);
 		mov(px, (size_t)p_); // destroy px
 		if (isFullBit_) {
-			jc(".over");
+			jc(".over", jmpMode);
 		}
 		gen_raw_sub(rsp, pz, px, rax);
-		jc(".exit");
+		jc(".exit", jmpMode);
 		gen_mov(pz, rsp, rax, pn_);
 		if (isFullBit_) {
-			jmp(".exit");
+			jmp(".exit", jmpMode);
 			L(".over");
 			gen_raw_sub(pz, pz, px, rax);
 		}
@@ -468,10 +470,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
+		const Xbyak::CodeGenerator::LabelType jmpMode = pn_ < 5 ? T_AUTO : T_NEAR;
 
 		inLocalLabel();
 		gen_raw_sub(pz, px, py, rax);
-		jnc(".exit");
+		jnc(".exit", jmpMode);
 		mov(px, (size_t)p_);
 		gen_raw_add(pz, pz, px, rax);
 	L(".exit");
@@ -504,17 +507,48 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_mul()
 	{
-		switch (pn_) {
-		case 3:
+		if (pn_ == 3) {
 			gen_montMul3(p_, pp_);
-			break;
-		case 4:
+		} else if (pn_ == 4) {
 			gen_montMul4(p_, pp_);
-			break;
-		default:
-			printf("gen_mul is not implemented for n=%d\n", pn_);
-			break;
+		} else if (pn_ <= 8) {
+			gen_montMulN(p_, pp_, pn_);
+		} else {
+			throw cybozu::Exception("mie::FpGenerator:gen_mul:not implemented for") << pn_;
 		}
+	}
+	/*
+		input (z, x, y) = (p[0], p[1], p[2])
+		z[0..n-1] <- montgomery(x[0..n-1], y[0..n-1])
+		destroy gt0, ..., gt9, xm0, xm1, p2
+	*/
+	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
+	{
+		StackFrame sf(this, 3, 3 | UseRDX, (n * 3 + 1) * 8);
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		const Reg64& py = sf.p[2];
+		const Reg64& t = sf.t[0];
+		const Reg64& y = sf.t[1];
+		const Reg64& pAddr = sf.t[2];
+		const RegExp pw1 = rsp; // pw1[0..n]
+		const RegExp pw2 = pw1 + n * 8; // pw2[0..n]
+		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
+		mov(pAddr, (size_t)p);
+
+		for (int i = 0; i < n; i++) {
+			mov(y, ptr [py + i * 8]);
+			montgomeryN_1(pp, n, pc, px, y, pAddr, t, pw1, pw2, i == 0);
+		}
+		// pz[] = pc[] - p[]
+		gen_raw_sub(pz, pc, pAddr, t);
+		if (isFullBit_) sbb(qword[pc + n * 8], 0);
+		jnc("@f");
+		for (int i = 0; i < n; i++) {
+			mov(t, ptr [pc + i * 8]);
+			mov(ptr [pz + i * 8], t);
+		}
+	L("@@");
 	}
 	/*
 		input (z, x, y) = (p0, p1, p2)
@@ -600,7 +634,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t9, ptr [p2]);
 		//                c3, c2, c1, c0, px, y,  p,
 		montgomery3_1(pp, t0, t3, t2, t1, p1, t9, t7, t4, t5, t6, t8, p0, true);
-
 		mov(t9, ptr [p2 + 8]);
 		montgomery3_1(pp, t1, t0, t3, t2, p1, t9, t7, t4, t5, t6, t8, p0, false);
 
@@ -621,9 +654,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	static inline void put_debug_inner(uint64_t k, const uint64_t *ptr, int n)
 	{
-		printf("A %3d  ", (int)k);
-		for (int i = n - 1; i >= 0; i--) {
-			printf("%016llx", (long long)ptr[i]);
+		printf("debug %llx ", (long long)k);
+		for (int i = 0; i < n; i++) {
+			printf("%016llx", (long long)ptr[n - 1 - i]);
 		}
 		printf("\n");
 	}
@@ -1103,6 +1136,60 @@ private:
 				adc(c0, t4);
 			}
 		}
+	}
+	/*
+		pc[0..n] += x[0..n-1] * y ; pc[] = 0 if isFirst
+		pc[n + 1] is temporary used if isFullBit_
+		q = uint64_t(pc[0] * pp)
+		pc[] = (pc[] + q * p) >> 64
+		input : pc[], px[], y, p[], pw1[], pw2[]
+		output : pc[]
+		destroy y
+	*/
+	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Reg64& t, const RegExp& pw1, const RegExp& pw2, bool isFirst)
+	{
+		// pc[] += x[] * y
+		if (isFirst) {
+			gen_raw_mulI(pc, px, y, pw1, t, n);
+			mov(ptr [pc + n * 8], rdx);
+			if (isFullBit_) {
+				xor_(rax, rax);
+				mov(ptr [pc + (n + 1) * 8], rax);
+			}
+		} else {
+			gen_raw_mulI(pw2, px, y, pw1, t, n);
+			mov(t, ptr [pw2 + 0 * 8]);
+			add(ptr [pc + 0 * 8], t);
+			for (int i = 1; i < n; i++) {
+				mov(t, ptr [pw2 + i * 8]);
+				adc(ptr [pc + i * 8], t);
+			}
+			adc(ptr [pc + n * 8], rdx);
+			if (isFullBit_) {
+				adc(qword [pc + (n + 1) * 8], 0);
+			}
+		}
+		mov(rax, pp);
+		mul(qword [pc]);
+		mov(y, rax); // y = q
+		gen_raw_mulI(pw2, p, y, pw1, t, n);
+		// c[] = (c[] + pw2[]) >> 64
+		mov(t, ptr [pw2 + 0 * 8]);
+		add(t, ptr [pc + 0 * 8]);
+		for (int i = 1; i < n; i++) {
+			mov(t, ptr [pw2 + i * 8]);
+			adc(t, ptr [pc + i * 8]);
+			mov(ptr [pc + (i - 1) * 8], t);
+		}
+		adc(rdx, ptr [pc + n * 8]);
+		mov(ptr [pc + (n - 1) * 8], rdx);
+		if (isFullBit_) {
+			mov(t, ptr [pc + (n + 1) * 8]);
+		} else {
+			mov(t, 0);
+		}
+		adc(t, 0);
+		mov(qword [pc + n * 8], t);
 	}
 	/*
 		[rdx:x:t2:t1:t0] <- py[3:2:1:0] * x

@@ -13,9 +13,11 @@
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp_3;
 typedef mie::MontFpT<4> Fp_4;
+typedef mie::MontFpT<6> Fp_6;
 #else
 typedef mie::FpT<mie::Gmp> Fp_3;
 typedef mie::FpT<mie::Gmp> Fp_4;
+typedef mie::FpT<mie::Gmp> Fp_6;
 typedef mie::FpT<mie::Gmp> Fp_ext;
 #endif
 
@@ -230,9 +232,13 @@ CYBOZU_TEST_AUTO(all)
 		mie::ecparam::secp256k1,
 	};
 	test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
+
+	const struct mie::EcParam para6[] = {
+		mie::ecparam::secp384r1,
+	};
+	test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
 #ifndef USE_MONT_FP
 	const struct mie::EcParam para_ext[] = {
-		mie::ecparam::secp384r1,
 		mie::ecparam::secp521r1
 	};
 	test_sub<Fp_ext>(para_ext, CYBOZU_NUM_OF_ARRAY(para_ext));

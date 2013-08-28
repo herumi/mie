@@ -29,7 +29,9 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static MontFpT R_; // (1 << (N * 64)) % p
 	static MontFpT RR_; // (R * R) % p
 	static MontFpT invTbl_[N * 64 * 2];
+public:
 	static FpGenerator fg_;
+private:
 	uint64_t v_[N];
 	void fromRawGmp(const mpz_class& x)
 	{
