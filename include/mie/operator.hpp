@@ -7,6 +7,7 @@
 	http://opensource.org/licenses/BSD-3-Clause
 */
 #include <ios>
+#include <cybozu/exception.hpp>
 
 #ifdef _WIN32
 	#ifndef MIE_FORCE_INLINE
@@ -98,6 +99,14 @@ struct hasIO : E {
 		self.fromStr(str, base);
 		return is;
 	}
+};
+
+template<class T>
+struct Optimized {
+	bool hasMulMod() const { return false; }
+	void init(const T&) {}
+	static void mulMod(T&, const T&, const T&) {}
+	static void mulMod(T&, const T&, unsigned int) {}
 };
 
 } } // mie::ope

@@ -8,7 +8,6 @@
 */
 #include <sstream>
 #include <vector>
-#include <cybozu/exception.hpp>
 #include <cybozu/hash.hpp>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
@@ -133,14 +132,6 @@ inline const char *verifyStr(int& base, const std::string& str)
 	if (base == 0) base = 10;
 	return p;
 }
-
-template<class T, class tag>
-struct Optimized {
-	bool hasMulMod() { return false; }
-	void init(const T&) {}
-	static void mulMod(T&, const T&, const T&) {}
-	static void mulMod(T&, const T&, int) {}
-};
 
 } // fp
 
@@ -321,7 +312,7 @@ public:
 	const ImplType& getInnerValue() const { return v; }
 private:
 	static ImplType m_;
-	static fp::Optimized<ImplType, tag> opt_;
+	static mie::ope::Optimized<ImplType> opt_;
 	ImplType v;
 	static inline void fromStr(ImplType& t, const std::string& str, int base)
 	{
@@ -336,7 +327,7 @@ template<class T, class tag>
 typename T::ImplType FpT<T, tag>::m_;
 
 template<class T, class tag>
-fp::Optimized<typename T::ImplType, tag> FpT<T, tag>::opt_;
+mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
 
 } // mie
 

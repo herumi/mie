@@ -8,6 +8,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #ifdef _WIN32
 	#pragma warning(push)
 	#pragma warning(disable : 4616)
@@ -30,6 +31,7 @@
 #pragma comment(lib, "mpirxx.lib")
 #endif
 #endif
+#include <mie/operator.hpp>
 
 namespace mie {
 
@@ -205,5 +207,46 @@ struct Gmp {
 	}
 };
 
-} // mie::Gmp
+namespace ope {
+
+template<>
+struct Optimized<mpz_class> {
+	Optimized()
+		: hasMulMod_(false)
+	{
+	}
+	bool hasMulMod() const { return hasMulMod_; }
+	void init(const mpz_class& m)
+	{
+		hasMulMod_ = m == getM521();
+	}
+	static void mulMod(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		z = x * y;
+		modByM521(z, z);
+	}
+	static void mulMod(mpz_class& z, const mpz_class& x, unsigned int y)
+	{
+		z = x * y;
+		modByM521(z, z);
+	}
+private:
+	bool hasMulMod_;
+	static const mpz_class& getM521()
+	{
+		static mpz_class M521("0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+		return M521;
+	}
+	static void modByM521(mpz_class& z, const mpz_class& x)
+	{
+		const mpz_class& m = getM521();
+		assert(x < 2 * m);
+		z = (x & m) + (x >> 521);
+		if (z >= m) z -= m;
+	}
+};
+
+} // mie::ope
+
+} // mie
 
