@@ -797,6 +797,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			}
 		}
 	}
+#ifdef _MSC_VER
 	void debug_put_mp(const MixPack& mp, int n, const Reg64& t)
 	{
 		if (n >= 10) exit(1);
@@ -810,6 +811,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		debug_put(rax, n);
 		pop(rax);
 	}
+#endif
 
 	/*
 		input (r, x) = (p0, p1)
