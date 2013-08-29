@@ -422,76 +422,43 @@ CYBOZU_TEST_AUTO(toStr16)
 }
 
 #ifdef NDEBUG
-CYBOZU_TEST_AUTO(bench)
+template<class T>
+void benchSub(const char *pStr, const char *xStr, const char *yStr)
 {
-	Fp2::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
-	Fp2 x("12345678901234567900342423332197");
+	T::setModulo(pStr);
+	T x(xStr);
+	T y(yStr);
+	std::string dummy;
 
-	{
-		printf("add "); CYBOZU_BENCH("", Fp2::add, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp2 y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
-		printf("sub "); CYBOZU_BENCH("", Fp2::sub, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		printf("mul "); CYBOZU_BENCH("", Fp2::mul, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp2 y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
-		printf("div "); CYBOZU_BENCH("", Fp2::div, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
+	CYBOZU_BENCH("add", T::add, x, x, x); dummy += x.toStr();
+	CYBOZU_BENCH("sub", T::sub, x, x, y); dummy += x.toStr();
+	CYBOZU_BENCH("mul", T::mul, x, x, x); dummy += x.toStr();
+	CYBOZU_BENCH("inv", T::inv, x, x); dummy += x.toStr();
+	CYBOZU_BENCH("div", T::div, x, x, y); dummy += x.toStr();
+	puts("");
 }
+
+CYBOZU_TEST_AUTO(bench2)
+{
+	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	const char *xStr = "0x148094810948190412345678901234567900342423332197";
+	const char *yStr = "0x7fffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub<Fp2>(pStr, xStr, yStr);
+}
+
 CYBOZU_TEST_AUTO(bench6)
 {
-	Fp6::setModulo("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff");
-	Fp6 x("12345678901234567900342308472047204720422423332197");
-
-	{
-		printf("add "); CYBOZU_BENCH("", Fp6::add, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp6  y("0x3948384209834029839820948205872380573205723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
-		printf("sub "); CYBOZU_BENCH("", Fp6::sub, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		printf("mul "); CYBOZU_BENCH("", Fp6::mul, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp6 y("0xffffffffff23423423333333333333333333333333333333333333333333fffffffffffe26f2fc170f69466a74defd8d");
-		printf("div "); CYBOZU_BENCH("", Fp6::div, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
+	const char *pStr = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff";
+	const char *xStr = "0x19481084109481094820948209482094820984290482212345678901234567900342308472047204720422423332197";
+	const char *yStr = "0x209348209481094820984209842094820948204204243123456789012345679003423084720472047204224233321972";
+	benchSub<Fp6>(pStr, xStr, yStr);
 }
+
 CYBOZU_TEST_AUTO(bench9)
 {
-	Fp9::setModulo("0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-	Fp9 x("12345678901234567900342308472047204720422423332197");
-
-	{
-		printf("add "); CYBOZU_BENCH("", Fp9::add, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp9 y("0x3948384209834029834092384204920349820948205872380573205782385729385729385723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
-		printf("sub "); CYBOZU_BENCH("", Fp9::sub, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		printf("mul "); CYBOZU_BENCH("", Fp9::mul, x, x, x);
-		printf(" %s\n", x.toStr().c_str());
-	}
-	{
-		Fp9 y("0xffffffffff23423423333333333333333333333333333333333333333333333333333333333333333333333333333333333fffffffffffe26f2fc170f69466a74defd8d");
-		printf("div "); CYBOZU_BENCH("", Fp9::div, x, x, y);
-		printf(" %s\n", x.toStr().c_str());
-	}
+	const char *pStr = "0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+	const char *xStr = "0x2908209582095820941098410948109482094820984209840294829049240294242498540975555312345678901234567900342308472047204720422423332197";
+	const char *yStr = "0x3948384209834029834092384204920349820948205872380573205782385729385729385723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub<Fp9>(pStr, xStr, yStr);
 }
 #endif
