@@ -134,6 +134,14 @@ inline const char *verifyStr(int& base, const std::string& str)
 	return p;
 }
 
+template<class T, class tag>
+struct Optimized {
+	bool hasMulMod() { return false; }
+	void init(const T&) {}
+	static void mulMod(T&, const T&, const T&) {}
+	static void mulMod(T&, const T&, int) {}
+};
+
 } // fp
 
 namespace fp_local {
@@ -231,6 +239,7 @@ public:
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		FpT::fromStr(m_, mstr, base);
+		opt_.init(m_);
 	}
 	static inline void getModulo(std::string& mstr)
 	{
@@ -238,12 +247,26 @@ public:
 	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y) { T::addMod(z.v, x.v, y.v, m_); }
 	static inline void sub(FpT& z, const FpT& x, const FpT& y) { T::subMod(z.v, x.v, y.v, m_); }
-	static inline void mul(FpT& z, const FpT& x, const FpT& y) { T::mulMod(z.v, x.v, y.v, m_); }
+	static inline void mul(FpT& z, const FpT& x, const FpT& y)
+	{
+		if (opt_.hasMulMod()) {
+			opt_.mulMod(z.v, x.v, y.v);
+		} else {
+			T::mulMod(z.v, x.v, y.v, m_);
+		}
+	}
 	static inline void square(FpT& z, const FpT& x) { T::squareMod(z.v, x.v, m_); }
 
 	static inline void add(FpT& z, const FpT& x, unsigned int y) { T::addMod(z.v, x.v, y, m_); }
 	static inline void sub(FpT& z, const FpT& x, unsigned int y) { T::subMod(z.v, x.v, y, m_); }
-	static inline void mul(FpT& z, const FpT& x, unsigned int y) { T::mulMod(z.v, x.v, y, m_); }
+	static inline void mul(FpT& z, const FpT& x, unsigned int y)
+	{
+		if (opt_.hasMulMod()) {
+			opt_.mulMod(z.v, x.v, y);
+		} else {
+			T::mulMod(z.v, x.v, y, m_);
+		}
+	}
 
 	static inline void inv(FpT& z, const FpT& x) { T::invMod(z.v, x.v, m_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
@@ -298,6 +321,7 @@ public:
 	const ImplType& getInnerValue() const { return v; }
 private:
 	static ImplType m_;
+	static fp::Optimized<ImplType, tag> opt_;
 	ImplType v;
 	static inline void fromStr(ImplType& t, const std::string& str, int base)
 	{
@@ -310,6 +334,9 @@ private:
 
 template<class T, class tag>
 typename T::ImplType FpT<T, tag>::m_;
+
+template<class T, class tag>
+fp::Optimized<typename T::ImplType, tag> FpT<T, tag>::opt_;
 
 } // mie
 
