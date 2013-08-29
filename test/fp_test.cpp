@@ -1,3 +1,4 @@
+#define PUT(x) std::cout << #x "=" << (x) << std::endl
 #include <cybozu/test.hpp>
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
@@ -10,8 +11,12 @@
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
 typedef mie::MontFpT<3> Fp2;
+typedef mie::MontFpT<6> Fp6;
+typedef mie::MontFpT<9> Fp9;
 #else
 typedef mie::FpT<mie::Gmp> Fp2;
+typedef mie::FpT<mie::Gmp> Fp6;
+typedef mie::FpT<mie::Gmp> Fp9;
 #endif
 
 typedef mie::FpT<mie::Gmp> Fp;
@@ -438,6 +443,54 @@ CYBOZU_TEST_AUTO(bench)
 	{
 		Fp2 y("0xfffffffffffffffffffffe26f2fc170f69466a74defd8d");
 		printf("div "); CYBOZU_BENCH("", Fp2::div, x, x, y);
+		printf(" %s\n", x.toStr().c_str());
+	}
+}
+CYBOZU_TEST_AUTO(bench6)
+{
+	Fp6::setModulo("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff");
+	Fp6 x("12345678901234567900342308472047204720422423332197");
+
+	{
+		printf("add "); CYBOZU_BENCH("", Fp6::add, x, x, x);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		Fp6  y("0x3948384209834029839820948205872380573205723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		printf("sub "); CYBOZU_BENCH("", Fp6::sub, x, x, y);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		printf("mul "); CYBOZU_BENCH("", Fp6::mul, x, x, x);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		Fp6 y("0xffffffffff23423423333333333333333333333333333333333333333333fffffffffffe26f2fc170f69466a74defd8d");
+		printf("div "); CYBOZU_BENCH("", Fp6::div, x, x, y);
+		printf(" %s\n", x.toStr().c_str());
+	}
+}
+CYBOZU_TEST_AUTO(bench9)
+{
+	Fp9::setModulo("0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+	Fp9 x("12345678901234567900342308472047204720422423332197");
+
+	{
+		printf("add "); CYBOZU_BENCH("", Fp9::add, x, x, x);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		Fp9 y("0x3948384209834029834092384204920349820948205872380573205782385729385729385723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		printf("sub "); CYBOZU_BENCH("", Fp9::sub, x, x, y);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		printf("mul "); CYBOZU_BENCH("", Fp9::mul, x, x, x);
+		printf(" %s\n", x.toStr().c_str());
+	}
+	{
+		Fp9 y("0xffffffffff23423423333333333333333333333333333333333333333333333333333333333333333333333333333333333fffffffffffe26f2fc170f69466a74defd8d");
+		printf("div "); CYBOZU_BENCH("", Fp9::div, x, x, y);
 		printf(" %s\n", x.toStr().c_str());
 	}
 }

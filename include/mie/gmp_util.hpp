@@ -209,6 +209,7 @@ struct Gmp {
 
 namespace ope {
 
+#if 0
 template<>
 struct Optimized<mpz_class> {
 	Optimized()
@@ -245,6 +246,7 @@ private:
 		if (z >= m) z -= m;
 	}
 };
+#endif
 
 } // mie::ope
 
