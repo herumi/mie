@@ -522,12 +522,13 @@ void customTest(const char *pStr, const char *xStr, const char *yStr)
 {
 #if 0
 	{
-		MontFp9::setModulo(pStr);
-		static uint64_t x[9] = { 0x80000000000000 };
-		uint64_t z[9];
+		pStr = "0xfffffffffffffffffffffffffffffffffffffffeffffee37",
+		MontFp3::setModulo(pStr);
+		static uint64_t x[3] = { 1, 0, 0 };
+		uint64_t z[3];
 std::cout<<std::hex;
-		MontFp9::setModulo(pStr);
-		MontFp9::inv(*(MontFp9*)z, *(const MontFp9*)x);
+		MontFp3::inv(*(MontFp3*)z, *(const MontFp3*)x);
+put(z);
 		exit(1);
 	}
 #endif
@@ -649,7 +650,6 @@ CYBOZU_TEST_AUTO(test6)
 	}
 }
 
-#if 0
 CYBOZU_TEST_AUTO(test9)
 {
 	Test<9> test;
@@ -661,7 +661,6 @@ CYBOZU_TEST_AUTO(test9)
 		test.run(tbl[i]);
 	}
 }
-#endif
 
 CYBOZU_TEST_AUTO(toStr16)
 {

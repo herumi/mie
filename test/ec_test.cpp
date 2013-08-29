@@ -240,10 +240,8 @@ CYBOZU_TEST_AUTO(all)
 	};
 	test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
 
-#if 0
 	const struct mie::EcParam para9[] = {
 		mie::ecparam::secp521r1
 	};
 	test_sub<Fp_9>(para9, CYBOZU_NUM_OF_ARRAY(para9));
-#endif
 }
