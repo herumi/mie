@@ -126,6 +126,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	static const int UseRDX = Xbyak::util::UseRDX;
 	static const int UseRCX = Xbyak::util::UseRCX;
 	Xbyak::util::Cpu cpu_;
+	bool useMulx_;
 	const uint64_t *p_;
 	uint64_t pp_;
 	int pn_;
@@ -169,6 +170,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		, shr1_(0)
 		, preInv_(0)
 	{
+		useMulx_ = cpu_.has(Xbyak::util::Cpu::tBMI2);
 	}
 	/*
 		@param p [in] pointer to prime
@@ -321,29 +323,31 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_raw_mulI_with_mulx(const RegExp& pz, const RegExp& px, const Reg64& y, const Reg64& t0, const Reg64& t1, int n)
 	{
-		mov(rdx, ptr [px]);
-		mulx(rax, t0, y);
-		mov(ptr [pz], t0);
-		const Reg64 *pt0 = &rax;
+		assert(n > 2);
+		// mulx(H, L, x) = [H:L] = x * rdxA
+		mov(rdx, y);
+		mulx(t1, rax, ptr [px]); // [y:rax] = px * y
+		mov(ptr [pz], rax);
+		const Reg64 *pt0 = &t0;
 		const Reg64 *pt1 = &t1;
-		for (int i = 1; i < n; i++) {
-			mov(rdx, ptr [px + 8 * i]);
-			mulx(*pt1, t0, y);
+		for (int i = 1; i < n - 1; i++) {
+			mulx(*pt0, rax, ptr [px + i * 8]);
 			if (i == 1) {
-				add(*pt0, t0);
+				add(rax, *pt1);
 			} else {
-				adc(*pt0, t0);
+				adc(rax, *pt1);
 			}
-			mov(ptr [pz + 8 * i], *pt0);
+			mov(ptr [pz + i * 8], rax);
 			std::swap(pt0, pt1);
 		}
-		if (pt1 == &rax) mov(rax, *pt0);
-		adc(rax, 0);
+		mulx(rdx, rax, ptr [px + (n - 1) * 8]);
+		adc(rax, *pt1);
+		mov(ptr [pz + (n - 1) * 8], rax);
+		adc(rdx, 0);
 	}
 	void gen_mulI()
 	{
-		const bool useMulx = cpu_.has(Xbyak::util::Cpu::tBMI2);
-		if (useMulx) {
+		if (useMulx_) {
 			printf("use mulx for mulI(%d)\n", pn_);
 			// mulx H, L, x ; [H:L] = x * rdx
 			StackFrame sf(this, 3, 2 | UseRDX);
@@ -351,6 +355,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			const Reg64& px = sf.p[1];
 			const Reg64& y = sf.p[2];
 			gen_raw_mulI_with_mulx(pz, px, y, sf.t[0], sf.t[1], pn_);
+			mov(rax, rdx);
 			return;
 		}
 		StackFrame sf(this, 3, 1 | UseRDX, pn_ * 8);
@@ -523,13 +528,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
-		StackFrame sf(this, 3, 3 | UseRDX, (n * 3 + 2) * 8);
+		StackFrame sf(this, 3, (3 | UseRDX) + (useMulx_ ? 1 : 0), (n * 3 + 2) * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
-		const Reg64& t = sf.t[0];
-		const Reg64& y = sf.t[1];
-		const Reg64& pAddr = sf.t[2];
+		const Reg64& y = sf.t[0];
+		const Reg64& pAddr = sf.t[1];
+		const Pack pt = sf.t.sub(2);
+		const Reg64& t = pt[0];
 		const RegExp pw1 = rsp; // pw1[0..n-1]
 		const RegExp pw2 = pw1 + n * 8; // pw2[0..n-1]
 		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
@@ -537,7 +543,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		for (int i = 0; i < n; i++) {
 			mov(y, ptr [py + i * 8]);
-			montgomeryN_1(pp, n, pc, px, y, pAddr, t, pw1, pw2, i == 0);
+			montgomeryN_1(pp, n, pc, px, y, pAddr, pt, pw1, pw2, i == 0);
 		}
 		// pz[] = pc[] - p[]
 		gen_raw_sub(pz, pc, pAddr, t);
@@ -1149,14 +1155,23 @@ private:
 		         pc[0..n-1] ; if !isFullBit_
 		destroy y
 	*/
-	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Reg64& t, const RegExp& pw1, const RegExp& pw2, bool isFirst)
+	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const RegExp& pw1, const RegExp& pw2, bool isFirst)
 	{
+		const Reg64& t = pt[0];
 		// pc[] += x[] * y
 		if (isFirst) {
-			gen_raw_mulI(pc, px, y, pw1, t, n);
+			if (useMulx_) {
+				gen_raw_mulI_with_mulx(pc, px, y, pt[0], pt[1], n);
+			} else {
+				gen_raw_mulI(pc, px, y, pw1, t, n);
+			}
 			mov(ptr [pc + n * 8], rdx);
 		} else {
-			gen_raw_mulI(pw2, px, y, pw1, t, n);
+			if (useMulx_) {
+				gen_raw_mulI_with_mulx(pw2, px, y, pt[0], pt[1], n);
+			} else {
+				gen_raw_mulI(pw2, px, y, pw1, t, n);
+			}
 			mov(t, ptr [pw2 + 0 * 8]);
 			add(ptr [pc + 0 * 8], t);
 			for (int i = 1; i < n; i++) {
@@ -1173,7 +1188,11 @@ private:
 		mov(rax, pp);
 		mul(qword [pc]);
 		mov(y, rax); // y = q
-		gen_raw_mulI(pw2, p, y, pw1, t, n);
+		if (useMulx_) {
+			gen_raw_mulI_with_mulx(pw2, p, y, pt[0], pt[1], n);
+		} else {
+			gen_raw_mulI(pw2, p, y, pw1, t, n);
+		}
 		// c[] = (c[] + pw2[]) >> 64
 		mov(t, ptr [pw2 + 0 * 8]);
 		add(t, ptr [pc + 0 * 8]);
