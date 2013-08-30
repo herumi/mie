@@ -454,6 +454,17 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (isFullBit_) {
 			jc(".over", jmpMode);
 		}
+#if 0
+		for (int i = 0; i < pn_; i++) {
+			mov(py, ptr [pz + (pn_ - 1 - i) * 8]); // destroy py
+			cmp(py, ptr [px + (pn_ - 1 - i) * 8]);
+			jc(".exit", jmpMode);
+			jnz(".over", jmpMode);
+		}
+		L(".over");
+			gen_raw_sub(pz, pz, px, rax);
+		L(".exit");
+#else
 		gen_raw_sub(rsp, pz, px, rax);
 		jc(".exit", jmpMode);
 		gen_mov(pz, rsp, rax, pn_);
@@ -463,6 +474,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			gen_raw_sub(pz, pz, px, rax);
 		}
 		L(".exit");
+#endif
 		outLocalLabel();
 	}
 	void gen_sub()
