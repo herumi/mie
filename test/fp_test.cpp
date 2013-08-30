@@ -10,11 +10,13 @@
 #endif
 #ifdef USE_MONT_FP
 #include <mie/mont_fp.hpp>
-typedef mie::MontFpT<3> Fp2;
+typedef mie::MontFpT<3> Fp3;
+typedef mie::MontFpT<4> Fp4;
 typedef mie::MontFpT<6> Fp6;
 typedef mie::MontFpT<9> Fp9;
 #else
-typedef mie::FpT<mie::Gmp> Fp2;
+typedef mie::FpT<mie::Gmp> Fp3;
+typedef mie::FpT<mie::Gmp> Fp4;
 typedef mie::FpT<mie::Gmp> Fp6;
 typedef mie::FpT<mie::Gmp> Fp9;
 #endif
@@ -438,12 +440,20 @@ void benchSub(const char *pStr, const char *xStr, const char *yStr)
 	puts("");
 }
 
-CYBOZU_TEST_AUTO(bench2)
+CYBOZU_TEST_AUTO(bench3)
 {
 	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
 	const char *xStr = "0x148094810948190412345678901234567900342423332197";
 	const char *yStr = "0x7fffffffffffffffffffffe26f2fc170f69466a74defd8d";
-	benchSub<Fp2>(pStr, xStr, yStr);
+	benchSub<Fp3>(pStr, xStr, yStr);
+}
+
+CYBOZU_TEST_AUTO(bench4)
+{
+	const char *pStr = "0x2523648240000001ba344d80000000086121000000000013a700000000000013";
+	const char *xStr = "0x1480948109481904123456789234234242423424201234567900342423332197";
+	const char *yStr = "0x151342342342341517fffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub<Fp4>(pStr, xStr, yStr);
 }
 
 CYBOZU_TEST_AUTO(bench6)
