@@ -67,9 +67,17 @@ struct MixPack {
 	int pn;
 	const Xbyak::RegExp *m;
 	int mn;
+	MixPack() : p(0), pn(0), m(0), mn(0)) {}
 	MixPack(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
-		: p(p), pn(p ? (int)p->size() : 0), m(m), mn(mn)
 	{
+		init(p, m, mn);
+	}
+	void init(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
+	{
+		this->p = p;
+		this->pn = p ? (int)p->size() : 0;
+		this->m = m;
+		this->mn = mn;
 	}
 	int size() const { return pn + mn; }
 	bool isReg(int n) const { return n < pn; }
@@ -88,6 +96,8 @@ struct MixPack {
 		return MemReg((n < pn) ? &(*p)[n] : 0, (n < pn) ? 0 : m, n - pn);
 	}
 };
+
+
 
 } // fp_gen_local
 
