@@ -68,16 +68,18 @@ struct MixPack {
 	Xbyak::util::Pack p;
 	Xbyak::RegExp m;
 	MixPack() : pn(0), mn(0) {}
-	MixPack(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
+	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n)
 	{
-		init(p, m, mn);
+		init(remain, rspPos, n);
 	}
-	void init(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
+	void init(Xbyak::util::Pack& remain, int& rspPos, int n)
 	{
-		this->pn = p ? (int)p->size() : 0;
-		this->mn = mn;
-		if (m) this->m = *m;
-		if (p) this->p = *p;
+		this->pn = std::min((int)remain.size(), n);
+		this->mn = n - pn;
+		this->m = Xbyak::util::rsp + rspPos;
+		this->p = remain.sub(0, pn);
+		remain = remain.sub(pn);
+		rspPos += mn * 8;
 	}
 	int size() const { return pn + mn; }
 	bool isReg(int n) const { return n < pn; }
@@ -862,44 +864,17 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		int rspPos = 0;
 
 		assert((int)sf.t.size() >= pn_);
-		const Pack v = sf.t.sub(0, pn_);
-		const MixPack vv(&v, 0, 0);
-
-		Pack remain = sf.t.sub(pn_);
+		Pack remain = sf.t;
+		const MixPack vv(remain, rspPos, pn_);
+		const Pack& v = vv.p;
 		if (pn_ > 2) {
 			remain.append(rdx).append(pr).append(px);
 		}
-		const int uRegNum = std::min((int)remain.size(), pn_);
-		const int uMemNum = pn_ - uRegNum;
-		const Pack u = remain.sub(0, uRegNum);
-		const RegExp uMem = rsp + rspPos;
-		const MixPack uu(&u, &uMem, uMemNum);
-		rspPos += uMemNum * 8;
-		remain = remain.sub(uRegNum);
 
-		const int rRegNum = std::min((int)remain.size(), pn_);
-		const int rMemNum = pn_ - rRegNum;
-		const Pack r = remain.sub(0, rRegNum);
-		const RegExp rMem = rsp + rspPos;
-		const MixPack rr(&r, &rMem, rMemNum);
-		rspPos += rMemNum * 8;
-		remain = remain.sub(rRegNum);
-
-		const int sRegNum = std::min((int)remain.size(), pn_);
-		const int sMemNum = pn_ - sRegNum;
-		const Pack s = remain.sub(0, sRegNum);
-		const RegExp sMem = rsp + rspPos;
-		const MixPack ss(&s, &sMem, sMemNum);
-		rspPos += sMemNum * 8;
-		remain = remain.sub(sRegNum);
-
-		const int keepRegNum = std::min((int)remain.size(), pn_);
-		const int keepMemNum = pn_ - keepRegNum;
-		const Pack keep = remain.sub(0, keepRegNum);
-		const RegExp keepMem = rsp + rspPos;
-		const MixPack keep_v(&keep, &keepMem, keepMemNum);
-		rspPos += keepMemNum * 8;
-		remain = remain.sub(keepRegNum);
+		const MixPack uu(remain, rspPos, pn_);
+		const MixPack rr(remain, rspPos, pn_);
+		const MixPack ss(remain, rspPos, pn_);
+		const MixPack keep_v(remain, rspPos, pn_);
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
