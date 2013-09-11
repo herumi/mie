@@ -63,41 +63,39 @@ public:
 };
 
 struct MixPack {
-	const Xbyak::util::Pack *p;
 	int pn;
-	const Xbyak::RegExp *m;
 	int mn;
-	MixPack() : p(0), pn(0), m(0), mn(0)) {}
+	Xbyak::util::Pack p;
+	Xbyak::RegExp m;
+	MixPack() : pn(0), mn(0) {}
 	MixPack(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
 	{
 		init(p, m, mn);
 	}
 	void init(const Xbyak::util::Pack *p, const Xbyak::RegExp *m, int mn)
 	{
-		this->p = p;
 		this->pn = p ? (int)p->size() : 0;
-		this->m = m;
 		this->mn = mn;
+		if (m) this->m = *m;
+		if (p) this->p = *p;
 	}
 	int size() const { return pn + mn; }
 	bool isReg(int n) const { return n < pn; }
 	const Xbyak::Reg64& getReg(int n) const
 	{
 		assert(n < pn);
-		return (*p)[n];
+		return p[n];
 	}
 	Xbyak::RegExp getMem(int n) const
 	{
 		assert(pn <= n && n < size());
-		return *m + (n - pn) * (int)sizeof(size_t);
+		return m + (n - pn) * (int)sizeof(size_t);
 	}
 	MemReg operator[](int n) const
 	{
-		return MemReg((n < pn) ? &(*p)[n] : 0, (n < pn) ? 0 : m, n - pn);
+		return MemReg((n < pn) ? &p[n] : 0, (n < pn) ? 0 : &m, n - pn);
 	}
 };
-
-
 
 } // fp_gen_local
 
