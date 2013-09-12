@@ -40,6 +40,7 @@ struct Init {
 
 CYBOZU_TEST_SETUP_FIXTURE(Init);
 
+#ifndef MIE_ONLY_BENCH
 CYBOZU_TEST_AUTO(cstr)
 {
 	const struct {
@@ -422,6 +423,7 @@ CYBOZU_TEST_AUTO(toStr16)
 		CYBOZU_TEST_EQUAL(str, std::string("0x") + tbl[i].str);
 	}
 }
+#endif
 
 #ifdef NDEBUG
 template<class T>
@@ -430,13 +432,13 @@ void benchSub(const char *pStr, const char *xStr, const char *yStr)
 	T::setModulo(pStr);
 	T x(xStr);
 	T y(yStr);
-	std::string dummy;
+	T one(1);
 
-	CYBOZU_BENCH("add", T::add, x, x, x); dummy += x.toStr();
-	CYBOZU_BENCH("sub", T::sub, x, x, y); dummy += x.toStr();
-	CYBOZU_BENCH("mul", T::mul, x, x, x); dummy += x.toStr();
-	CYBOZU_BENCH("inv", T::inv, x, x); dummy += x.toStr();
-	CYBOZU_BENCH("div", T::div, x, x, y); dummy += x.toStr();
+	CYBOZU_BENCH("add", T::add, x, x, x);
+	CYBOZU_BENCH("sub", T::sub, x, x, y);
+	CYBOZU_BENCH("mul", T::mul, x, x, x);
+	CYBOZU_BENCH("inv", x += one;T::inv, x, x);
+	CYBOZU_BENCH("div", x += one;T::div, x, x, y);
 	puts("");
 }
 
