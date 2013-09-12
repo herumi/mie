@@ -358,7 +358,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void gen_mulI()
 	{
 		if (useMulx_) {
-			printf("use mulx for mulI(%d)\n", pn_);
 			// mulx H, L, x ; [H:L] = x * rdx
 			StackFrame sf(this, 3, 2 | UseRDX);
 			const Reg64& pz = sf.p[0];
