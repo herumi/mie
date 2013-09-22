@@ -97,6 +97,16 @@ struct MixPack {
 	{
 		return MemReg((n < pn) ? &p[n] : 0, (n < pn) ? 0 : &m, n - pn);
 	}
+	void resize(int s)
+	{
+		if (s > size()) throw cybozu::Exception("MixPack:resize:too large s") << s << size();
+		if (s >= pn) {
+			mn = s - pn;
+		} else {
+			pn = s;
+			mn = 0;
+		}
+	}
 };
 
 } // fp_gen_local
@@ -165,7 +175,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void2op shr1_;
 	int2op preInv_;
 	FpGenerator()
-		: CodeGenerator(4096 * 4)
+		: CodeGenerator(4096 * 8)
 		, p_(0)
 		, pp_(0)
 		, pn_(0)
@@ -463,7 +473,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (isFullBit_) {
 			jc(".over", jmpMode);
 		}
-#if 0
+#ifdef MIE_USE_JMP
 		for (int i = 0; i < pn_; i++) {
 			mov(py, ptr [pz + (pn_ - 1 - i) * 8]); // destroy py
 			cmp(py, ptr [px + (pn_ - 1 - i) * 8]);
@@ -840,12 +850,22 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 #endif
 
+	std::string mkLabel(const char *label, int n) const
+	{
+		return std::string(label) + Xbyak::Label::toStr(n);
+	}
 	/*
 		input (r, x) = (p0, p1)
 		int k = preInvC(r, x)
 	*/
 	void gen_preInv()
 	{
+#if 0
+		if (pn_ == 4) {
+			gen_preInv4();
+			return;
+		}
+#endif
 		assert(pn_ >= 2);
 		const int freeRegNum = 13;
 		if (pn_ > 9) {
@@ -864,16 +884,15 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		assert((int)sf.t.size() >= pn_);
 		Pack remain = sf.t;
-		const MixPack vv(remain, rspPos, pn_);
+		MixPack vv(remain, rspPos, pn_);
 		const Pack& v = vv.p;
 		if (pn_ > 2) {
 			remain.append(rdx).append(pr).append(px);
 		}
 
-		const MixPack uu(remain, rspPos, pn_);
+		MixPack uu(remain, rspPos, pn_);
 		const MixPack rr(remain, rspPos, pn_);
 		const MixPack ss(remain, rspPos, pn_);
-		const MixPack keep_v(remain, rspPos, pn_);
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
@@ -881,7 +900,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		inLocalLabel();
 		mov(ptr [keep_pr], pr);
-		load_rm(v, px); // v = x
+		load_mp(vv, px, t); // v = x
 		// px is free frome here
 		mov(rax, (size_t)p_);
 		load_mp(uu, rax, t); // u = p_
@@ -900,10 +919,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(qword [ss.getMem(0)], 1);
 		}
-		jmp(".lp");
-		align(16);
+#if 0
 	L(".lp");
-		or_r(t, v);
+		or_mp(vv, t);
 		jz(".exit", T_NEAR);
 
 		if (uu.isReg(0)) {
@@ -914,9 +932,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		jz(".u_even", T_NEAR);
 		test(v[0], 1);
 		jz(".v_even", T_NEAR);
-		mov_mp(keep_v, vv, t);
+		for (int i = pn_ - 1; i >= 0; i--) {
+			g_cmp(vv[i], uu[i], t);
+			jc(".v_lt_u", T_NEAR);
+			jnz(".v_ge_u");
+		}
+
+	L(".v_ge_u");
 		sub_mp(vv, uu, t);
-		jc(".v_lt_u", T_NEAR);
 		add_mp(ss, rr, t);
 	L(".v_even");
 		shr_mp(vv, 1, t);
@@ -928,7 +951,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		inc(rax);
 		jmp(".lp", T_NEAR);
 	L(".v_lt_u");
-		mov_mp(vv, keep_v, t);
 		sub_mp(uu, vv, t);
 		add_mp(rr, ss, t);
 		if (isFullBit_) {
@@ -940,24 +962,235 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		twice_mp(ss, t);
 		inc(rax);
 		jmp(".lp", T_NEAR);
+#else
+		for (int cn = pn_; cn > 0; cn--) {
+			const std::string _lp = mkLabel(".lp", cn);
+			const std::string _u_v_odd = mkLabel(".u_v_odd", cn);
+			const std::string _u_even = mkLabel(".u_even", cn);
+			const std::string _v_even = mkLabel(".v_even", cn);
+			const std::string _v_ge_u = mkLabel(".v_ge_u", cn);
+			const std::string _v_lt_u = mkLabel(".v_lt_u", cn);
+		L(_lp);
+			or_mp(vv, t);
+			jz(".exit", T_NEAR);
+
+			if (uu.isReg(0)) {
+				test(uu.getReg(0), 1);
+			} else {
+				test(qword [uu.getMem(0)], 1);
+			}
+			jz(_u_even, T_NEAR);
+			test(v[0], 1);
+			jz(_v_even, T_NEAR);
+		L(_u_v_odd);
+			if (cn > 1) {
+				g_test(vv[cn - 1], uu[cn - 1], t);
+				jz(mkLabel(".u_v_odd", cn - 1), T_NEAR);
+			}
+			for (int i = cn - 1; i >= 0; i--) {
+				g_cmp(vv[i], uu[i], t);
+				jc(_v_lt_u, T_NEAR);
+				jnz(_v_ge_u);
+			}
+
+		L(_v_ge_u);
+			sub_mp(vv, uu, t);
+			add_mp(ss, rr, t);
+		L(_v_even);
+			shr_mp(vv, 1, t);
+			twice_mp(rr, t);
+			if (isFullBit_) {
+				sbb(t, t);
+				mov(ptr [rTop], t);
+			}
+			inc(rax);
+			jmp(_lp, T_NEAR);
+		L(_v_lt_u);
+			sub_mp(uu, vv, t);
+			add_mp(rr, ss, t);
+			if (isFullBit_) {
+				sbb(t, t);
+				mov(ptr [rTop], t);
+			}
+		L(_u_even);
+			shr_mp(uu, 1, t);
+			twice_mp(ss, t);
+			inc(rax);
+			jmp(_lp, T_NEAR);
+
+			vv.resize(vv.size() - 1);
+			uu.resize(uu.size() - 1);
+		}
+#endif
 	L(".exit");
+		// ww is all reg
+		remain = sf.t;
+		rspPos = 0;
+		MixPack ww(remain, rspPos, pn_);
+		const Pack& w = ww.p;
+
 		mov(t, (size_t)p_);
-		load_rm(v, t); // v = p
+		load_rm(w, t); // w = p
 		if (isFullBit_) {
 			mov(t, ptr [rTop]);
 			test(t, t);
 			jz("@f");
-			sub_mp(rr, vv, t);
+			sub_mp(rr, ww, t);
 		L("@@");
 		}
-		sub_mp(vv, rr, t);
+		sub_mp(ww, rr, t);
 		jnc("@f");
 		mov(t, (size_t)p_);
-		add_rm(v, t);
+		add_rm(w, t);
 	L("@@");
 		mov(rcx, ptr [keep_pr]);
-		store_mr(rcx, v);
+		store_mr(rcx, w);
 		outLocalLabel();
+	}
+	void gen_preInv4()
+	{
+		using namespace Xbyak;
+		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, 8 * 4);
+		const Reg64& r = sf.p[0];
+		const Reg64& v0 = sf.p[1];
+		const Reg64& v1 = sf.t[0];
+		const Reg64& v2 = sf.t[1];
+		const Reg64& v3 = sf.t[2];
+		const Reg64& u0 = sf.t[3];
+		const Reg64& u1 = sf.t[4];
+		const Reg64& u2 = sf.t[5];
+		const Reg64& u3 = sf.t[6];
+		const Reg64& s0 = sf.t[7];
+		const Reg64& s1 = sf.t[8];
+		const Reg64& s2 = sf.t[9];
+		const Reg64& s3 = rcx;
+		const Reg64& t = rdx;
+
+		inLocalLabel();
+		const Reg64& a = rax;
+		const Xmm& k = xm4;
+		const Xmm& one = xm5;
+		const Xmm& xt0 = xm0;
+		const Xmm& xt1 = xm1;
+		const Xmm& xt2 = xm2;
+		const Xmm& xt3 = xm3;
+		mov32c(t, (uint64_t)p_);
+		load_rm(Pack(u3, u2, u1, u0), t); // u = p
+		mov(v3, ptr [v0 + 8 * 3]);
+		mov(v2, ptr [v0 + 8 * 2]);
+		mov(v1, ptr [v0 + 8 * 1]);
+		mov(v0, ptr [v0 + 8 * 0]); // v = x
+		xor_(s3, s3);
+		lea(s0, ptr [s3 + 1]);
+		mov(s1, s3);
+		mov(s2, s3); // s[3:2:1:0] = 1
+
+		// r = [r:a:rsp[1]:rsp[0]]
+		mov(ptr [rsp + 8 * 0], s3);
+		mov(ptr [rsp + 8 * 1], s3);
+		mov(ptr [rsp + 8 * 2], r); // save r
+		xor_(a, a);
+		xor_(r, r);
+
+		pxor(k, k); // k
+		pxor(one, one);
+		movq(one, s0);
+
+		align(16);
+	L(".lp");
+		mov(t, v0);
+		or_(t, v1);
+		or_(t, v2);
+		or_(t, v3);
+		jz(".exit", T_NEAR);
+		test(u0, 1);
+		jz(".u_even", T_NEAR);
+		test(v0, 1);
+		jz(".v_even");
+		movq(xt0, v0);
+		movq(xt1, v1);
+		movq(xt2, v2);
+		movq(xt3, v3);
+		sub_rr(Pack(v3, v2, v1, v0), Pack(u3, u2, u1, u0));
+		jc(".next3");
+		add(s0, ptr [rsp + 8 * 0]);
+		adc(s1, ptr [rsp + 8 * 1]);
+		adc(s2, a);
+		adc(s3, r);
+	L(".v_even");
+		shr1(v3, v2, v1, v0);
+		mov(t, ptr [rsp + 8 * 0]);
+		add(ptr [rsp + 8 * 0], t);
+		mov(t, ptr [rsp + 8 * 1]);
+		adc(ptr [rsp + 8 * 1], t);
+		adc(a, a);
+		adc(r, r);
+		paddd(k, one);
+		jmp(".lp");
+		align(16);
+	L(".next3");
+		movq(v0, xt0);
+		movq(v1, xt1);
+		movq(v2, xt2);
+		movq(v3, xt3);
+		sub_rr(Pack(u3, u2, u1, u0), Pack(v3, v2, v1, v0));
+		add(ptr [rsp + 8 * 0], s0);
+		adc(ptr [rsp + 8 * 1], s1);
+		adc(a, s2);
+		adc(r, s3);
+	L(".u_even");
+		shr1(u3, u2, u1, u0);
+		shl1(s3, s2, s1, s0);
+		paddd(k, one);
+		jmp(".lp", T_NEAR);
+		align(16);
+	L(".exit");
+		// r = 2p - r
+		// if (r >= p) r -= p ; this is unnecessary because next function is mul
+		mov32c(t, (uint64_t)&p_);
+		load_rm(Pack(s3, s2, s1, s0), t);
+		shl1(s3, s2, s1, s0);
+		sub(s0, ptr [rsp + 8 * 0]);
+		sbb(s1, ptr [rsp + 8 * 1]);
+		sbb(s2, a);
+		sbb(s3, r);
+		mov(r, ptr [rsp + 8 * 2]);
+		store_mr(r, Pack(s3, s2, s1, s0));
+		movq(rax, k);
+
+		outLocalLabel();
+	}
+	void mov32c(const Reg64& r, uint64_t c)
+	{
+		if (c & 0xffffffff00000000ULL) {
+			mov(r, c);
+		} else {
+			mov(Xbyak::Reg32(r.getIdx()), (uint32_t)c);
+		}
+	}
+	/*
+		[x3:x2:x1:x0] >>= n
+	*/
+	void shrn(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0, uint8_t n)
+	{
+		shrd(x0, x1, n); // x0 = [x1:x0] >> n
+		shrd(x1, x2, n); // x1 = [x2:x1] >> n
+		shrd(x2, x3, n); // x2 = [x3:x2] >> n
+		shr(x3, n); // x3 >> n
+	}
+	/*
+		[x3:x2:x1:x0] >>= 1
+	*/
+	void shr1(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0)
+	{
+		shrn(x3, x2, x1, x0, 1);
+	}
+	/*
+		[x3:x2:x1:x0] <<= 1
+	*/
+	void shl1(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0)
+	{
+		add_rr(Pack(x3, x2, x1, x0), Pack(x3, x2, x1, x0));
 	}
 private:
 	FpGenerator(const FpGenerator&);
@@ -993,6 +1226,26 @@ private:
 	void g_adc(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::adc, op1, op2, t); }
 	void g_sub(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sub, op1, op2, t); }
 	void g_sbb(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sbb, op1, op2, t); }
+	void g_cmp(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::cmp, op1, op2, t); }
+	void g_test(const MemReg& op1, const MemReg& op2, const Reg64& t)
+	{
+		const MemReg *pop1 = &op1;
+		const MemReg *pop2 = &op2;
+		if (!pop1->isReg()) {
+			std::swap(pop1, pop2);
+		}
+		// (M, M), (R, M), (R, R)
+		if (pop1->isReg()) {
+			if (pop2->isReg()) {
+				test(pop1->getReg(), pop2->getReg());
+			} else {
+				test(ptr [pop2->getMem()], pop1->getReg());
+			}
+		} else {
+			mov(t, ptr [pop1->getMem()]);
+			test(ptr [pop2->getMem()], t);
+		}
+	}
 	/*
 		z[] = x[]
 	*/
@@ -1033,6 +1286,17 @@ private:
 		}
 	}
 	/*
+		z[] -= x[]
+	*/
+	void sub_rr(const Pack& z, const Pack& x)
+	{
+		sub(z[0], x[0]);
+		assert(z.size() == x.size());
+		for (size_t i = 1, n = z.size(); i < n; i++) {
+			sbb(z[i], x[i]);
+		}
+	}
+	/*
 		z[] += m[]
 	*/
 	void add_rm(const Pack& z, const RegExp& m)
@@ -1056,15 +1320,28 @@ private:
 		t = all or x[i]
 		ZF = x is zero
 	*/
-	void or_r(const Reg64& t, const Pack& x)
+	void or_mp(const MixPack& x, const Reg64& t)
 	{
 		const int n = (int)x.size();
 		if (n == 1) {
-			test(x[0], x[0]);
+			if (x.isReg(0)) {
+				test(x.getReg(0), x.getReg(0));
+			} else {
+				mov(t, ptr [x.getMem(0)]);
+				test(t, t);
+			}
 		} else {
-			mov(t, x[0]);
+			if (x.isReg(0)) {
+				mov(t, x.getReg(0));
+			} else {
+				mov(t, ptr [x.getMem(0)]);
+			}
 			for (int i = 1; i < n; i++) {
-				or_(t, x[i]);
+				if (x.isReg(i)) {
+					or_(t, x.getReg(i));
+				} else {
+					or_(t, ptr [x.getMem(i)]);
+				}
 			}
 		}
 	}
