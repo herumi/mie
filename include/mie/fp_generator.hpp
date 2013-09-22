@@ -1018,8 +1018,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			inc(rax);
 			jmp(_lp, T_NEAR);
 
-			vv.resize(vv.size() - 1);
-			uu.resize(uu.size() - 1);
+			if (cn > 0) {
+				vv.resize(cn - 1);
+				uu.resize(cn - 1);
+			}
 		}
 #endif
 	L(".exit");
