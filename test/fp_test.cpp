@@ -432,13 +432,12 @@ void benchSub(const char *pStr, const char *xStr, const char *yStr)
 	T::setModulo(pStr);
 	T x(xStr);
 	T y(yStr);
-	T one(1);
 
 	CYBOZU_BENCH("add", T::add, x, x, x);
 	CYBOZU_BENCH("sub", T::sub, x, x, y);
 	CYBOZU_BENCH("mul", T::mul, x, x, x);
-	CYBOZU_BENCH("inv", x += one;T::inv, x, x); // avoid same jmp
-	CYBOZU_BENCH("div", x += one;T::div, x, x, y);
+	CYBOZU_BENCH("inv", x += y;T::inv, x, x); // avoid same jmp
+	CYBOZU_BENCH("div", x += y;T::div, x, x, y);
 	puts("");
 }
 

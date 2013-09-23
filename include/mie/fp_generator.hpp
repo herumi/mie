@@ -68,13 +68,14 @@ struct MixPack {
 	Xbyak::util::Pack p;
 	Xbyak::RegExp m;
 	MixPack() : pn(0), mn(0) {}
-	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n)
+	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
 	{
-		init(remain, rspPos, n);
+		init(remain, rspPos, n, useRegNum);
 	}
-	void init(Xbyak::util::Pack& remain, int& rspPos, int n)
+	void init(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
 	{
 		this->pn = std::min((int)remain.size(), n);
+		if (useRegNum > 0 && useRegNum < this->pn) this->pn = useRegNum;
 		this->mn = n - pn;
 		this->m = Xbyak::util::rsp + rspPos;
 		this->p = remain.sub(0, pn);
@@ -884,15 +885,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		assert((int)sf.t.size() >= pn_);
 		Pack remain = sf.t;
-		MixPack vv(remain, rspPos, pn_);
-		const Pack& v = vv.p;
+		const MixPack rr(remain, rspPos, pn_);
 		if (pn_ > 2) {
 			remain.append(rdx).append(pr).append(px);
 		}
-
-		MixPack uu(remain, rspPos, pn_);
-		const MixPack rr(remain, rspPos, pn_);
 		const MixPack ss(remain, rspPos, pn_);
+		MixPack vv(remain, rspPos, pn_);
+		MixPack uu(remain, rspPos, pn_);
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
@@ -900,7 +899,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		inLocalLabel();
 		mov(ptr [keep_pr], pr);
-		load_mp(vv, px, t); // v = x
+		mov(rax, px);
+		load_mp(vv, rax, t); // v = x
 		// px is free frome here
 		mov(rax, (size_t)p_);
 		load_mp(uu, rax, t); // u = p_
@@ -919,50 +919,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(qword [ss.getMem(0)], 1);
 		}
-#if 0
-	L(".lp");
-		or_mp(vv, t);
-		jz(".exit", T_NEAR);
-
-		if (uu.isReg(0)) {
-			test(uu.getReg(0), 1);
-		} else {
-			test(qword [uu.getMem(0)], 1);
-		}
-		jz(".u_even", T_NEAR);
-		test(v[0], 1);
-		jz(".v_even", T_NEAR);
-		for (int i = pn_ - 1; i >= 0; i--) {
-			g_cmp(vv[i], uu[i], t);
-			jc(".v_lt_u", T_NEAR);
-			jnz(".v_ge_u");
-		}
-
-	L(".v_ge_u");
-		sub_mp(vv, uu, t);
-		add_mp(ss, rr, t);
-	L(".v_even");
-		shr_mp(vv, 1, t);
-		twice_mp(rr, t);
-		if (isFullBit_) {
-			sbb(t, t);
-			mov(ptr [rTop], t);
-		}
-		inc(rax);
-		jmp(".lp", T_NEAR);
-	L(".v_lt_u");
-		sub_mp(uu, vv, t);
-		add_mp(rr, ss, t);
-		if (isFullBit_) {
-			sbb(t, t);
-			mov(ptr [rTop], t);
-		}
-	L(".u_even");
-		shr_mp(uu, 1, t);
-		twice_mp(ss, t);
-		inc(rax);
-		jmp(".lp", T_NEAR);
-#else
 		for (int cn = pn_; cn > 0; cn--) {
 			const std::string _lp = mkLabel(".lp", cn);
 			const std::string _u_v_odd = mkLabel(".u_v_odd", cn);
@@ -974,13 +930,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			or_mp(vv, t);
 			jz(".exit", T_NEAR);
 
-			if (uu.isReg(0)) {
-				test(uu.getReg(0), 1);
-			} else {
-				test(qword [uu.getMem(0)], 1);
-			}
+			g_test(uu[0], 1);
 			jz(_u_even, T_NEAR);
-			test(v[0], 1);
+			g_test(vv[0], 1);
 			jz(_v_even, T_NEAR);
 		L(_u_v_odd);
 			if (cn > 1) {
@@ -990,7 +942,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			for (int i = cn - 1; i >= 0; i--) {
 				g_cmp(vv[i], uu[i], t);
 				jc(_v_lt_u, T_NEAR);
-				jnz(_v_ge_u);
+				jnz(_v_ge_u, T_NEAR);
 			}
 
 		L(_v_ge_u);
@@ -1023,7 +975,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				uu.resize(cn - 1);
 			}
 		}
-#endif
 	L(".exit");
 		// ww is all reg
 		remain = sf.t;
@@ -1246,6 +1197,14 @@ private:
 		} else {
 			mov(t, ptr [pop1->getMem()]);
 			test(ptr [pop2->getMem()], t);
+		}
+	}
+	void g_test(const MemReg& op, int imm)
+	{
+		if (op.isReg()) {
+			test(op.getReg(), imm);
+		} else {
+			test(qword [op.getMem()], imm);
 		}
 	}
 	/*
