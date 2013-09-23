@@ -885,6 +885,15 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		assert((int)sf.t.size() >= pn_);
 		Pack remain = sf.t;
+#if 1
+		MixPack vv(remain, rspPos, pn_);
+		if (pn_ > 2) {
+			remain.append(rdx).append(pr).append(px);
+		}
+		MixPack uu(remain, rspPos, pn_);
+		const MixPack rr(remain, rspPos, pn_);
+		const MixPack ss(remain, rspPos, pn_);
+#else
 		const MixPack rr(remain, rspPos, pn_);
 		if (pn_ > 2) {
 			remain.append(rdx).append(pr).append(px);
@@ -892,6 +901,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const MixPack ss(remain, rspPos, pn_);
 		MixPack vv(remain, rspPos, pn_);
 		MixPack uu(remain, rspPos, pn_);
+#endif
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
@@ -919,6 +929,46 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(qword [ss.getMem(0)], 1);
 		}
+#if 1
+	L(".lp");
+		or_mp(vv, t);
+		jz(".exit", T_NEAR);
+
+		g_test(uu[0], 1);
+		jz(".u_even", T_NEAR);
+		g_test(vv[0], 1);
+		jz(".v_even", T_NEAR);
+		for (int i = pn_ - 1; i >= 0; i--) {
+			g_cmp(vv[i], uu[i], t);
+			jc(".v_lt_u", T_NEAR);
+			jnz(".v_ge_u");
+		}
+
+	L(".v_ge_u");
+		sub_mp(vv, uu, t);
+		add_mp(ss, rr, t);
+	L(".v_even");
+		shr_mp(vv, 1, t);
+		twice_mp(rr, t);
+		if (isFullBit_) {
+			sbb(t, t);
+			mov(ptr [rTop], t);
+		}
+		inc(rax);
+		jmp(".lp", T_NEAR);
+	L(".v_lt_u");
+		sub_mp(uu, vv, t);
+		add_mp(rr, ss, t);
+		if (isFullBit_) {
+			sbb(t, t);
+			mov(ptr [rTop], t);
+		}
+	L(".u_even");
+		shr_mp(uu, 1, t);
+		twice_mp(ss, t);
+		inc(rax);
+		jmp(".lp", T_NEAR);
+#else
 		for (int cn = pn_; cn > 0; cn--) {
 			const std::string _lp = mkLabel(".lp", cn);
 			const std::string _u_v_odd = mkLabel(".u_v_odd", cn);
@@ -975,6 +1025,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 				uu.resize(cn - 1);
 			}
 		}
+#endif
 	L(".exit");
 		// ww is all reg
 		remain = sf.t;
