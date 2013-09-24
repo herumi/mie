@@ -930,12 +930,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_preInv()
 	{
-#if 0
-		if (pn_ == 4) {
-			gen_preInv4();
-			return;
-		}
-#endif
 		assert(pn_ >= 2);
 		const int freeRegNum = 13;
 		if (pn_ > 9) {
@@ -1109,119 +1103,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	L("@@");
 		outLocalLabel();
 	}
-	void gen_preInv4()
-	{
-		using namespace Xbyak;
-		StackFrame sf(this, 2, 10 | UseRDX | UseRCX, 8 * 4);
-		const Reg64& r = sf.p[0];
-		const Reg64& v0 = sf.p[1];
-		const Reg64& v1 = sf.t[0];
-		const Reg64& v2 = sf.t[1];
-		const Reg64& v3 = sf.t[2];
-		const Reg64& u0 = sf.t[3];
-		const Reg64& u1 = sf.t[4];
-		const Reg64& u2 = sf.t[5];
-		const Reg64& u3 = sf.t[6];
-		const Reg64& s0 = sf.t[7];
-		const Reg64& s1 = sf.t[8];
-		const Reg64& s2 = sf.t[9];
-		const Reg64& s3 = rcx;
-		const Reg64& t = rdx;
-
-		inLocalLabel();
-		const Reg64& a = rax;
-		const Xmm& k = xm4;
-		const Xmm& one = xm5;
-		const Xmm& xt0 = xm0;
-		const Xmm& xt1 = xm1;
-		const Xmm& xt2 = xm2;
-		const Xmm& xt3 = xm3;
-		mov32c(t, (uint64_t)p_);
-		load_rm(Pack(u3, u2, u1, u0), t); // u = p
-		mov(v3, ptr [v0 + 8 * 3]);
-		mov(v2, ptr [v0 + 8 * 2]);
-		mov(v1, ptr [v0 + 8 * 1]);
-		mov(v0, ptr [v0 + 8 * 0]); // v = x
-		xor_(s3, s3);
-		lea(s0, ptr [s3 + 1]);
-		mov(s1, s3);
-		mov(s2, s3); // s[3:2:1:0] = 1
-
-		// r = [r:a:rsp[1]:rsp[0]]
-		mov(ptr [rsp + 8 * 0], s3);
-		mov(ptr [rsp + 8 * 1], s3);
-		mov(ptr [rsp + 8 * 2], r); // save r
-		xor_(a, a);
-		xor_(r, r);
-
-		pxor(k, k); // k
-		pxor(one, one);
-		movq(one, s0);
-
-		align(16);
-	L(".lp");
-		mov(t, v0);
-		or_(t, v1);
-		or_(t, v2);
-		or_(t, v3);
-		jz(".exit", T_NEAR);
-		test(u0, 1);
-		jz(".u_even", T_NEAR);
-		test(v0, 1);
-		jz(".v_even");
-		movq(xt0, v0);
-		movq(xt1, v1);
-		movq(xt2, v2);
-		movq(xt3, v3);
-		sub_rr(Pack(v3, v2, v1, v0), Pack(u3, u2, u1, u0));
-		jc(".next3");
-		add(s0, ptr [rsp + 8 * 0]);
-		adc(s1, ptr [rsp + 8 * 1]);
-		adc(s2, a);
-		adc(s3, r);
-	L(".v_even");
-		shr1(v3, v2, v1, v0);
-		mov(t, ptr [rsp + 8 * 0]);
-		add(ptr [rsp + 8 * 0], t);
-		mov(t, ptr [rsp + 8 * 1]);
-		adc(ptr [rsp + 8 * 1], t);
-		adc(a, a);
-		adc(r, r);
-		paddd(k, one);
-		jmp(".lp");
-		align(16);
-	L(".next3");
-		movq(v0, xt0);
-		movq(v1, xt1);
-		movq(v2, xt2);
-		movq(v3, xt3);
-		sub_rr(Pack(u3, u2, u1, u0), Pack(v3, v2, v1, v0));
-		add(ptr [rsp + 8 * 0], s0);
-		adc(ptr [rsp + 8 * 1], s1);
-		adc(a, s2);
-		adc(r, s3);
-	L(".u_even");
-		shr1(u3, u2, u1, u0);
-		shl1(s3, s2, s1, s0);
-		paddd(k, one);
-		jmp(".lp", T_NEAR);
-		align(16);
-	L(".exit");
-		// r = 2p - r
-		// if (r >= p) r -= p ; this is unnecessary because next function is mul
-		mov32c(t, (uint64_t)&p_);
-		load_rm(Pack(s3, s2, s1, s0), t);
-		shl1(s3, s2, s1, s0);
-		sub(s0, ptr [rsp + 8 * 0]);
-		sbb(s1, ptr [rsp + 8 * 1]);
-		sbb(s2, a);
-		sbb(s3, r);
-		mov(r, ptr [rsp + 8 * 2]);
-		store_mr(r, Pack(s3, s2, s1, s0));
-		movq(rax, k);
-
-		outLocalLabel();
-	}
 	void mov32c(const Reg64& r, uint64_t c)
 	{
 		if (c & 0xffffffff00000000ULL) {
@@ -1229,30 +1110,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(Xbyak::Reg32(r.getIdx()), (uint32_t)c);
 		}
-	}
-	/*
-		[x3:x2:x1:x0] >>= n
-	*/
-	void shrn(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0, uint8_t n)
-	{
-		shrd(x0, x1, n); // x0 = [x1:x0] >> n
-		shrd(x1, x2, n); // x1 = [x2:x1] >> n
-		shrd(x2, x3, n); // x2 = [x3:x2] >> n
-		shr(x3, n); // x3 >> n
-	}
-	/*
-		[x3:x2:x1:x0] >>= 1
-	*/
-	void shr1(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0)
-	{
-		shrn(x3, x2, x1, x0, 1);
-	}
-	/*
-		[x3:x2:x1:x0] <<= 1
-	*/
-	void shl1(const Reg64& x3, const Reg64& x2, const Reg64& x1, const Reg64& x0)
-	{
-		add_rr(Pack(x3, x2, x1, x0), Pack(x3, x2, x1, x0));
 	}
 private:
 	FpGenerator(const FpGenerator&);
