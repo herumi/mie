@@ -63,50 +63,62 @@ public:
 };
 
 struct MixPack {
-	int pn;
-	int mn;
 	Xbyak::util::Pack p;
 	Xbyak::RegExp m;
-	MixPack() : pn(0), mn(0) {}
+	int mn;
+	MixPack() : mn(0) {}
 	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
 	{
 		init(remain, rspPos, n, useRegNum);
 	}
 	void init(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
 	{
-		this->pn = std::min((int)remain.size(), n);
-		if (useRegNum > 0 && useRegNum < this->pn) this->pn = useRegNum;
+		int pn = std::min((int)remain.size(), n);
+		if (useRegNum > 0 && useRegNum < pn) pn = useRegNum;
 		this->mn = n - pn;
 		this->m = Xbyak::util::rsp + rspPos;
 		this->p = remain.sub(0, pn);
 		remain = remain.sub(pn);
 		rspPos += mn * 8;
 	}
-	int size() const { return pn + mn; }
-	bool isReg(int n) const { return n < pn; }
+	int size() const { return (int)p.size() + mn; }
+	bool isReg(int n) const { return n < p.size(); }
 	const Xbyak::Reg64& getReg(int n) const
 	{
-		assert(n < pn);
+		assert(n < p.size());
 		return p[n];
 	}
 	Xbyak::RegExp getMem(int n) const
 	{
+		const int pn = (int)p.size();
 		assert(pn <= n && n < size());
 		return m + (n - pn) * (int)sizeof(size_t);
 	}
 	MemReg operator[](int n) const
 	{
+		const int pn = (int)p.size();
 		return MemReg((n < pn) ? &p[n] : 0, (n < pn) ? 0 : &m, n - pn);
 	}
-	void resize(int s)
+	void removeLast()
 	{
-		if (s > size()) throw cybozu::Exception("MixPack:resize:too large s") << s << size();
-		if (s >= pn) {
-			mn = s - pn;
+		if (!size()) throw cybozu::Exception("MixPack:removeLast:empty");
+		if (mn > 0) {
+			mn--;
 		} else {
-			pn = s;
-			mn = 0;
+			p = p.sub(0, p.size() - 1);
 		}
+	}
+	/*
+		replace Mem with r if possible
+	*/
+	bool replaceMemWith(Xbyak::CodeGenerator *code, const Xbyak::Reg64& r)
+	{
+		if (mn == 0) return false;
+		p.append(r);
+		code->mov(r, code->ptr [m]);
+		m = m + 8;
+		mn--;
+		return true;
 	}
 };
 
@@ -948,7 +960,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			remain.append(rdx).append(px).append(pr);
 		}
 		const MixPack ss(remain, rspPos, pn_);
-		MixPack vv(remain, rspPos, pn_);
+		const int rSize = (int)remain.size();
+		MixPack vv(remain, rspPos, pn_, rSize > 0 ? rSize / 2 : -1);
 		MixPack uu(remain, rspPos, pn_);
 
 		const RegExp keep_pr = rsp + rspPos;
@@ -1069,8 +1082,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			jmp(_lp, T_NEAR);
 
 			if (cn > 0) {
-				vv.resize(cn - 1);
-				uu.resize(cn - 1);
+				vv.removeLast();
+				uu.removeLast();
 			}
 		}
 #endif

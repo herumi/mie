@@ -514,7 +514,7 @@ struct Test {
 		CYBOZU_BENCH("add", operator+, x, x);
 		CYBOZU_BENCH("sub", operator-, x, y);
 		CYBOZU_BENCH("mul", operator*, x, x);
-		CYBOZU_BENCH("div", operator/, x, y);
+		CYBOZU_BENCH("div", y += x; operator/, x, y);
 	}
 };
 
