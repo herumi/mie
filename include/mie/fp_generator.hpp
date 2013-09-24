@@ -82,7 +82,7 @@ struct MixPack {
 		rspPos += mn * 8;
 	}
 	int size() const { return (int)p.size() + mn; }
-	bool isReg(int n) const { return n < p.size(); }
+	bool isReg(int n) const { return n < (int)p.size(); }
 	const Xbyak::Reg64& getReg(int n) const
 	{
 		assert(n < p.size());
