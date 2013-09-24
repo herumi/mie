@@ -737,19 +737,23 @@ struct FpGenerator : Xbyak::CodeGenerator {
 #endif
 	/*
 		z >>= c
+		@note shrd(r/m, r, imm)
 	*/
 	void shr_mp(const MixPack& z, uint8_t c, const Reg64& t)
 	{
 		const int n = z.size();
 		for (int i = 0; i < n - 1; i++) {
+			const Reg64 *p;
 			if (z.isReg(i + 1)) {
-				shrd(z.getReg(i), z.getReg(i + 1), c);
-			} else if (z.isReg(i)) {
-				mov(t, ptr [z.getMem(i + 1)]);
-				shrd(z.getReg(i), t, c);
+				p = &z.getReg(i + 1);
 			} else {
 				mov(t, ptr [z.getMem(i + 1)]);
-				shrd(ptr [z.getMem(i)], t, c);
+				p = &t;
+			}
+			if (z.isReg(i)) {
+				shrd(z.getReg(i), *p, c);
+			} else {
+				shrd(qword [z.getMem(i)], *p, c);
 			}
 		}
 		if (z.isReg(n - 1)) {
@@ -780,6 +784,40 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			g_adc(z[i], x[i], t);
 		}
 	}
+	void add_m_m(const RegExp& mz, const RegExp& mx, const Reg64& t, int n)
+	{
+		for (int i = 0; i < n; i++) {
+			mov(t, ptr [mx + i * 8]);
+			if (i == 0) {
+				add(ptr [mz + i * 8], t);
+			} else {
+				adc(ptr [mz + i * 8], t);
+			}
+		}
+	}
+	/*
+		mz[] = mx[] - y
+	*/
+	void sub_m_mp_m(const RegExp& mz, const RegExp& mx, const MixPack& y, const Reg64& t)
+	{
+		for (int i = 0; i < y.size(); i++) {
+			mov(t, ptr [mx + i * 8]);
+			if (i == 0) {
+				if (y.isReg(i)) {
+					sub(t, y.getReg(i));
+				} else {
+					sub(t, ptr [y.getMem(i)]);
+				}
+			} else {
+				if (y.isReg(i)) {
+					sbb(t, y.getReg(i));
+				} else {
+					sbb(t, ptr [y.getMem(i)]);
+				}
+			}
+			mov(ptr [mz + i * 8], t);
+		}
+	}
 	/*
 		z -= x
 	*/
@@ -789,6 +827,26 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		g_sub(z[0], x[0], t);
 		for (int i = 1, n = z.size(); i < n; i++) {
 			g_sbb(z[i], x[i], t);
+		}
+	}
+	/*
+		z -= px[]
+	*/
+	void sub_mp_m(const MixPack& z, const RegExp& px, const Reg64& t)
+	{
+		if (z.isReg(0)) {
+			sub(z.getReg(0), ptr [px]);
+		} else {
+			mov(t, ptr [px]);
+			sub(ptr [z.getMem(0)], t);
+		}
+		for (int i = 1, n = z.size(); i < n; i++) {
+			if (z.isReg(i)) {
+				sbb(z.getReg(i), ptr [px + i * 8]);
+			} else {
+				mov(t, ptr [px + i * 8]);
+				sbb(ptr [z.getMem(i)], t);
+			}
 		}
 	}
 	void store_mp(const RegExp& m, const MixPack& z, const Reg64& t)
@@ -856,8 +914,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		return std::string(label) + Xbyak::Label::toStr(n);
 	}
 	/*
-		input (r, x) = (p0, p1)
-		int k = preInvC(r, x)
+		int k = preInvC(pr, px)
 	*/
 	void gen_preInv()
 	{
@@ -877,7 +934,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& px = sf.p[1];
 		const Reg64& t = rcx;
 		/*
-			rax, : k, rcx : temporary
+			k = rax, t = rcx : temporary
 			use rdx, pr, px in main loop, so we can use 13 registers
 			v = t[0, pn_) : all registers
 		*/
@@ -885,23 +942,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 
 		assert((int)sf.t.size() >= pn_);
 		Pack remain = sf.t;
-#if 1
-		MixPack vv(remain, rspPos, pn_);
-		if (pn_ > 2) {
-			remain.append(rdx).append(pr).append(px);
-		}
-		MixPack uu(remain, rspPos, pn_);
-		const MixPack rr(remain, rspPos, pn_);
-		const MixPack ss(remain, rspPos, pn_);
-#else
+
 		const MixPack rr(remain, rspPos, pn_);
 		if (pn_ > 2) {
-			remain.append(rdx).append(pr).append(px);
+			remain.append(rdx).append(px).append(pr);
 		}
 		const MixPack ss(remain, rspPos, pn_);
 		MixPack vv(remain, rspPos, pn_);
 		MixPack uu(remain, rspPos, pn_);
-#endif
 
 		const RegExp keep_pr = rsp + rspPos;
 		rspPos += 8;
@@ -910,8 +958,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		inLocalLabel();
 		mov(ptr [keep_pr], pr);
 		mov(rax, px);
-		load_mp(vv, rax, t); // v = x
 		// px is free frome here
+		load_mp(vv, rax, t); // v = x
 		mov(rax, (size_t)p_);
 		load_mp(uu, rax, t); // u = p_
 		// k = 0
@@ -929,7 +977,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		} else {
 			mov(qword [ss.getMem(0)], 1);
 		}
-#if 1
+#if 0
 	L(".lp");
 		or_mp(vv, t);
 		jz(".exit", T_NEAR);
@@ -941,7 +989,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		for (int i = pn_ - 1; i >= 0; i--) {
 			g_cmp(vv[i], uu[i], t);
 			jc(".v_lt_u", T_NEAR);
-			jnz(".v_ge_u");
+			if (i > 0) jnz(".v_ge_u", T_NEAR);
 		}
 
 	L(".v_ge_u");
@@ -986,13 +1034,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			jz(_v_even, T_NEAR);
 		L(_u_v_odd);
 			if (cn > 1) {
-				g_test(vv[cn - 1], uu[cn - 1], t);
+				isBothZero(vv[cn - 1], uu[cn - 1], t);
 				jz(mkLabel(".u_v_odd", cn - 1), T_NEAR);
 			}
 			for (int i = cn - 1; i >= 0; i--) {
 				g_cmp(vv[i], uu[i], t);
 				jc(_v_lt_u, T_NEAR);
-				jnz(_v_ge_u, T_NEAR);
+				if (i > 0) jnz(_v_ge_u, T_NEAR);
 			}
 
 		L(_v_ge_u);
@@ -1027,28 +1075,25 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		}
 #endif
 	L(".exit");
-		// ww is all reg
-		remain = sf.t;
-		rspPos = 0;
-		MixPack ww(remain, rspPos, pn_);
-		const Pack& w = ww.p;
+		assert(ss.isReg(0) && ss.isReg(1));
+		const Reg64& t2 = ss.getReg(0);
+		const Reg64& t3 = ss.getReg(1);
 
-		mov(t, (size_t)p_);
-		load_rm(w, t); // w = p
+		mov(t2, (size_t)p_);
 		if (isFullBit_) {
 			mov(t, ptr [rTop]);
 			test(t, t);
 			jz("@f");
-			sub_mp(rr, ww, t);
+			sub_mp_m(rr, t2, t);
 		L("@@");
 		}
-		sub_mp(ww, rr, t);
+		mov(t3, ptr [keep_pr]);
+		// pr[] = p[] - rr
+		sub_m_mp_m(t3, t2, rr, t);
 		jnc("@f");
-		mov(t, (size_t)p_);
-		add_rm(w, t);
+		// pr[] += p[]
+		add_m_m(t3, t2, t, pn_);
 	L("@@");
-		mov(rcx, ptr [keep_pr]);
-		store_mr(rcx, w);
 		outLocalLabel();
 	}
 	void gen_preInv4()
@@ -1250,6 +1295,11 @@ private:
 			test(ptr [pop2->getMem()], t);
 		}
 	}
+	void isBothZero(const MemReg& op1, const MemReg& op2, const Reg64& t)
+	{
+		MIE_FP_GEN_OP_RM(mov, t, op1)
+		MIE_FP_GEN_OP_RM(or_, t, op2)
+	}
 	void g_test(const MemReg& op, int imm)
 	{
 		if (op.isReg()) {
@@ -1329,30 +1379,30 @@ private:
 		}
 	}
 	/*
-		t = all or x[i]
-		ZF = x is zero
+		t = all or z[i]
+		ZF = z is zero
 	*/
-	void or_mp(const MixPack& x, const Reg64& t)
+	void or_mp(const MixPack& z, const Reg64& t)
 	{
-		const int n = (int)x.size();
+		const int n = z.size();
 		if (n == 1) {
-			if (x.isReg(0)) {
-				test(x.getReg(0), x.getReg(0));
+			if (z.isReg(0)) {
+				test(z.getReg(0), z.getReg(0));
 			} else {
-				mov(t, ptr [x.getMem(0)]);
+				mov(t, ptr [z.getMem(0)]);
 				test(t, t);
 			}
 		} else {
-			if (x.isReg(0)) {
-				mov(t, x.getReg(0));
+			if (z.isReg(0)) {
+				mov(t, z.getReg(0));
 			} else {
-				mov(t, ptr [x.getMem(0)]);
+				mov(t, ptr [z.getMem(0)]);
 			}
 			for (int i = 1; i < n; i++) {
-				if (x.isReg(i)) {
-					or_(t, x.getReg(i));
+				if (z.isReg(i)) {
+					or_(t, z.getReg(i));
 				} else {
-					or_(t, ptr [x.getMem(i)]);
+					or_(t, ptr [z.getMem(i)]);
 				}
 			}
 		}
