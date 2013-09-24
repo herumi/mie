@@ -956,12 +956,12 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		Pack remain = sf.t;
 
 		const MixPack rr(remain, rspPos, pn_);
-		if (pn_ > 2) {
-			remain.append(rdx).append(px).append(pr);
-		}
+		remain.append(rdx);
 		const MixPack ss(remain, rspPos, pn_);
+		remain.append(px);
 		const int rSize = (int)remain.size();
 		MixPack vv(remain, rspPos, pn_, rSize > 0 ? rSize / 2 : -1);
+		remain.append(pr);
 		MixPack uu(remain, rspPos, pn_);
 
 		const RegExp keep_pr = rsp + rspPos;
