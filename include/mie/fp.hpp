@@ -218,8 +218,7 @@ public:
 		std::vector<unsigned int> buf(n);
 		rg.read(&buf[0], n);
 		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
-		buf[n - 1] |= 1U << rem;
-		T::setRaw(v, &buf[0], n);
+		setRaw(&buf[0], n);
 	}
 	template<class S>
 	void setRaw(const S *buf, size_t n)
