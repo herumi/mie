@@ -203,6 +203,7 @@ struct Gmp {
 	}
 	static inline size_t getBlockSize(const mpz_class& x)
 	{
+		assert(x.get_mpz_t()->_mp_size >= 0);
 		return x.get_mpz_t()->_mp_size;
 	}
 };
