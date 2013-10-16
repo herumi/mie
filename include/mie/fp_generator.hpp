@@ -54,12 +54,12 @@ namespace fp_gen_local {
 class MemReg {
 	const Xbyak::Reg64 *r_;
 	const Xbyak::RegExp *m_;
-	int offset_;
+	size_t offset_;
 public:
-	MemReg(const Xbyak::Reg64 *r, const Xbyak::RegExp *m, int offset) : r_(r), m_(m), offset_(offset) {}
+	MemReg(const Xbyak::Reg64 *r, const Xbyak::RegExp *m, size_t offset) : r_(r), m_(m), offset_(offset) {}
 	bool isReg() const { return r_ != 0; }
 	const Xbyak::Reg64& getReg() const { return *r_; }
-	Xbyak::RegExp getMem() const { return *m_ + offset_ * (int)sizeof(size_t); }
+	Xbyak::RegExp getMem() const { return *m_ + offset_ * sizeof(size_t); }
 };
 
 struct MixPack {
@@ -67,14 +67,14 @@ struct MixPack {
 	Xbyak::RegExp m;
 	size_t mn;
 	MixPack() : mn(0) {}
-	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
+	MixPack(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, int useRegNum = -1)
 	{
 		init(remain, rspPos, n, useRegNum);
 	}
-	void init(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
+	void init(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, int useRegNum = -1)
 	{
-		int pn = std::min((int)remain.size(), n);
-		if (useRegNum > 0 && useRegNum < pn) pn = useRegNum;
+		size_t pn = std::min(remain.size(), n);
+		if (useRegNum > 0 && useRegNum < (int)pn) pn = useRegNum;
 		this->mn = n - pn;
 		this->m = Xbyak::util::rsp + rspPos;
 		this->p = remain.sub(0, pn);
@@ -753,8 +753,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void shr_mp(const MixPack& z, uint8_t c, const Reg64& t)
 	{
-		const int n = z.size();
-		for (int i = 0; i < n - 1; i++) {
+		const size_t n = z.size();
+		for (size_t i = 0; i < n - 1; i++) {
 			const Reg64 *p;
 			if (z.isReg(i + 1)) {
 				p = &z.getReg(i + 1);
@@ -780,8 +780,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void twice_mp(const MixPack& z, const Reg64& t)
 	{
 		g_add(z[0], z[0], t);
-		const int n = z.size();
-		for (int i = 1; i < n; i++) {
+		for (size_t i = 1, n = z.size(); i < n; i++) {
 			g_adc(z[i], z[i], t);
 		}
 	}
@@ -792,7 +791,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	{
 		assert(z.size() == x.size());
 		g_add(z[0], x[0], t);
-		for (int i = 1, n = z.size(); i < n; i++) {
+		for (size_t i = 1, n = z.size(); i < n; i++) {
 			g_adc(z[i], x[i], t);
 		}
 	}
@@ -837,7 +836,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	{
 		assert(z.size() == x.size());
 		g_sub(z[0], x[0], t);
-		for (int i = 1, n = z.size(); i < n; i++) {
+		for (size_t i = 1, n = z.size(); i < n; i++) {
 			g_sbb(z[i], x[i], t);
 		}
 	}
@@ -852,7 +851,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(t, ptr [px]);
 			sub(ptr [z.getMem(0)], t);
 		}
-		for (int i = 1, n = z.size(); i < n; i++) {
+		for (size_t i = 1, n = z.size(); i < n; i++) {
 			if (z.isReg(i)) {
 				sbb(z.getReg(i), ptr [px + i * 8]);
 			} else {
@@ -863,7 +862,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void store_mp(const RegExp& m, const MixPack& z, const Reg64& t)
 	{
-		for (int i = 0, n = z.size(); i < n; i++) {
+		for (size_t i = 0, n = z.size(); i < n; i++) {
 			if (z.isReg(i)) {
 				mov(ptr [m + i * 8], z.getReg(i));
 			} else {
@@ -874,7 +873,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void load_mp(const MixPack& z, const RegExp& m, const Reg64& t)
 	{
-		for (int i = 0, n = z.size(); i < n; i++) {
+		for (size_t i = 0, n = z.size(); i < n; i++) {
 			if (z.isReg(i)) {
 				mov(z.getReg(i), ptr [m + i * 8]);
 			} else {
@@ -885,13 +884,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void set_mp(const MixPack& z, const Reg64& t)
 	{
-		for (int i = 0, n = z.size(); i < n; i++) {
+		for (size_t i = 0, n = z.size(); i < n; i++) {
 			MIE_FP_GEN_OP_MR(mov, z[i], t)
 		}
 	}
 	void mov_mp(const MixPack& z, const MixPack& x, const Reg64& t)
 	{
-		for (int i = 0, n = z.size(); i < n; i++) {
+		for (size_t i = 0, n = z.size(); i < n; i++) {
 			const MemReg zi = z[i], xi = x[i];
 			if (z.isReg(i)) {
 				MIE_FP_GEN_OP_RM(mov, zi.getReg(), xi)
@@ -944,7 +943,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			use rdx, pr, px in main loop, so we can use 13 registers
 			v = t[0, pn_) : all registers
 		*/
-		int rspPos = 0;
+		size_t rspPos = 0;
 
 		assert((int)sf.t.size() >= pn_);
 		Pack remain = sf.t;
@@ -1254,7 +1253,7 @@ private:
 	*/
 	void or_mp(const MixPack& z, const Reg64& t)
 	{
-		const int n = z.size();
+		const size_t n = z.size();
 		if (n == 1) {
 			if (z.isReg(0)) {
 				test(z.getReg(0), z.getReg(0));
@@ -1268,7 +1267,7 @@ private:
 			} else {
 				mov(t, ptr [z.getMem(0)]);
 			}
-			for (int i = 1; i < n; i++) {
+			for (size_t i = 1; i < n; i++) {
 				if (z.isReg(i)) {
 					or_(t, z.getReg(i));
 				} else {
