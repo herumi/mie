@@ -65,7 +65,7 @@ public:
 struct MixPack {
 	Xbyak::util::Pack p;
 	Xbyak::RegExp m;
-	int mn;
+	size_t mn;
 	MixPack() : mn(0) {}
 	MixPack(Xbyak::util::Pack& remain, int& rspPos, int n, int useRegNum = -1)
 	{
@@ -81,22 +81,22 @@ struct MixPack {
 		remain = remain.sub(pn);
 		rspPos += mn * 8;
 	}
-	int size() const { return (int)p.size() + mn; }
-	bool isReg(int n) const { return n < (int)p.size(); }
-	const Xbyak::Reg64& getReg(int n) const
+	size_t size() const { return p.size() + mn; }
+	bool isReg(size_t n) const { return n < p.size(); }
+	const Xbyak::Reg64& getReg(size_t n) const
 	{
 		assert(n < p.size());
 		return p[n];
 	}
-	Xbyak::RegExp getMem(int n) const
+	Xbyak::RegExp getMem(size_t n) const
 	{
-		const int pn = (int)p.size();
+		const size_t pn = p.size();
 		assert(pn <= n && n < size());
-		return m + (n - pn) * (int)sizeof(size_t);
+		return m + (int)((n - pn) * sizeof(size_t));
 	}
-	MemReg operator[](int n) const
+	MemReg operator[](size_t n) const
 	{
-		const int pn = (int)p.size();
+		const size_t pn = p.size();
 		return MemReg((n < pn) ? &p[n] : 0, (n < pn) ? 0 : &m, n - pn);
 	}
 	void removeLast()
@@ -812,7 +812,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void sub_m_mp_m(const RegExp& mz, const RegExp& mx, const MixPack& y, const Reg64& t)
 	{
-		for (int i = 0; i < y.size(); i++) {
+		for (size_t i = 0; i < y.size(); i++) {
 			mov(t, ptr [mx + i * 8]);
 			if (i == 0) {
 				if (y.isReg(i)) {
