@@ -34,7 +34,7 @@ struct Test {
 		: para(para)
 	{
 		Fp::setModulo(para.p);
-		Zn::setModulo(para.p);
+		Zn::setModulo(para.n);
 		Ec::setParam(para.a, para.b);
 //		CYBOZU_TEST_EQUAL(para.bitLen, Fp(-1).getBitLen());
 	}
