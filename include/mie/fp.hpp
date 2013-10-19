@@ -109,27 +109,32 @@ void fromStr16(T *x, size_t xn, const char *str, size_t strLen)
 /*
 	@param base [inout]
 */
-inline const char *verifyStr(int& base, const std::string& str)
+inline const char *verifyStr(bool *isMinus, int *base, const std::string& str)
 {
-	if (str.empty()) throw cybozu::Exception("fp:verifyStr:str is empty");
-	if (str[0] == '-') throw cybozu::Exception("fp:verifyStr:negative str is not supported") << str;
 	const char *p = str.c_str();
-	if (str.size() > 2 && str[0] == '0') {
-		if (str[1] == 'x') {
-			if (base != 0 && base != 16) {
-				throw cybozu::Exception("fp:verifyStr:bad base") << base << str;
+	if (*p == '-') {
+		*isMinus = true;
+		p++;
+	} else {
+		*isMinus = false;
+	}
+	if (p[0] == '0') {
+		if (p[1] == 'x') {
+			if (*base != 0 && *base != 16) {
+				throw cybozu::Exception("fp:verifyStr:bad base") << *base << str;
 			}
-			base = 16;
+			*base = 16;
 			p += 2;
-		} else if (str[1] == 'b') {
-			if (base != 0 && base != 2) {
-				throw cybozu::Exception("fp:verifyStr:bad base") << base << str;
+		} else if (p[1] == 'b') {
+			if (*base != 0 && *base != 2) {
+				throw cybozu::Exception("fp:verifyStr:bad base") << *base << str;
 			}
-			base = 2;
+			*base = 2;
 			p += 2;
 		}
 	}
-	if (base == 0) base = 10;
+	if (*base == 0) *base = 10;
+	if (*p == '\0') throw cybozu::Exception("fp:verifyStr:str is empty");
 	return p;
 }
 
@@ -181,7 +186,12 @@ public:
 	}
 	void fromStr(const std::string& str, int base = 0)
 	{
-		fromStr(v, str, base);
+		bool isMinus;
+		inFromStr(v, &isMinus, str, base);
+		T::mod(v, v, m_);
+		if (isMinus) {
+			neg(*this, *this);
+		}
 	}
 	void set(const std::string& str, int base = 10) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
@@ -228,7 +238,9 @@ public:
 	}
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
-		FpT::fromStr(m_, mstr, base);
+		bool isMinus;
+		inFromStr(m_, &isMinus, mstr, base);
+		if (isMinus) throw cybozu::Exception("fp:FpT:setModulo:mstr is not minus") << mstr;
 		opt_.init(m_);
 	}
 	static inline void getModulo(std::string& mstr)
@@ -313,9 +325,9 @@ private:
 	static ImplType m_;
 	static mie::ope::Optimized<ImplType> opt_;
 	ImplType v;
-	static inline void fromStr(ImplType& t, const std::string& str, int base)
+	static inline void inFromStr(ImplType& t, bool *isMinus, const std::string& str, int base)
 	{
-		const char *p = fp::verifyStr(base, str);
+		const char *p = fp::verifyStr(isMinus, &base, str);
 		if (!T::fromStr(t, p, base)) {
 			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}

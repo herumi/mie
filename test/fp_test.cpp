@@ -52,6 +52,9 @@ CYBOZU_TEST_AUTO(cstr)
 		{ "123", 123 },
 		{ "0x123", 0x123 },
 		{ "0b10101", 21 },
+		{ "-123", m - 123 },
+		{ "-0x123", m - 0x123 },
+		{ "-0b10101", m - 21 },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		// string cstr
@@ -84,7 +87,6 @@ CYBOZU_TEST_AUTO(cstr)
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
 	}
-	CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "negative");
 }
 
 CYBOZU_TEST_AUTO(bitLen)
@@ -163,9 +165,9 @@ CYBOZU_TEST_AUTO(stream)
 
 CYBOZU_TEST_AUTO(conv)
 {
-	const char *bin = "0b100100011010001010110011110001001000000010010001101000101011001111000100100000001001000110100010101100111100010010000";
-	const char *hex = "0x123456789012345678901234567890";
-	const char *dec = "94522879687365475552814062743484560";
+	const char *bin = "0b1001000110100";
+	const char *hex = "0x1234";
+	const char *dec = "4660";
 	Fp b(bin);
 	Fp h(hex);
 	Fp d(dec);
