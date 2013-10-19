@@ -226,6 +226,7 @@ CYBOZU_TEST_AUTO(all)
 		mie::ecparam::p160_1,
 		mie::ecparam::secp160k1,
 		mie::ecparam::secp192k1,
+		mie::ecparam::NIST_P192,
 	};
 	test_sub<Fp_3>(para3, CYBOZU_NUM_OF_ARRAY(para3));
 

@@ -81,6 +81,16 @@ const struct mie::EcParam secp521r1 = {
 	"0x1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409",
 	521
 };
+const struct mie::EcParam NIST_P192 = {
+	"NIST_P192",
+	"6277101735386680763835789423207666416083908700390324961279",
+	"-3",
+	"0x64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1",
+	"0x188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012",
+	"0x07192b95ffc8da78631011ed6b24cdd573f977a11e794811",
+	"6277101735386680763835789423176059013767194773182842284081",
+	192
+};
 
 } // mie::ecparam
 
@@ -93,6 +103,8 @@ static inline const mie::EcParam* getEcParam(const std::string& name)
 		&ecparam::secp256k1,
 		&ecparam::secp384r1,
 		&ecparam::secp521r1,
+
+		&ecparam::NIST_P192,
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		if (name == tbl[i]->name) return tbl[i];
