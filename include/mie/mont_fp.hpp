@@ -94,18 +94,24 @@ public:
 	}
 	void fromStr(const std::string& str, int base = 0)
 	{
-		const char *p = fp::verifyStr(base, str);
+		bool isMinus;
+		const char *p = fp::verifyStr(&isMinus, &base, str);
+
 		if (base == 16) {
 			MontFpT t;
-			mie::fp::fromStr16(t.v_, N, p, str.size() - (p - &str[0]));
+			mie::fp::fromStr16(t.v_, N, p, str.size() - (p - str.c_str()));
+			if (compare(t, p_) >= 0) throw cybozu::Exception("fp:MontFpT:str is too large") << str;
 			mul(*this, t, RR_);
-			return;
+		} else {
+			mpz_class t;
+			if (!Gmp::fromStr(t, p, base)) {
+				throw cybozu::Exception("fp:MontFpT:fromStr") << str;
+			}
+			toMont(*this, t);
 		}
-		mpz_class t;
-		if (!Gmp::fromStr(t, p, base)) {
-			throw cybozu::Exception("fp:MontFpT:fromStr") << str;
+		if (isMinus) {
+			neg(*this, *this);
 		}
-		toMont(*this, t);
 	}
 	void put() const
 	{
@@ -170,7 +176,9 @@ public:
 	}
 	static inline void setModulo(const std::string& pstr, int base = 0)
 	{
-		const char *p = fp::verifyStr(base, pstr);
+		bool isMinus;
+		const char *p = fp::verifyStr(&isMinus, &base, pstr);
+		if (isMinus) throw cybozu::Exception("MontFp:setModulo:mstr is not pinus") << pstr;
 		if (!Gmp::fromStr(pOrg_, p, base)) {
 			throw cybozu::Exception("fp:MontFpT:setModulo") << pstr << base;
 		}

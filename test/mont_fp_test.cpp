@@ -180,7 +180,19 @@ struct Test {
 			x.toStr(str);
 			CYBOZU_TEST_EQUAL(str, os.str());
 		}
-		CYBOZU_TEST_EXCEPTION_MESSAGE(Fp("-123"), cybozu::Exception, "negative");
+		const struct {
+			const char *str;
+			int val;
+		} tbl2[] = {
+			{ "-123", 123 },
+			{ "-0x123", 0x123 },
+			{ "-0b10101", 21 },
+		};
+		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl2); i++) {
+			Fp x(tbl2[i].str);
+			x = -x;
+			CYBOZU_TEST_EQUAL(x, tbl2[i].val);
+		}
 	}
 	void toStr()
 	{
@@ -509,8 +521,8 @@ struct Test {
 	}
 	void bench()
 	{
-		Fp x("12345678901234567900342423332197");
-		Fp y("0x7ffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+		Fp x("-123456789");
+		Fp y("-0x7ffffffff");
 		CYBOZU_BENCH("add", operator+, x, x);
 		CYBOZU_BENCH("sub", operator-, x, y);
 		CYBOZU_BENCH("mul", operator*, x, x);
