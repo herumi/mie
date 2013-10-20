@@ -233,16 +233,20 @@ CYBOZU_TEST_AUTO(all)
 	const struct mie::EcParam para4[] = {
 		mie::ecparam::secp224k1,
 		mie::ecparam::secp256k1,
+		mie::ecparam::NIST_P224,
+		mie::ecparam::NIST_P256,
 	};
 	test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
 
 	const struct mie::EcParam para6[] = {
 		mie::ecparam::secp384r1,
+		mie::ecparam::NIST_P384,
 	};
 	test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
 
 	const struct mie::EcParam para9[] = {
-		mie::ecparam::secp521r1
+		mie::ecparam::secp521r1,
+		mie::ecparam::NIST_P521,
 	};
 	test_sub<Fp_9>(para9, CYBOZU_NUM_OF_ARRAY(para9));
 }
