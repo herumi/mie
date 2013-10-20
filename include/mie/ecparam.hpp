@@ -151,6 +151,10 @@ static inline const mie::EcParam* getEcParam(const std::string& name)
 		&ecparam::secp521r1,
 
 		&ecparam::NIST_P192,
+		&ecparam::NIST_P224,
+		&ecparam::NIST_P256,
+		&ecparam::NIST_P384,
+		&ecparam::NIST_P521,
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		if (name == tbl[i]->name) return tbl[i];
