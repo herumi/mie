@@ -336,12 +336,21 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EQUAL(x, Fp("0x3400000012"));
 	x.fromStr("0xffffffffffff");
 	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
-	Fp::setModulo("65537");
-	int b3 = 65536;
-	x.setRaw(&b3, 1);
-	CYBOZU_TEST_EQUAL(x, 65536);
-	b3 = 65537;
-	CYBOZU_TEST_EXCEPTION(x.setRaw(&b3, 1), cybozu::Exception);
+
+	Fp::setModulo("0x1000000000000123456789");
+std::cout << std::hex;
+	const struct {
+		const uint32_t buf[3];
+		const char *expected;
+	} tbl[] = {
+		{ { 0x23456788, 0x00000001, 0x00100000}, "0x1000000000000123456788" },
+		{ { 0x23456789, 0x00000001, 0x34100000}, "0" },
+		{ { 0x2345678a, 0x00000001, 0x99100000}, "1" },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		x.setRaw(tbl[i].buf, 3);
+		CYBOZU_TEST_EQUAL(x, Fp(tbl[i].expected));
+	}
 }
 
 CYBOZU_TEST_AUTO(set64bit)
