@@ -337,9 +337,11 @@ CYBOZU_TEST_AUTO(setRaw)
 	x.fromStr("0xffffffffffff");
 	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 	Fp::setModulo("65537");
-	int b3 = 65540;
+	int b3 = 65536;
 	x.setRaw(&b3, 1);
-	CYBOZU_TEST_EQUAL(x, 3);
+	CYBOZU_TEST_EQUAL(x, 65536);
+	b3 = 65537;
+	CYBOZU_TEST_EXCEPTION(x.setRaw(&b3, 1), cybozu::Exception);
 }
 
 CYBOZU_TEST_AUTO(set64bit)

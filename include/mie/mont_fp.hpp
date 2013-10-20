@@ -156,23 +156,26 @@ public:
 	template<class RG>
 	void initRand(RG& rg, size_t bitLen)
 	{
-		const size_t rem = bitLen & 31;
-		const size_t n = (bitLen + 31) / 32;
-		std::vector<unsigned int> buf(n);
-		rg.read(&buf[0], n);
-		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
-		buf[n - 1] |= 1U << rem;
-		setRaw(&buf[0], n);
+		if (bitLen == 0) {
+			clear();
+			return;
+		}
+		std::vector<uint32_t> buf;
+		fp::setRand(buf, rg, bitLen);
+		setRaw(&buf[0], buf.size());
+		if (compare(*this, p_)) {
+			subNc(v_, v_, p_.v_);
+		}
 	}
 	template<class S>
 	void setRaw(const S *buf, size_t n)
 	{
 		if (n * sizeof(S) > N * 8) {
-			throw cybozu::Exception("MontFp:setRaw:too large") << n;
+			throw cybozu::Exception("MontFp:setRaw:too large n") << n;
 		}
 		clear();
 		memcpy(v_, buf, n * sizeof(S));
-		// QQQ : mod
+		if (compare(*this, p_) >= 0) throw cybozu::Exception("MontFp:setRaw:too large buf");
 	}
 	static inline void setModulo(const std::string& pstr, int base = 0)
 	{

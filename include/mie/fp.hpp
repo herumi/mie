@@ -138,6 +138,17 @@ inline const char *verifyStr(bool *isMinus, int *base, const std::string& str)
 	return p;
 }
 
+template<class RG>
+void setRand(std::vector<uint32_t>& buf, RG& rg, size_t bitLen)
+{
+	const size_t rem = bitLen & 31;
+	const size_t n = (bitLen + 31) / 32;
+	buf.resize(n);
+	if (n == 0) return;
+	rg.read(&buf[0], n);
+	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
+}
+
 } // fp
 
 namespace fp_local {
@@ -223,18 +234,22 @@ public:
 	template<class RG>
 	void initRand(RG& rg, size_t bitLen)
 	{
-		const size_t rem = bitLen & 31;
-		const size_t n = (bitLen + 31) / 32;
-		std::vector<unsigned int> buf(n);
-		rg.read(&buf[0], n);
-		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
-		setRaw(&buf[0], n);
+		if (bitLen == 0) {
+			clear();
+			return;
+		}
+		std::vector<uint32_t> buf;
+		fp::setRand(buf, rg, bitLen);
+		setRaw(&buf[0], buf.size());
+		if (v >= m_) {
+			T::sub(v, v, m_);
+		}
 	}
 	template<class S>
 	void setRaw(const S *buf, size_t n)
 	{
 		T::setRaw(v, buf, n);
-		T::mod(v, v, m_);
+		if (v >= m_) throw cybozu::Exception("fp:FpT:setRaw:too large buf");
 	}
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
