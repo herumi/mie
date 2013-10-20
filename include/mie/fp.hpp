@@ -378,7 +378,7 @@ private:
 	template<class S>
 	void setMaskMod(std::vector<S>& buf)
 	{
-		assert(buf.size() * sizeof(S) * 8 <= modBitLen_);
+		assert(buf.size() <= fp::getRoundNum(modBitLen_, sizeof(S) * 8));
 		assert(!buf.empty());
 		fp::maskBuffer(&buf[0], buf.size(), modBitLen_);
 		T::setRaw(v, &buf[0], buf.size());
