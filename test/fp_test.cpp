@@ -100,7 +100,6 @@ CYBOZU_TEST_AUTO(bitLen)
 		{ "2", 2 },
 		{ "3", 2 },
 		{ "0xffff", 16 },
-		{ "0xffffffffffff", 48 },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].str);
@@ -327,7 +326,7 @@ CYBOZU_TEST_AUTO(another)
 
 CYBOZU_TEST_AUTO(setRaw)
 {
-	Fp::setModulo("100000000000000");
+	Fp::setModulo("1000000000000000000000");
 	char b1[] = { 0x56, 0x34, 0x12 };
 	Fp x;
 	x.setRaw(b1, 3);
@@ -335,6 +334,8 @@ CYBOZU_TEST_AUTO(setRaw)
 	int b2[] = { 0x12, 0x34 };
 	x.setRaw(b2, 2);
 	CYBOZU_TEST_EQUAL(x, Fp("0x3400000012"));
+	x.fromStr("0xffffffffffff");
+	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 	Fp::setModulo("65537");
 	int b3 = 65540;
 	x.setRaw(&b3, 1);

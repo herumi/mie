@@ -188,7 +188,7 @@ public:
 	{
 		bool isMinus;
 		inFromStr(v, &isMinus, str, base);
-		T::mod(v, v, m_);
+		if (v >= m_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
 		if (isMinus) {
 			neg(*this, *this);
 		}
