@@ -338,17 +338,19 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 
 	Fp::setModulo("0x1000000000000123456789");
-std::cout << std::hex;
 	const struct {
 		const uint32_t buf[3];
+		size_t bufN;
 		const char *expected;
 	} tbl[] = {
-		{ { 0x23456788, 0x00000001, 0x00100000}, "0x1000000000000123456788" },
-		{ { 0x23456789, 0x00000001, 0x34100000}, "0" },
-		{ { 0x2345678a, 0x00000001, 0x99100000}, "1" },
+		{ { 0x23456788, 0x00000001, 0x00100000}, 1, "0x23456788" },
+		{ { 0x23456788, 0x00000001, 0x00100000}, 2, "0x123456788" },
+		{ { 0x23456788, 0x00000001, 0x00100000}, 3, "0x1000000000000123456788" },
+		{ { 0x23456789, 0x00000001, 0x34100000}, 3, "0" },
+		{ { 0x2345678a, 0x00000001, 0x99100000}, 3, "1" },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		x.setRaw(tbl[i].buf, 3);
+		x.setRaw(tbl[i].buf, tbl[i].bufN);
 		CYBOZU_TEST_EQUAL(x, Fp(tbl[i].expected));
 	}
 }

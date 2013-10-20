@@ -29,6 +29,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static MontFpT R_; // (1 << (N * 64)) % p
 	static MontFpT RR_; // (R * R) % p
 	static MontFpT invTbl_[N * 64 * 2];
+	static size_t modBitLen_;
 public:
 	static FpGenerator fg_;
 private:
@@ -38,6 +39,18 @@ private:
 		if (Gmp::getRaw(v_, N, x) == 0) {
 			throw cybozu::Exception("MontFpT:fromRawGmp") << x;
 		}
+	}
+	template<class S>
+	void setMaskMod(std::vector<S>& buf)
+	{
+		assert(buf.size() * sizeof(S) * 8 <= modBitLen_);
+		assert(!buf.empty());
+		fp::maskBuffer(&buf[0], buf.size(), modBitLen_);
+		memcpy(v_, &buf[0], buf.size() * sizeof(S));
+		if (compare(*this, p_) >= 0) {
+			subNc(v_, v_, p_.v_);
+		}
+		assert(compare(*this, p_) < 0);
 	}
 	static void initInvTbl(MontFpT *invTbl)
 	{
@@ -154,28 +167,24 @@ public:
 		for (size_t i = 0; i < N; i++) v_[i] = 0;
 	}
 	template<class RG>
-	void initRand(RG& rg, size_t bitLen)
+	void initRand(RG& rg, size_t)
 	{
-		if (bitLen == 0) {
+		std::vector<uint32_t> buf(fp::getRoundNum(modBitLen_, 32));
+		assert(!buf.empty());
+		rg.read(&buf[0], buf.size());;
+		setMaskMod(buf);
+	}
+	template<class S>
+	void setRaw(const S *inBuf, size_t n)
+	{
+		n = std::min(n, fp::getRoundNum(modBitLen_, sizeof(S) * 8));
+		if (n == 0) {
 			clear();
 			return;
 		}
-		std::vector<uint32_t> buf;
-		fp::setRand(buf, rg, bitLen);
-		setRaw(&buf[0], buf.size());
-		if (compare(*this, p_)) {
-			subNc(v_, v_, p_.v_);
-		}
-	}
-	template<class S>
-	void setRaw(const S *buf, size_t n)
-	{
-		if (n * sizeof(S) > N * 8) {
-			throw cybozu::Exception("MontFp:setRaw:too large n") << n;
-		}
-		clear();
-		memcpy(v_, buf, n * sizeof(S));
-		if (compare(*this, p_) >= 0) throw cybozu::Exception("MontFp:setRaw:too large buf");
+		std::vector<S> buf(n);
+		std::copy(inBuf, inBuf + buf.size(), &buf[0]);
+		setMaskMod(buf);
 	}
 	static inline void setModulo(const std::string& pstr, int base = 0)
 	{
@@ -185,7 +194,8 @@ public:
 		if (!Gmp::fromStr(pOrg_, p, base)) {
 			throw cybozu::Exception("fp:MontFpT:setModulo") << pstr << base;
 		}
-		if ((Gmp::getBitLen(pOrg_) + 63) / 64 != N) {
+		modBitLen_ = Gmp::getBitLen(pOrg_);
+		if (fp::getRoundNum(modBitLen_, 64) != N) {
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
 		p_.fromRawGmp(pOrg_);
@@ -371,6 +381,7 @@ template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::R_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::RR_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::invTbl_[N * 64 * 2];
 template<size_t N, class tag>FpGenerator MontFpT<N, tag>::fg_;
+template<size_t N, class tag>size_t MontFpT<N, tag>::modBitLen_;
 
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::add;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::sub;

@@ -138,15 +138,38 @@ inline const char *verifyStr(bool *isMinus, int *base, const std::string& str)
 	return p;
 }
 
+inline size_t getRoundNum(size_t x, size_t size)
+{
+	return (x + size - 1) / size;
+}
+
+template<class T>
+void maskBuffer(T* buf, size_t bufN, size_t bitLen)
+{
+	size_t bitSizeT = sizeof(T) * 8;
+	if (bitLen >= bitSizeT * bufN) return;
+	const size_t rem = bitLen & (bitSizeT - 1);
+	const size_t n = getRoundNum(bitLen, bitSizeT);
+	if (rem > 0) buf[n - 1] &= (T(1) << rem) - 1;
+}
+
 template<class RG>
 void setRand(std::vector<uint32_t>& buf, RG& rg, size_t bitLen)
 {
-	const size_t rem = bitLen & 31;
-	const size_t n = (bitLen + 31) / 32;
+	const size_t n = getRoundNum(bitLen, 32);
 	buf.resize(n);
 	if (n == 0) return;
 	rg.read(&buf[0], n);
-	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
+}
+
+template<class S>
+void setMaskedRaw(std::vector<S>& buf, const S *inBuf, size_t n, size_t bitLen)
+{
+	bitLen = std::min(bitLen, sizeof(S) * 8 * n);
+	buf.resize(getRoundNum(bitLen, sizeof(S) * 8));
+	if (buf.empyt()) return;
+	std::copy(inBuf, inBuf + buf.size(), &buf[0]);
+	fp::maskBuffer(&buf[0], buf.size(), bitLen);
 }
 
 } // fp
@@ -232,30 +255,34 @@ public:
 		T::clear(v);
 	}
 	template<class RG>
-	void initRand(RG& rg, size_t bitLen)
+	void initRand(RG& rg, size_t)
 	{
-		if (bitLen == 0) {
+		std::vector<uint32_t> buf(fp::getRoundNum(modBitLen_, 32));
+		assert(!buf.empty());
+		rg.read(&buf[0], buf.size());;
+		setMaskMod(buf);
+	}
+	/*
+		ignore the value of inBuf over modulo
+	*/
+	template<class S>
+	void setRaw(const S *inBuf, size_t n)
+	{
+		n = std::min(n, fp::getRoundNum(modBitLen_, sizeof(S) * 8));
+		if (n == 0) {
 			clear();
 			return;
 		}
-		std::vector<uint32_t> buf;
-		fp::setRand(buf, rg, bitLen);
-		setRaw(&buf[0], buf.size());
-		if (v >= m_) {
-			T::sub(v, v, m_);
-		}
-	}
-	template<class S>
-	void setRaw(const S *buf, size_t n)
-	{
-		T::setRaw(v, buf, n);
-		if (v >= m_) throw cybozu::Exception("fp:FpT:setRaw:too large buf");
+		std::vector<S> buf(n);
+		std::copy(inBuf, inBuf + buf.size(), &buf[0]);
+		setMaskMod(buf);
 	}
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		bool isMinus;
 		inFromStr(m_, &isMinus, mstr, base);
 		if (isMinus) throw cybozu::Exception("fp:FpT:setModulo:mstr is not minus") << mstr;
+		modBitLen_ = T::getBitLen(m_);
 		opt_.init(m_);
 	}
 	static inline void getModulo(std::string& mstr)
@@ -338,6 +365,7 @@ public:
 	const ImplType& getInnerValue() const { return v; }
 private:
 	static ImplType m_;
+	static size_t modBitLen_;
 	static mie::ope::Optimized<ImplType> opt_;
 	ImplType v;
 	static inline void inFromStr(ImplType& t, bool *isMinus, const std::string& str, int base)
@@ -347,10 +375,24 @@ private:
 			throw cybozu::Exception("fp:FpT:fromStr") << str;
 		}
 	}
+	template<class S>
+	void setMaskMod(std::vector<S>& buf)
+	{
+		assert(buf.size() * sizeof(S) * 8 <= modBitLen_);
+		assert(!buf.empty());
+		fp::maskBuffer(&buf[0], buf.size(), modBitLen_);
+		T::setRaw(v, &buf[0], buf.size());
+		if (v >= m_) {
+			T::sub(v, v, m_);
+		}
+		assert(v < m_);
+	}
 };
 
 template<class T, class tag>
 typename T::ImplType FpT<T, tag>::m_;
+template<class T, class tag>
+size_t FpT<T, tag>::modBitLen_;
 
 template<class T, class tag>
 mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
