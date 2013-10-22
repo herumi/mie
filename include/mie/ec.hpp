@@ -23,6 +23,11 @@ template<class _Fp>
 class EcT : public ope::addsub<EcT<_Fp>,
 	ope::comparable<EcT<_Fp>,
 	ope::hasNegative<EcT<_Fp> > > > {
+	enum {
+		zero,
+		minus3,
+		generic
+	};
 public:
 	typedef _Fp Fp;
 #ifdef MIE_EC_USE_JACOBI
@@ -33,6 +38,7 @@ public:
 #endif
 	static Fp a_;
 	static Fp b_;
+	static int specialA_;
 #ifdef MIE_EC_USE_JACOBI
 	EcT() { z.clear(); }
 #else
@@ -59,6 +65,14 @@ public:
 	{
 		a_.fromStr(astr);
 		b_.fromStr(bstr);
+		if (a_.isZero()) {
+			specialA_ = zero;
+		} else if (a_ == -3) {
+			specialA_ = minus3;
+		} else {
+			specialA_ = generic;
+		}
+		printf("specialA_=%d\n", specialA_);
 	}
 	static inline bool isValid(const Fp& _x, const Fp& _y)
 	{
@@ -99,16 +113,28 @@ public:
 		S += S;
 		S += S;
 		Fp::square(M, P.x);
-		if (a_.isZero()) {
+		switch (specialA_) {
+		case zero:
 			Fp::add(t, M, M);
-		} else {
+			M += t;
+			break;
+		case minus3:
+			Fp::square(t, P.z);
+			Fp::square(t, t);
+			M -= t;
+			Fp::add(t, M, M);
+			M += t;
+			break;
+		case generic:
+		default:
 			Fp::square(t, P.z);
 			Fp::square(t, t);
 			t *= a_;
 			t += M;
 			M += M;
+			M += t;
+			break;
 		}
-		M += t;
 		Fp::square(R.x, M);
 		R.x -= S;
 		R.x -= S;
@@ -335,6 +361,7 @@ struct TagMultiGr<EcT<T> > {
 
 template<class _Fp> _Fp EcT<_Fp>::a_;
 template<class _Fp> _Fp EcT<_Fp>::b_;
+template<class _Fp> int EcT<_Fp>::specialA_;
 
 struct EcParam {
 	const char *name;
