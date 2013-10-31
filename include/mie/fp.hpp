@@ -362,6 +362,7 @@ public:
 		power_impl::power(z, x, y);
 	}
 	const ImplType& getInnerValue() const { return v; }
+	static inline size_t getModBitLen() { return modBitLen_; }
 private:
 	static ImplType m_;
 	static size_t modBitLen_;

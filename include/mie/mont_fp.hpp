@@ -371,6 +371,7 @@ public:
 	const uint64_t* getInnerValue() const { return v_; }
 	bool operator==(const MontFpT& rhs) const { return compare(*this, rhs) == 0; }
 	bool operator!=(const MontFpT& rhs) const { return compare(*this, rhs) != 0; }
+	static inline size_t getModBitLen() { return modBitLen_; }
 };
 
 template<size_t N, class tag>mpz_class MontFpT<N, tag>::pOrg_;
