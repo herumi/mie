@@ -72,7 +72,6 @@ public:
 		} else {
 			specialA_ = generic;
 		}
-		printf("specialA_=%d\n", specialA_);
 	}
 	static inline bool isValid(const Fp& _x, const Fp& _y)
 	{
