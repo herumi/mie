@@ -182,8 +182,7 @@ public:
 			clear();
 			return;
 		}
-		std::vector<S> buf(n);
-		std::copy(inBuf, inBuf + buf.size(), &buf[0]);
+		std::vector<S> buf(inBuf, inBuf + buf.size());
 		setMaskMod(buf);
 	}
 	static inline void setModulo(const std::string& pstr, int base = 0)
