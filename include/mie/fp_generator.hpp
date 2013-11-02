@@ -334,12 +334,12 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		for (int i = 0; i < n; i++) {
 			mov(rax, ptr [px + i * 8]);
 			mul(y);
-			mov(ptr [pz + i * 8], rax);
 			if (i < n - 1) {
+				mov(ptr [pz + i * 8], rax);
 				mov(ptr [pw + i * 8], rdx);
 			}
 		}
-		for (int i = 1; i < n; i++) {
+		for (int i = 1; i < n - 1; i++) {
 			mov(t, ptr [pz + i * 8]);
 			if (i == 1) {
 				add(t, ptr [pw + (i - 1) * 8]);
@@ -348,6 +348,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			}
 			mov(ptr [pz + i * 8], t);
 		}
+		adc(rax, ptr [pw + (n - 2) * 8]);
+		mov(ptr [pz + (n - 1) * 8], rax);
 		adc(rdx, 0);
 	}
 	/*
