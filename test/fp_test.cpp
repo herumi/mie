@@ -339,7 +339,7 @@ CYBOZU_TEST_AUTO(setRaw)
 
 	Fp::setModulo("0x1000000000000123456789");
 	const struct {
-		const uint32_t buf[3];
+		uint32_t buf[3];
 		size_t bufN;
 		const char *expected;
 	} tbl[] = {

@@ -133,7 +133,7 @@ struct MixPack {
 if (rm.isReg()) { \
 	op(r, rm.getReg()); \
 } else { \
-	op(r, ptr [rm.getMem()]); \
+	op(r, qword [rm.getMem()]); \
 }
 
 /*
@@ -145,7 +145,7 @@ if (rm.isReg()) { \
 if (rm.isReg()) { \
 	op(rm.getReg(), r); \
 } else { \
-	op(ptr [rm.getMem()], r); \
+	op(qword [rm.getMem()], r); \
 }
 
 struct FpGenerator : Xbyak::CodeGenerator {
@@ -352,6 +352,44 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(ptr [pz + (n - 1) * 8], rax);
 		adc(rdx, 0);
 	}
+#if 1
+	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& mw, const Reg64& t, int n)
+	{
+		assert(n >= 2);
+		if (n == 2) {
+			mov(rax, ptr [px]);
+			mul(y);
+			mov(ptr [pz], rax);
+			mov(t, rdx);
+			mov(rax, ptr [px + 8]);
+			mul(y);
+			add(rax, t);
+			adc(rdx, 0);
+			mov(ptr [pz + 8], rax);
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			mov(rax, ptr [px + i * 8]);
+			mul(y);
+			if (i < n - 1) {
+				mov(ptr [pz + i * 8], rax);
+				g_mov(mw[i], rdx);
+			}
+		}
+		for (int i = 1; i < n - 1; i++) {
+			mov(t, ptr [pz + i * 8]);
+			if (i == 1) {
+				g_add(t, mw[i - 1]);
+			} else {
+				g_adc(t, mw[i - 1]);
+			}
+			mov(ptr [pz + i * 8], t);
+		}
+		g_adc(rax, mw[n - 2]);
+		mov(ptr [pz + (n - 1) * 8], rax);
+		adc(rdx, 0);
+	}
+#endif
 	/*
 		(rdx:pz[]) = px[] * y
 		use rax, rdx, pw[]
@@ -396,7 +434,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& y = sf.p[2];
-		gen_raw_mulI(pz, px, y, rsp, sf.t[0], pn_);
+		size_t rspPos = 0;
+		Pack remain;// = sf.t.sub(1);
+		MixPack mw(remain, rspPos, pn_);
+		gen_raw_mulI(pz, px, y, mw, sf.t[0], pn_);
 		mov(rax, rdx);
 	}
 	/*
@@ -574,6 +615,41 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
+#if 1
+		StackFrame sf(this, 3, (3 | UseRDX) + (useMulx_ ? 1 : 0), (n * 3 + 2) * 8);
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		const Reg64& py = sf.p[2];
+		const Reg64& y = sf.t[0];
+		const Reg64& pAddr = sf.t[1];
+		const Pack pt = sf.t.sub(2);
+		const Reg64& t = pt[0];
+#if 1
+		size_t rspPos = 0;
+		Pack none;
+		MixPack pw1(none, rspPos, n);
+		const RegExp pw2 = rsp + rspPos; // pw2[0..n-1]
+#else
+		const RegExp pw1 = rsp; // pw1[0..n-1]
+		const RegExp pw2 = pw1 + n * 8; // pw2[0..n-1]
+#endif
+		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
+		mov(pAddr, (size_t)p);
+
+		for (int i = 0; i < n; i++) {
+			mov(y, ptr [py + i * 8]);
+			montgomeryN_1(pp, n, pc, px, y, pAddr, pt, pw1, pw2, i == 0);
+		}
+		// pz[] = pc[] - p[]
+		gen_raw_sub(pz, pc, pAddr, t);
+		if (isFullBit_) sbb(qword[pc + n * 8], 0);
+		jnc("@f");
+		for (int i = 0; i < n; i++) {
+			mov(t, ptr [pc + i * 8]);
+			mov(ptr [pz + i * 8], t);
+		}
+	L("@@");
+#else
 		StackFrame sf(this, 3, (3 | UseRDX) + (useMulx_ ? 1 : 0), (n * 3 + 2) * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
@@ -600,6 +676,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + i * 8], t);
 		}
 	L("@@");
+#endif
 	}
 	/*
 		input (z, x, y) = (p0, p1, p2)
@@ -1120,7 +1197,7 @@ private:
 		if (op2.isReg()) {
 			(this->*op)(op1, op2.getReg());
 		} else {
-			(this->*op)(op1, ptr [op2.getMem()]);
+			(this->*op)(op1, qword [op2.getMem()]);
 		}
 	}
 	void make_op_mr(void (Xbyak::CodeGenerator::*op)(const Xbyak::Operand&, const Xbyak::Operand&), const MemReg& op1, const Reg64& op2)
@@ -1128,7 +1205,7 @@ private:
 		if (op1.isReg()) {
 			(this->*op)(op1.getReg(), op2);
 		} else {
-			(this->*op)(ptr [op1.getMem()], op2);
+			(this->*op)(qword [op1.getMem()], op2);
 		}
 	}
 	void make_op(void (Xbyak::CodeGenerator::*op)(const Xbyak::Operand&, const Xbyak::Operand&), const MemReg& op1, const MemReg& op2, const Reg64& t)
@@ -1147,6 +1224,7 @@ private:
 	void g_sub(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sub, op1, op2, t); }
 	void g_sbb(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::sbb, op1, op2, t); }
 	void g_cmp(const MemReg& op1, const MemReg& op2, const Reg64& t) { make_op(&Xbyak::CodeGenerator::cmp, op1, op2, t); }
+	void g_or(const Reg64& r, const MemReg& op) { make_op_rm(&Xbyak::CodeGenerator::or_, r, op); }
 	void g_test(const MemReg& op1, const MemReg& op2, const Reg64& t)
 	{
 		const MemReg *pop1 = &op1;
@@ -1156,28 +1234,30 @@ private:
 		}
 		// (M, M), (R, M), (R, R)
 		if (pop1->isReg()) {
-			if (pop2->isReg()) {
-				test(pop1->getReg(), pop2->getReg());
-			} else {
-				test(ptr [pop2->getMem()], pop1->getReg());
-			}
+			MIE_FP_GEN_OP_MR(test, (*pop2), pop1->getReg())
 		} else {
 			mov(t, ptr [pop1->getMem()]);
 			test(ptr [pop2->getMem()], t);
 		}
 	}
+	void g_mov(const MemReg& op, const Reg64& r)
+	{
+		make_op_mr(&Xbyak::CodeGenerator::mov, op, r);
+	}
+	void g_mov(const Reg64& r, const MemReg& op)
+	{
+		make_op_rm(&Xbyak::CodeGenerator::mov, r, op);
+	}
+	void g_add(const Reg64& r, const MemReg& mr) { MIE_FP_GEN_OP_RM(add, r, mr) }
+	void g_adc(const Reg64& r, const MemReg& mr) { MIE_FP_GEN_OP_RM(adc, r, mr) }
 	void isBothZero(const MemReg& op1, const MemReg& op2, const Reg64& t)
 	{
-		MIE_FP_GEN_OP_RM(mov, t, op1)
-		MIE_FP_GEN_OP_RM(or_, t, op2)
+		g_mov(t, op1);
+		g_or(t, op2);
 	}
 	void g_test(const MemReg& op, int imm)
 	{
-		if (op.isReg()) {
-			test(op.getReg(), imm);
-		} else {
-			test(qword [op.getMem()], imm);
-		}
+		MIE_FP_GEN_OP_MR(test, op, imm)
 	}
 	/*
 		z[] = x[]
@@ -1264,17 +1344,9 @@ private:
 				test(t, t);
 			}
 		} else {
-			if (z.isReg(0)) {
-				mov(t, z.getReg(0));
-			} else {
-				mov(t, ptr [z.getMem(0)]);
-			}
+			g_mov(t, z[0]);
 			for (size_t i = 1; i < n; i++) {
-				if (z.isReg(i)) {
-					or_(t, z.getReg(i));
-				} else {
-					or_(t, ptr [z.getMem(i)]);
-				}
+				g_or(t, z[i]);
 			}
 		}
 	}
@@ -1359,7 +1431,8 @@ private:
 		         pc[0..n-1] ; if !isFullBit_
 		destroy y
 	*/
-	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const RegExp& pw1, const RegExp& pw2, bool isFirst)
+//	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const RegExp& pw1, const RegExp& pw2, bool isFirst)
+	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const MixPack& pw1, const RegExp& pw2, bool isFirst)
 	{
 		const Reg64& t = pt[0];
 		// pc[] += x[] * y

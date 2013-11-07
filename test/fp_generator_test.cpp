@@ -10,6 +10,7 @@
 #include <mie/fp.hpp>
 #include <iostream>
 #include <cybozu/xorshift.hpp>
+#include <cybozu/benchmark.hpp>
 
 typedef mie::FpT<mie::Gmp> Fp;
 
@@ -167,6 +168,13 @@ void testMulI(const mie::FpGenerator& fg, int pn)
 		z[pn] = d;
 		mie::Gmp::setRaw(my, z, pn + 1);
 		CYBOZU_TEST_EQUAL(mx, my);
+	}
+	{
+		uint64_t x[MAX_N];
+		uint64_t z[MAX_N + 1];
+		rg.read(x, pn);
+		uint64_t y = rg.get64();
+		CYBOZU_BENCH_C("mulI", 10000000, fg.mulI_, z, x, y);
 	}
 }
 
