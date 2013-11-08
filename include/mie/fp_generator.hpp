@@ -430,12 +430,12 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(rax, rdx);
 			return;
 		}
-		StackFrame sf(this, 3, 1 | UseRDX, pn_ * 8);
+		StackFrame sf(this, 3, (1 + std::min(pn_, 8)) | UseRDX, pn_ * 8);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& y = sf.p[2];
 		size_t rspPos = 0;
-		Pack remain;// = sf.t.sub(1);
+		Pack remain = sf.t.sub(1);
 		MixPack mw(remain, rspPos, pn_);
 		gen_raw_mulI(pz, px, y, mw, sf.t[0], pn_);
 		mov(rax, rdx);
