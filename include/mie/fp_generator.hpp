@@ -316,43 +316,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		use rax, rdx, pw[]
 		@note this is general version(maybe not so fast)
 	*/
-	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const RegExp& pw, const Reg64& t, int n)
-	{
-		assert(n >= 2);
-		if (n == 2) {
-			mov(rax, ptr [px]);
-			mul(y);
-			mov(ptr [pz], rax);
-			mov(t, rdx);
-			mov(rax, ptr [px + 8]);
-			mul(y);
-			add(rax, t);
-			adc(rdx, 0);
-			mov(ptr [pz + 8], rax);
-			return;
-		}
-		for (int i = 0; i < n; i++) {
-			mov(rax, ptr [px + i * 8]);
-			mul(y);
-			if (i < n - 1) {
-				mov(ptr [pz + i * 8], rax);
-				mov(ptr [pw + i * 8], rdx);
-			}
-		}
-		for (int i = 1; i < n - 1; i++) {
-			mov(t, ptr [pz + i * 8]);
-			if (i == 1) {
-				add(t, ptr [pw + (i - 1) * 8]);
-			} else {
-				adc(t, ptr [pw + (i - 1) * 8]);
-			}
-			mov(ptr [pz + i * 8], t);
-		}
-		adc(rax, ptr [pw + (n - 2) * 8]);
-		mov(ptr [pz + (n - 1) * 8], rax);
-		adc(rdx, 0);
-	}
-#if 1
 	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& mw, const Reg64& t, int n)
 	{
 		assert(n >= 2);
@@ -389,7 +352,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(ptr [pz + (n - 1) * 8], rax);
 		adc(rdx, 0);
 	}
-#endif
 	/*
 		(rdx:pz[]) = px[] * y
 		use rax, rdx, pw[]
