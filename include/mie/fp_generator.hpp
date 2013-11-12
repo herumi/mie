@@ -313,10 +313,10 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	/*
 		(rdx:pz[]) = px[] * y
-		use rax, rdx, pw[]
-		@note this is general version(maybe not so fast)
+		use rax, rdx, wk[]
+		@note this is general version
 	*/
-	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& mw, const Reg64& t, int n)
+	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& wk, const Reg64& t, int n)
 	{
 		assert(n >= 2);
 		if (n == 2) {
@@ -331,75 +331,64 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + 8], rax);
 			return;
 		}
+		if (useMulx_) {
+			assert(wk.isReg(0));
+			const Reg64& t1 = wk.getReg(0);
+			// mulx(H, L, x) = [H:L] = x * rdxA
+			mov(rdx, y);
+			mulx(t1, rax, ptr [px]); // [y:rax] = px * y
+			mov(ptr [pz], rax);
+			const Reg64 *pt0 = &t;
+			const Reg64 *pt1 = &t1;
+			for (int i = 1; i < n - 1; i++) {
+				mulx(*pt0, rax, ptr [px + i * 8]);
+				if (i == 1) {
+					add(rax, *pt1);
+				} else {
+					adc(rax, *pt1);
+				}
+				mov(ptr [pz + i * 8], rax);
+				std::swap(pt0, pt1);
+			}
+			mulx(rdx, rax, ptr [px + (n - 1) * 8]);
+			adc(rax, *pt1);
+			mov(ptr [pz + (n - 1) * 8], rax);
+			adc(rdx, 0);
+			return;
+		}
 		for (int i = 0; i < n; i++) {
 			mov(rax, ptr [px + i * 8]);
 			mul(y);
 			if (i < n - 1) {
 				mov(ptr [pz + i * 8], rax);
-				g_mov(mw[i], rdx);
+				g_mov(wk[i], rdx);
 			}
 		}
 		for (int i = 1; i < n - 1; i++) {
 			mov(t, ptr [pz + i * 8]);
 			if (i == 1) {
-				g_add(t, mw[i - 1]);
+				g_add(t, wk[i - 1]);
 			} else {
-				g_adc(t, mw[i - 1]);
+				g_adc(t, wk[i - 1]);
 			}
 			mov(ptr [pz + i * 8], t);
 		}
-		g_adc(rax, mw[n - 2]);
-		mov(ptr [pz + (n - 1) * 8], rax);
-		adc(rdx, 0);
-	}
-	/*
-		(rdx:pz[]) = px[] * y
-		use rax, rdx, pw[]
-	*/
-	void gen_raw_mulI_with_mulx(const RegExp& pz, const RegExp& px, const Reg64& y, const Reg64& t0, const Reg64& t1, int n)
-	{
-		assert(n > 2);
-		// mulx(H, L, x) = [H:L] = x * rdxA
-		mov(rdx, y);
-		mulx(t1, rax, ptr [px]); // [y:rax] = px * y
-		mov(ptr [pz], rax);
-		const Reg64 *pt0 = &t0;
-		const Reg64 *pt1 = &t1;
-		for (int i = 1; i < n - 1; i++) {
-			mulx(*pt0, rax, ptr [px + i * 8]);
-			if (i == 1) {
-				add(rax, *pt1);
-			} else {
-				adc(rax, *pt1);
-			}
-			mov(ptr [pz + i * 8], rax);
-			std::swap(pt0, pt1);
-		}
-		mulx(rdx, rax, ptr [px + (n - 1) * 8]);
-		adc(rax, *pt1);
+		g_adc(rax, wk[n - 2]);
 		mov(ptr [pz + (n - 1) * 8], rax);
 		adc(rdx, 0);
 	}
 	void gen_mulI()
 	{
-		if (useMulx_) {
-			// mulx H, L, x ; [H:L] = x * rdx
-			StackFrame sf(this, 3, 2 | UseRDX);
-			const Reg64& pz = sf.p[0];
-			const Reg64& px = sf.p[1];
-			const Reg64& y = sf.p[2];
-			gen_raw_mulI_with_mulx(pz, px, y, sf.t[0], sf.t[1], pn_);
-			mov(rax, rdx);
-			return;
-		}
-		StackFrame sf(this, 3, (1 + std::min(pn_, 8)) | UseRDX, pn_ * 8);
+		const int tmpNum = useMulx_ ? 2 : (1 + std::min(pn_, 8));
+		const int stackSize = useMulx_ ? 0 : pn_ * 8;
+		StackFrame sf(this, 3, tmpNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& y = sf.p[2];
 		size_t rspPos = 0;
 		Pack remain = sf.t.sub(1);
-		MixPack mw(remain, rspPos, pn_);
-		gen_raw_mulI(pz, px, y, mw, sf.t[0], pn_);
+		MixPack wk(remain, rspPos, pn_);
+		gen_raw_mulI(pz, px, y, wk, sf.t[0], pn_);
 		mov(rax, rdx);
 	}
 	/*
@@ -577,30 +566,27 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	*/
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
-#if 1
-		StackFrame sf(this, 3, (3 | UseRDX) + (useMulx_ ? 1 : 0), (n * 3 + 2) * 8);
+		assert(5 <= pn_ && pn_ <= 9);
+		const int tmpNum = useMulx_ ? 4 : 3;
+		const int stackSize = (n * 3 + 2) * 8;
+		StackFrame sf(this, 3, tmpNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
 		const Reg64& y = sf.t[0];
 		const Reg64& pAddr = sf.t[1];
-		const Pack pt = sf.t.sub(2);
-		const Reg64& t = pt[0];
-#if 1
+		const Reg64& t = sf.t[2];
+		Pack remain = sf.t.sub(3);
 		size_t rspPos = 0;
-		Pack none;
-		MixPack pw1(none, rspPos, n);
+
+		MixPack pw1(remain, rspPos, n);
 		const RegExp pw2 = rsp + rspPos; // pw2[0..n-1]
-#else
-		const RegExp pw1 = rsp; // pw1[0..n-1]
-		const RegExp pw2 = pw1 + n * 8; // pw2[0..n-1]
-#endif
 		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
 		mov(pAddr, (size_t)p);
 
 		for (int i = 0; i < n; i++) {
 			mov(y, ptr [py + i * 8]);
-			montgomeryN_1(pp, n, pc, px, y, pAddr, pt, pw1, pw2, i == 0);
+			montgomeryN_1(pp, n, pc, px, y, pAddr, t, pw1, pw2, i == 0);
 		}
 		// pz[] = pc[] - p[]
 		gen_raw_sub(pz, pc, pAddr, t);
@@ -611,34 +597,6 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			mov(ptr [pz + i * 8], t);
 		}
 	L("@@");
-#else
-		StackFrame sf(this, 3, (3 | UseRDX) + (useMulx_ ? 1 : 0), (n * 3 + 2) * 8);
-		const Reg64& pz = sf.p[0];
-		const Reg64& px = sf.p[1];
-		const Reg64& py = sf.p[2];
-		const Reg64& y = sf.t[0];
-		const Reg64& pAddr = sf.t[1];
-		const Pack pt = sf.t.sub(2);
-		const Reg64& t = pt[0];
-		const RegExp pw1 = rsp; // pw1[0..n-1]
-		const RegExp pw2 = pw1 + n * 8; // pw2[0..n-1]
-		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
-		mov(pAddr, (size_t)p);
-
-		for (int i = 0; i < n; i++) {
-			mov(y, ptr [py + i * 8]);
-			montgomeryN_1(pp, n, pc, px, y, pAddr, pt, pw1, pw2, i == 0);
-		}
-		// pz[] = pc[] - p[]
-		gen_raw_sub(pz, pc, pAddr, t);
-		if (isFullBit_) sbb(qword[pc + n * 8], 0);
-		jnc("@f");
-		for (int i = 0; i < n; i++) {
-			mov(t, ptr [pc + i * 8]);
-			mov(ptr [pz + i * 8], t);
-		}
-	L("@@");
-#endif
 	}
 	/*
 		input (z, x, y) = (p0, p1, p2)
@@ -1393,24 +1351,14 @@ private:
 		         pc[0..n-1] ; if !isFullBit_
 		destroy y
 	*/
-//	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const RegExp& pw1, const RegExp& pw2, bool isFirst)
-	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Pack& pt, const MixPack& pw1, const RegExp& pw2, bool isFirst)
+	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Reg64& t, const MixPack& pw1, const RegExp& pw2, bool isFirst)
 	{
-		const Reg64& t = pt[0];
 		// pc[] += x[] * y
 		if (isFirst) {
-			if (useMulx_) {
-				gen_raw_mulI_with_mulx(pc, px, y, pt[0], pt[1], n);
-			} else {
-				gen_raw_mulI(pc, px, y, pw1, t, n);
-			}
+			gen_raw_mulI(pc, px, y, pw1, t, n);
 			mov(ptr [pc + n * 8], rdx);
 		} else {
-			if (useMulx_) {
-				gen_raw_mulI_with_mulx(pw2, px, y, pt[0], pt[1], n);
-			} else {
-				gen_raw_mulI(pw2, px, y, pw1, t, n);
-			}
+			gen_raw_mulI(pw2, px, y, pw1, t, n);
 			mov(t, ptr [pw2 + 0 * 8]);
 			add(ptr [pc + 0 * 8], t);
 			for (int i = 1; i < n; i++) {
@@ -1427,11 +1375,7 @@ private:
 		mov(rax, pp);
 		mul(qword [pc]);
 		mov(y, rax); // y = q
-		if (useMulx_) {
-			gen_raw_mulI_with_mulx(pw2, p, y, pt[0], pt[1], n);
-		} else {
-			gen_raw_mulI(pw2, p, y, pw1, t, n);
-		}
+		gen_raw_mulI(pw2, p, y, pw1, t, n);
 		// c[] = (c[] + pw2[]) >> 64
 		mov(t, ptr [pw2 + 0 * 8]);
 		add(t, ptr [pc + 0 * 8]);
