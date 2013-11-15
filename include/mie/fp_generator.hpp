@@ -334,7 +334,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (useMulx_) {
 			assert(wk.isReg(0));
 			const Reg64& t1 = wk.getReg(0);
-			// mulx(H, L, x) = [H:L] = x * rdxA
+			// mulx(H, L, x) = [H:L] = x * rdx
 			mov(rdx, y);
 			mulx(t1, rax, ptr [px]); // [y:rax] = px * y
 			mov(ptr [pz], rax);
