@@ -315,8 +315,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		(rdx:pz[0..n-1]) = px[0..n-1] * y
 		use t, rax, rdx
 		if n > 2
-		use wk(0)      if  useMulx_
-		use wk(0..n-2) if !useMulx_
+		use
+		wk[0] if useMulx_
+		wk[0..n-2] otherwise
 	*/
 	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& wk, const Reg64& t, int n)
 	{
@@ -582,7 +583,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		Pack remain = sf.t.sub(3);
 		size_t rspPos = 0;
 
-		MixPack pw1(remain, rspPos, n);
+		MixPack pw1(remain, rspPos, n - 1);
 		const RegExp pw2 = rsp + rspPos; // pw2[0..n-1]
 		const RegExp pc = pw2 + n * 8; // pc[0..n+1]
 		mov(pAddr, (size_t)p);
@@ -1353,6 +1354,10 @@ private:
 		output : pc[0..n]   ; if isFullBit_
 		         pc[0..n-1] ; if !isFullBit_
 		destroy y
+		use
+		pw1[0] if useMulx_
+		pw1[0..n-2] otherwise
+		pw2[0..n-1]
 	*/
 	void montgomeryN_1(uint64_t pp, int n, const RegExp& pc, const RegExp& px, const Reg64& y, const Reg64& p, const Reg64& t, const MixPack& pw1, const RegExp& pw2, bool isFirst)
 	{
