@@ -227,7 +227,7 @@ public:
 			neg(*this, *this);
 		}
 	}
-	void set(const std::string& str, int base = 10) { fromStr(str, base); }
+	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
 		switch (base) {
