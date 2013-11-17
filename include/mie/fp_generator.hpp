@@ -312,9 +312,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		outLocalLabel();
 	}
 	/*
-		(rdx:pz[]) = px[] * y
-		use rax, rdx, wk[]
-		@note this is general version
+		(rdx:pz[0..n-1]) = px[0..n-1] * y
+		use t, rax, rdx
+		if n > 2
+		use wk(0)      if  useMulx_
+		use wk(0..n-2) if !useMulx_
 	*/
 	void gen_raw_mulI(const RegExp& pz, const RegExp& px, const Reg64& y, const MixPack& wk, const Reg64& t, int n)
 	{
@@ -379,15 +381,16 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	}
 	void gen_mulI()
 	{
-		const int tmpNum = useMulx_ ? 2 : (1 + std::min(pn_, 8));
-		const int stackSize = useMulx_ ? 0 : pn_ * 8;
-		StackFrame sf(this, 3, tmpNum | UseRDX, stackSize);
+		assert(pn_ >= 2);
+		const int regNum = useMulx_ ? 2 : (1 + std::min(pn_ - 1, 8));
+		const int stackSize = useMulx_ ? 0 : (pn_ - 1) * 8;
+		StackFrame sf(this, 3, regNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& y = sf.p[2];
 		size_t rspPos = 0;
 		Pack remain = sf.t.sub(1);
-		MixPack wk(remain, rspPos, pn_);
+		MixPack wk(remain, rspPos, pn_ - 1);
 		gen_raw_mulI(pz, px, y, wk, sf.t[0], pn_);
 		mov(rax, rdx);
 	}
@@ -567,9 +570,9 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
 		assert(5 <= pn_ && pn_ <= 9);
-		const int tmpNum = useMulx_ ? 4 : 3;
-		const int stackSize = (n * 3 + 2) * 8;
-		StackFrame sf(this, 3, tmpNum | UseRDX, stackSize);
+		const int regNum = useMulx_ ? 4 : 3;
+		const int stackSize = (n * 3 + (isFullBit_ ? 2 : 1)) * 8;
+		StackFrame sf(this, 3, regNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		const Reg64& py = sf.p[2];
