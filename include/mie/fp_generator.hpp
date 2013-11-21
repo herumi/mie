@@ -335,7 +335,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			return;
 		}
 		if (useMulx_) {
-			assert(wk.isReg(0));
+			assert(wk.size() > 0 && wk.isReg(0));
 			const Reg64& t1 = wk.getReg(0);
 			// mulx(H, L, x) = [H:L] = x * rdx
 			mov(rdx, y);
@@ -359,6 +359,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			adc(rdx, 0);
 			return;
 		}
+		assert(wk.size() >= n - 1);
 		for (int i = 0; i < n; i++) {
 			mov(rax, ptr [px + i * 8]);
 			mul(y);
@@ -571,7 +572,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void gen_montMulN(const uint64_t *p, uint64_t pp, int n)
 	{
 		assert(5 <= pn_ && pn_ <= 9);
-		const int regNum = useMulx_ ? 4 : 3;
+		const int regNum = useMulx_ ? 4 : 3 + std::min(n - 1, 7);
 		const int stackSize = (n * 3 + (isFullBit_ ? 2 : 1)) * 8;
 		StackFrame sf(this, 3, regNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
