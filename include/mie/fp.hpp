@@ -195,14 +195,6 @@ public:
 	{
 		fromStr(str, base);
 	}
-	FpT(const FpT& x)
-		: v(x.v)
-	{
-	}
-	FpT& operator=(const FpT& x)
-	{
-		v = x.v; return *this;
-	}
 	FpT& operator=(int x)
 	{
 		if (x >= 0) {

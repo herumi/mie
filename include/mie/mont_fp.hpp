@@ -75,15 +75,6 @@ public:
 	{
 		fromStr(str, base);
 	}
-	MontFpT(const MontFpT& x)
-	{
-		*this = x;
-	}
-	MontFpT& operator=(const MontFpT& x)
-	{
-		for (size_t i = 0; i < N; i++) v_[i] = x.v_[i];
-		return *this;
-	}
 	MontFpT& operator=(int x)
 	{
 		if (x == 0) {
