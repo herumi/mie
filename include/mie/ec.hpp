@@ -163,12 +163,29 @@ public:
 		R.y -= y2;
 #elif MIE_EC_COORD == MIE_EC_USE_PROJ
 		Fp w, t, h;
-		Fp::square(w, P.z);
-		w *= a_;
-		Fp::square(t, P.x);
-		w += t;
-		w += t;
-		w += t; // w = a z^2 + 3x^2
+		switch (specialA_) {
+		case zero:
+			Fp::square(w, P.x);
+			Fp::add(t, w, w);
+			w += t;
+			break;
+		case minus3:
+			Fp::square(w, P.x);
+			Fp::square(t, P.z);
+			w -= t;
+			Fp::add(t, w, w);
+			w += t;
+			break;
+		case generic:
+		default:
+			Fp::square(w, P.z);
+			w *= a_;
+			Fp::square(t, P.x);
+			w += t;
+			w += t;
+			w += t; // w = a z^2 + 3x^2
+			break;
+		}
 		Fp::mul(R.z, P.y, P.z); // s = yz
 		Fp::mul(t, R.z, P.x);
 		t *= P.y; // xys

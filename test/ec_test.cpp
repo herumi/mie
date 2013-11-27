@@ -202,18 +202,12 @@ pow 499.00usec
 */
 	void run() const
 	{
-		puts("cstr");
 		cstr();
-		puts("ope");
 		ope();
-		puts("power");
 		power();
-		puts("neg_power");
 		neg_power();
-		puts("power_fp");
 		power_fp();
 #ifdef NDEBUG
-		puts("bench");
 		bench();
 #endif
 	}
@@ -255,13 +249,13 @@ CYBOZU_TEST_AUTO(all)
 	test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
 
 	const struct mie::EcParam para6[] = {
-		mie::ecparam::secp384r1,
+//		mie::ecparam::secp384r1,
 		mie::ecparam::NIST_P384,
 	};
 	test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
 
 	const struct mie::EcParam para9[] = {
-		mie::ecparam::secp521r1,
+//		mie::ecparam::secp521r1,
 		mie::ecparam::NIST_P521,
 	};
 	test_sub<Fp_9>(para9, CYBOZU_NUM_OF_ARRAY(para9));
