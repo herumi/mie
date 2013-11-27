@@ -63,18 +63,19 @@ public:
 };
 
 struct MixPack {
+	static const size_t useAll = 100;
 	Xbyak::util::Pack p;
 	Xbyak::RegExp m;
 	size_t mn;
 	MixPack() : mn(0) {}
-	MixPack(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, int useRegNum = -1)
+	MixPack(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, size_t useRegNum = useAll)
 	{
 		init(remain, rspPos, n, useRegNum);
 	}
-	void init(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, int useRegNum = -1)
+	void init(Xbyak::util::Pack& remain, size_t& rspPos, size_t n, size_t useRegNum = useAll)
 	{
 		size_t pn = std::min(remain.size(), n);
-		if (useRegNum > 0 && useRegNum < (int)pn) pn = useRegNum;
+		if (useRegNum != useAll && useRegNum < pn) pn = useRegNum;
 		this->mn = n - pn;
 		this->m = Xbyak::util::rsp + rspPos;
 		this->p = remain.sub(0, pn);
@@ -162,7 +163,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	bool useMulx_;
 	const uint64_t *p_;
 	uint64_t pp_;
-	size_t pn_;
+	int pn_;
 	bool isFullBit_;
 	// add/sub without carry. return true if overflow
 	typedef bool (*bool3op)(uint64_t*, const uint64_t*, const uint64_t*);
@@ -209,7 +210,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		@param p [in] pointer to prime
 		@param pn [in] length of prime
 	*/
-	void init(const uint64_t *p, size_t pn)
+	void init(const uint64_t *p, int pn)
 	{
 		if (pn < 2) throw cybozu::Exception("mie:FpGenerator:small pn") << pn;
 		p_ = p;
@@ -265,7 +266,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t, ptr [px]);
 		add(t, ptr [py]);
 		mov(ptr [pz], t);
-		for (size_t i = 1; i < pn_; i++) {
+		for (int i = 1; i < pn_; i++) {
 			mov(t, ptr [px + i * 8]);
 			adc(t, ptr [py + i * 8]);
 			mov(ptr [pz + i * 8], t);
@@ -279,7 +280,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t, ptr [px]);
 		sub(t, ptr [py]);
 		mov(ptr [pz], t);
-		for (size_t i = 1; i < pn_; i++) {
+		for (int i = 1; i < pn_; i++) {
 			mov(t, ptr [px + i * 8]);
 			sbb(t, ptr [py + i * 8]);
 			mov(ptr [pz + i * 8], t);
@@ -295,13 +296,13 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		test(t0, t0);
 		jnz(".neg");
 		if (pn_ > 1) {
-			for (size_t i = 1; i < pn_; i++) {
+			for (int i = 1; i < pn_; i++) {
 				or_(t0, ptr [px + i * 8]);
 			}
 			jnz(".neg");
 		}
 		// zero
-		for (size_t i = 0; i < pn_; i++) {
+		for (int i = 0; i < pn_; i++) {
 			mov(ptr [pz + i * 8], t0);
 		}
 		jmp(".exit");
@@ -384,8 +385,8 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void gen_mulI()
 	{
 		assert(pn_ >= 2);
-		const int regNum = useMulx_ ? 2 : (1 + std::min<int>(pn_ - 1, 8));
-		const int stackSize = useMulx_ ? 0 : ((int)pn_ - 1) * 8;
+		const int regNum = useMulx_ ? 2 : (1 + std::min(pn_ - 1, 8));
+		const int stackSize = useMulx_ ? 0 : (pn_ - 1) * 8;
 		StackFrame sf(this, 3, regNum | UseRDX, stackSize);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
@@ -544,7 +545,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
 		mov(*t0, ptr [px]);
-		for (size_t i = 0; i < pn_ - 1; i++) {
+		for (int i = 0; i < pn_ - 1; i++) {
 			mov(*t1, ptr [px + 8 * (i + 1)]);
 			shrd(*t0, *t1, c);
 			mov(ptr [pz + i * 8], *t0);

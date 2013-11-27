@@ -18,7 +18,10 @@ namespace mie {
 #define MIE_EC_USE_JACOBI 2
 
 //#define MIE_EC_COORD MIE_EC_USE_JACOBI
-#define MIE_EC_COORD MIE_EC_USE_PROJ
+//#define MIE_EC_COORD MIE_EC_USE_PROJ
+#ifndef MIE_EC_COORD
+	#define MIE_EC_COORD MIE_EC_USE_PROJ
+#endif
 /*
 	elliptic curve
 	y^2 = x^3 + ax + b (affine)
@@ -242,24 +245,25 @@ public:
 		H3 *= S1;
 		Fp::sub(R.y, U1, H3);
 #elif MIE_EC_COORD == MIE_EC_USE_PROJ
-		Fp PxQz, PyQz, u, v, vv, r, A;
-		Fp::mul(PxQz, P.x, Q.z);
+		Fp r, PyQz, v, A, vv;
+		Fp::mul(r, P.x, Q.z);
 		Fp::mul(PyQz, P.y, Q.z);
-		Fp::mul(u, Q.y, P.z);
+		Fp::mul(A, Q.y, P.z);
 		Fp::mul(v, Q.x, P.z);
-		v -= PxQz;
+		v -= r;
 		if (v.isZero()) {
-			if (u == -PyQz) {
+			Fp::add(vv, A, PyQz);
+			if (vv.isZero()) {
 				R.clear();
 			} else {
 				dbl(R, P, false);
 			}
 			return;
 		}
-		u -= PyQz;
-		Fp::square(A, u);
+		Fp::sub(R.y, A, PyQz);
+		Fp::square(A, R.y);
 		Fp::square(vv, v);
-		Fp::mul(r, vv, PxQz);
+		r *= vv;
 		vv *= v;
 		Fp::mul(R.z, P.z, Q.z);
 		A *= R.z;
@@ -270,8 +274,8 @@ public:
 		A -= r;
 		Fp::mul(R.x, v, A);
 		r -= A;
-		u *= r;
-		Fp::sub(R.y, u, vv);
+		R.y *= r;
+		R.y -= vv;
 #else
 		Fp t;
 		Fp::neg(t, Q.y);

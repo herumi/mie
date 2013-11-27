@@ -71,9 +71,25 @@ struct Test {
 			Ec::dbl(R, P);
 			Ec R2 = P + P;
 			CYBOZU_TEST_EQUAL(R, R2);
+			{
+				Ec P2 = P;
+				Ec::dbl(P2, P2);
+				CYBOZU_TEST_EQUAL(P2, R2);
+			}
 			Ec R3L = R2 + P;
 			Ec R3R = P + R2;
 			CYBOZU_TEST_EQUAL(R3L, R3R);
+			{
+				Ec RR = R2;
+				RR = RR + P;
+				CYBOZU_TEST_EQUAL(RR, R3L);
+				RR = R2;
+				RR = P + RR;
+				CYBOZU_TEST_EQUAL(RR, R3L);
+				RR = P;
+				RR = RR + RR;
+				CYBOZU_TEST_EQUAL(RR, R2);
+			}
 			Ec::power(R, P, 2);
 			CYBOZU_TEST_EQUAL(R, R2);
 			Ec R4L = R3L + R2;
