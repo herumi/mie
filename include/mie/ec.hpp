@@ -13,7 +13,12 @@
 
 namespace mie {
 
-#define MIE_EC_USE_JACOBI
+#define MIE_EC_USE_AFFINE 0
+#define MIE_EC_USE_PROJ 1
+#define MIE_EC_USE_JACOBI 2
+
+//#define MIE_EC_COORD MIE_EC_USE_JACOBI
+#define MIE_EC_COORD MIE_EC_USE_PROJ
 /*
 	elliptic curve
 	y^2 = x^3 + ax + b (affine)
@@ -30,19 +35,19 @@ class EcT : public ope::addsub<EcT<_Fp>,
 	};
 public:
 	typedef _Fp Fp;
-#ifdef MIE_EC_USE_JACOBI
-	mutable Fp x, y, z;
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 	Fp x, y;
 	bool inf_;
+#else
+	mutable Fp x, y, z;
 #endif
 	static Fp a_;
 	static Fp b_;
 	static int specialA_;
-#ifdef MIE_EC_USE_JACOBI
-	EcT() { z.clear(); }
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 	EcT() : inf_(true) {}
+#else
+	EcT() { z.clear(); }
 #endif
 	EcT(const Fp& _x, const Fp& _y)
 	{
@@ -50,13 +55,20 @@ public:
 	}
 	void normalize() const
 	{
-#ifdef MIE_EC_USE_JACOBI
+#if MIE_EC_COORD == MIE_EC_USE_JACOBI
 		if (isZero() || z == 1) return;
 		Fp rz, rz2;
 		Fp::inv(rz, z);
 		rz2 = rz * rz;
 		x *= rz2;
 		y *= rz2 * rz;
+		z = 1;
+#elif MIE_EC_COORD == MIE_EC_USE_PROJ
+		if (isZero() || z == 1) return;
+		Fp rz;
+		Fp::inv(rz, z);
+		x *= rz;
+		y *= rz;
 		z = 1;
 #endif
 	}
@@ -81,18 +93,18 @@ public:
 	{
 		if (verify && !isValid(_x, _y)) throw cybozu::Exception("ec:EcT:set") << _x << _y;
 		x = _x; y = _y;
-#ifdef MIE_EC_USE_JACOBI
-		z = 1;
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		inf_ = false;
+#else
+		z = 1;
 #endif
 	}
 	void clear()
 	{
-#ifdef MIE_EC_USE_JACOBI
-		z = 0;
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		inf_ = true;
+#else
+		z = 0;
 #endif
 		x.clear();
 		y.clear();
@@ -105,7 +117,7 @@ public:
 				R.clear(); return;
 			}
 		}
-#ifdef MIE_EC_USE_JACOBI
+#if MIE_EC_COORD == MIE_EC_USE_JACOBI
 		Fp S, M, t, y2;
 		Fp::square(y2, P.y);
 		Fp::mul(S, P.x, y2);
@@ -146,6 +158,33 @@ public:
 		Fp::sub(R.y, S, R.x);
 		R.y *= M;
 		R.y -= y2;
+#elif MIE_EC_COORD == MIE_EC_USE_PROJ
+		Fp w, t, h;
+		Fp::square(w, P.z);
+		w *= a_;
+		Fp::square(t, P.x);
+		w += t;
+		w += t;
+		w += t; // w = a z^2 + 3x^2
+		Fp::mul(R.z, P.y, P.z); // s = yz
+		Fp::mul(t, R.z, P.x);
+		t *= P.y; // xys
+		t += t;
+		t += t; // 4(xys) ; 4B
+		Fp::square(h, w);
+		h -= t;
+		h -= t; // w^2 - 8B
+		Fp::mul(R.x, h, R.z);
+		t -= h; // h is free
+		t *= w;
+		Fp::square(w, P.y);
+		R.x += R.x;
+		R.z += R.z;
+		Fp::square(h, R.z);
+		w *= h;
+		R.z *= h;
+		Fp::sub(R.y, t, w);
+		R.y -= w;
 #else
 		Fp t, s;
 		Fp::square(t, P.x);
@@ -169,7 +208,7 @@ public:
 	{
 		if (P.isZero()) { R = Q; return; }
 		if (Q.isZero()) { R = P; return; }
-#ifdef MIE_EC_USE_JACOBI
+#if MIE_EC_COORD == MIE_EC_USE_JACOBI
 		Fp r, U1, S1, H, H3;
 		Fp::square(r, P.z);
 		Fp::square(S1, Q.z);
@@ -202,6 +241,37 @@ public:
 		U1 *= r;
 		H3 *= S1;
 		Fp::sub(R.y, U1, H3);
+#elif MIE_EC_COORD == MIE_EC_USE_PROJ
+		Fp PxQz, PyQz, u, v, vv, r, A;
+		Fp::mul(PxQz, P.x, Q.z);
+		Fp::mul(PyQz, P.y, Q.z);
+		Fp::mul(u, Q.y, P.z);
+		Fp::mul(v, Q.x, P.z);
+		v -= PxQz;
+		if (v.isZero()) {
+			if (u == -PyQz) {
+				R.clear();
+			} else {
+				dbl(R, P, false);
+			}
+			return;
+		}
+		u -= PyQz;
+		Fp::square(A, u);
+		Fp::square(vv, v);
+		Fp::mul(r, vv, PxQz);
+		vv *= v;
+		Fp::mul(R.z, P.z, Q.z);
+		A *= R.z;
+		R.z *= vv;
+		A -= vv;
+		vv *= PyQz;
+		A -= r;
+		A -= r;
+		Fp::mul(R.x, v, A);
+		r -= A;
+		u *= r;
+		Fp::sub(R.y, u, vv);
 #else
 		Fp t;
 		Fp::neg(t, Q.y);
@@ -258,11 +328,7 @@ public:
 	}
 	static inline void neg(EcT& R, const EcT& P)
 	{
-#ifdef MIE_EC_USE_JACOBI
-		R.x = P.x;
-		Fp::neg(R.y, P.y);
-		R.z = P.z;
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		if (P.isZero()) {
 			R.clear();
 			return;
@@ -270,6 +336,10 @@ public:
 		R.inf_ = false;
 		R.x = P.x;
 		Fp::neg(R.y, P.y);
+#else
+		R.x = P.x;
+		Fp::neg(R.y, P.y);
+		R.z = P.z;
 #endif
 	}
 	template<class N>
@@ -297,10 +367,10 @@ public:
 	}
 	bool isZero() const
 	{
-#ifdef MIE_EC_USE_JACOBI
-		return z.isZero();
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		return inf_;
+#else
+		return z.isZero();
 #endif
 	}
 	friend inline std::ostream& operator<<(std::ostream& os, const EcT& self)
@@ -319,10 +389,10 @@ public:
 		if (str == "0") {
 			self.clear();
 		} else {
-#ifdef MIE_EC_USE_JACOBI
-			self.z = 1;
-#else
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 			self.inf_ = false;
+#else
+			self.z = 1;
 #endif
 			size_t pos = str.find('_');
 			if (pos == std::string::npos) throw cybozu::Exception("EcT:bad format") << str;
@@ -392,4 +462,3 @@ struct hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> 
 };
 
 CYBOZU_NAMESPACE_TR1_END } // std
-
