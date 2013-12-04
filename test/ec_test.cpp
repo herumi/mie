@@ -1,4 +1,5 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
+#define CYBOZU_TEST_DISABLE_AUTO_RUN
 #include <cybozu/test.hpp>
 #include <cybozu/benchmark.hpp>
 #include <mie/gmp_util.hpp>
@@ -225,6 +226,8 @@ void test_sub(const mie::EcParam *para, size_t paraNum)
 	}
 }
 
+int g_partial = -1;
+
 CYBOZU_TEST_AUTO(all)
 {
 #ifdef USE_MONT_FP
@@ -232,31 +235,52 @@ CYBOZU_TEST_AUTO(all)
 #else
 	puts("use GMP");
 #endif
-	const struct mie::EcParam para3[] = {
-		mie::ecparam::p160_1,
-		mie::ecparam::secp160k1,
-		mie::ecparam::secp192k1,
-		mie::ecparam::NIST_P192,
-	};
-	test_sub<Fp_3>(para3, CYBOZU_NUM_OF_ARRAY(para3));
+	if (g_partial & (1 << 3)) {
+		const struct mie::EcParam para3[] = {
+	//		mie::ecparam::p160_1,
+			mie::ecparam::secp160k1,
+			mie::ecparam::secp192k1,
+			mie::ecparam::NIST_P192,
+		};
+		test_sub<Fp_3>(para3, CYBOZU_NUM_OF_ARRAY(para3));
+	}
 
-	const struct mie::EcParam para4[] = {
-		mie::ecparam::secp224k1,
-		mie::ecparam::secp256k1,
-		mie::ecparam::NIST_P224,
-		mie::ecparam::NIST_P256,
-	};
-	test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
+	if (g_partial & (1 << 4)) {
+		const struct mie::EcParam para4[] = {
+			mie::ecparam::secp224k1,
+			mie::ecparam::secp256k1,
+			mie::ecparam::NIST_P224,
+			mie::ecparam::NIST_P256,
+		};
+		test_sub<Fp_4>(para4, CYBOZU_NUM_OF_ARRAY(para4));
+	}
 
-	const struct mie::EcParam para6[] = {
-//		mie::ecparam::secp384r1,
-		mie::ecparam::NIST_P384,
-	};
-	test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
+	if (g_partial & (1 << 6)) {
+		const struct mie::EcParam para6[] = {
+	//		mie::ecparam::secp384r1,
+			mie::ecparam::NIST_P384,
+		};
+		test_sub<Fp_6>(para6, CYBOZU_NUM_OF_ARRAY(para6));
+	}
 
-	const struct mie::EcParam para9[] = {
-//		mie::ecparam::secp521r1,
-		mie::ecparam::NIST_P521,
-	};
-	test_sub<Fp_9>(para9, CYBOZU_NUM_OF_ARRAY(para9));
+	if (g_partial & (1 << 9)) {
+		const struct mie::EcParam para9[] = {
+	//		mie::ecparam::secp521r1,
+			mie::ecparam::NIST_P521,
+		};
+		test_sub<Fp_9>(para9, CYBOZU_NUM_OF_ARRAY(para9));
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc == 1) {
+		g_partial = -1;
+	} else {
+		g_partial = 0;
+		for (int i = 1; i < argc; i++) {
+			g_partial |= 1 << atoi(argv[i]);
+		}
+	}
+	return cybozu::test::autoRun.run(argc, argv);
 }
