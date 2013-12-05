@@ -152,6 +152,7 @@ if (rm.isReg()) { \
 struct FpGenerator : Xbyak::CodeGenerator {
 	typedef Xbyak::RegExp RegExp;
 	typedef Xbyak::Reg64 Reg64;
+	typedef Xbyak::Xmm Xmm;
 	typedef Xbyak::Operand Operand;
 	typedef Xbyak::util::StackFrame StackFrame;
 	typedef Xbyak::util::Pack Pack;
@@ -631,19 +632,19 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(p0, (uint64_t)p);
 		movq(xm1, p2);
 		mov(p2, ptr [p2]);
-		montgomery4_1(pp, t0, t7, t3, t2, t1, p1, p2, p0, t4, t5, t6, t8, t9, true);
+		montgomery4_1(pp, t0, t7, t3, t2, t1, p1, p2, p0, t4, t5, t6, t8, t9, true, xm2);
 
 		movq(p2, xm1);
 		mov(p2, ptr [p2 + 8]);
-		montgomery4_1(pp, t1, t0, t7, t3, t2, p1, p2, p0, t4, t5, t6, t8, t9, false);
+		montgomery4_1(pp, t1, t0, t7, t3, t2, p1, p2, p0, t4, t5, t6, t8, t9, false, xm2);
 
 		movq(p2, xm1);
 		mov(p2, ptr [p2 + 16]);
-		montgomery4_1(pp, t2, t1, t0, t7, t3, p1, p2, p0, t4, t5, t6, t8, t9, false);
+		montgomery4_1(pp, t2, t1, t0, t7, t3, p1, p2, p0, t4, t5, t6, t8, t9, false, xm2);
 
 		movq(p2, xm1);
 		mov(p2, ptr [p2 + 24]);
-		montgomery4_1(pp, t3, t2, t1, t0, t7, p1, p2, p0, t4, t5, t6, t8, t9, false);
+		montgomery4_1(pp, t3, t2, t1, t0, t7, p1, p2, p0, t4, t5, t6, t8, t9, false, xm2);
 		// [t7:t3:t2:t1:t0]
 
 		mov(t4, t0);
@@ -1324,9 +1325,10 @@ private:
 		} else {
 			mul3x1(px, y, t2, t1, t0, t3);
 			// [rdx:y:t1:t0] = px[2..0] * y
-			if (isFullBit_) xor_(t4, t4);
+//			if (isFullBit_) xor_(t4, t4);
 			add_rr(Pack(c3, y, c1, c0), Pack(rdx, c2, t1, t0));
-			if (isFullBit_) adc(t4, 0);
+//			if (isFullBit_) adc(t4, 0);
+			if (isFullBit_) setc(t4.cvt8());
 		}
 		// [t4:c3:y:c1:c0]
 		// t4 = 0 or 1 if isFullBit_, = 0 otherwise
@@ -1341,9 +1343,11 @@ private:
 		adc(c3, rdx);
 		if (isFullBit_) {
 			if (isFirst) {
-				adc(c0, 0);
+//				adc(c0, 0);
+				setc(c0.cvt8());
 			} else {
-				adc(c0, t4);
+//				adc(c0, t4);
+				adc(c0.cvt8(), t4.cvt8());
 			}
 		}
 	}
@@ -1444,10 +1448,11 @@ private:
 		output [c0:c4:c3:c2:c1]
 
 		@note use rax, rdx, destroy y
+		use xt if isFullBit_
 	*/
 	void montgomery4_1(uint64_t pp, const Reg64& c4, const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
 		const Reg64& px, const Reg64& y, const Reg64& p,
-		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, const Reg64& t4, bool isFirst)
+		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, const Reg64& t4, bool isFirst, const Xmm& xt)
 	{
 		if (isFirst) {
 			mul4x1(px, y, c3, c2, c1, c0, c4);
@@ -1457,7 +1462,7 @@ private:
 			mul4x1(px, y, t3, t2, t1, t0, t4);
 			// [rdx:y:t2:t1:t0] = px[3..0] * y
 			if (isFullBit_) {
-				push(px);
+				movq(xt, px);
 				xor_(px, px);
 			}
 			add_rr(Pack(c4, y, c2, c1, c0), Pack(rdx, c3, t2, t1, t0));
@@ -1481,7 +1486,7 @@ private:
 				adc(c0, 0);
 			} else {
 				adc(c0, px);
-				pop(px);
+				movq(px, xt);
 			}
 		}
 	}
