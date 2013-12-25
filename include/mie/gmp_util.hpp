@@ -16,6 +16,7 @@
 	#pragma warning(disable : 4244)
 	#pragma warning(disable : 4127)
 	#pragma warning(disable : 4512)
+	#pragma warning(disable : 4146)
 #endif
 #include <gmpxx.h>
 #include <stdint.h>
