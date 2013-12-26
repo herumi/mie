@@ -24,12 +24,22 @@
 	#pragma warning(pop)
 #endif
 #ifdef _WIN32
+#if _MSC_VER == 1800 // Visual Studio 2013(VS12)
+#ifdef _DEBUG
+#pragma comment(lib, "mpir12d.lib")
+#pragma comment(lib, "mpirxx12d.lib")
+#else
+#pragma comment(lib, "mpir12.lib")
+#pragma comment(lib, "mpirxx12.lib")
+#endif
+#else
 #ifdef _DEBUG
 #pragma comment(lib, "mpird.lib")
 #pragma comment(lib, "mpirxxd.lib")
 #else
 #pragma comment(lib, "mpir.lib")
 #pragma comment(lib, "mpirxx.lib")
+#endif
 #endif
 #endif
 #include <mie/operator.hpp>
