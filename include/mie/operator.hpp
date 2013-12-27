@@ -11,7 +11,11 @@
 
 #ifdef _WIN32
 	#ifndef MIE_FORCE_INLINE
-		#define MIE_FORCE_INLINE __forceinline
+		#if _MSC_VER == 1800 // bug of VC12
+			#define MIE_FORCE_INLINE inline
+		#else
+			#define MIE_FORCE_INLINE __forceinline
+		#endif
 	#endif
 	#pragma warning(push)
 	#pragma warning(disable : 4714)
