@@ -603,7 +603,7 @@ struct DummyCall {
 } // str_util_impl
 
 
-inline bool isAvaiableSSE42()
+inline bool isAvailableSSE42()
 {
 	return str_util_impl::InstanceIsHere<>::code.cpu.has(Xbyak::util::Cpu::tSSE42);
 }
