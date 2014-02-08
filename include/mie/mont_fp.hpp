@@ -199,6 +199,8 @@ public:
 		add = Xbyak::CastTo<void3op>(fg_.add_);
 		sub = Xbyak::CastTo<void3op>(fg_.sub_);
 		mul = Xbyak::CastTo<void3op>(fg_.mul_);
+		square = Xbyak::CastTo<void2op>(fg_.sqr_);
+		if (square == 0) square = squareC;
 		neg = Xbyak::CastTo<void2op>(fg_.neg_);
 		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
 		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
@@ -226,12 +228,13 @@ public:
 	static void3op add;
 	static void3op sub;
 	static void3op mul;
+	static void2op square;
 	static void2op neg;
 	static void2op shr1;
 	static bool3op addNc;
 	static bool3op subNc;
 	static int2op preInv;
-	static inline void square(MontFpT& z, const MontFpT& x)
+	static inline void squareC(MontFpT& z, const MontFpT& x)
 	{
 		mul(z, x, x);
 	}
@@ -377,6 +380,7 @@ template<size_t N, class tag>size_t MontFpT<N, tag>::modBitLen_;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::add;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::sub;
 template<size_t N, class tag>typename MontFpT<N, tag>::void3op MontFpT<N, tag>::mul;
+template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::square;
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::neg;
 template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::shr1;
 template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::addNc;

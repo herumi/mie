@@ -186,6 +186,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void3op sub_;
 	void3op mul_;
 	uint3opI mulI_;
+	void2op sqr_;
 	void2op neg_;
 	void2op shr1_;
 	int2op preInv_;
@@ -242,6 +243,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		mul_ = getCurr<void3op>();
 		gen_mul();
+		align(16);
+		sqr_ = getCurr<void2op>();
+		if (!gen_sqr()) {
+			sqr_ = 0;
+		}
 		align(16);
 		shr1_ = getCurr<void2op>();
 		gen_shr1();
@@ -567,6 +573,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			throw cybozu::Exception("mie:FpGenerator:gen_mul:not implemented for") << pn_;
 		}
 	}
+	bool gen_sqr()
+	{
+		if (pn_ == 3) {
+			gen_montSqr3(p_, pp_);
+			return true;
+		}
+		return false;
+	}
 	/*
 		input (pz[], px[], py[])
 		z[] <- montgomery(x[], y[])
@@ -684,6 +698,53 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& t8 = sf.t[8];
 		const Reg64& t9 = sf.t[9];
 
+		movq(xm0, p0); // save p0
+		mov(t7, (uint64_t)p);
+		mov(t9, ptr [p2]);
+		//                c3, c2, c1, c0, px, y,  p,
+		montgomery3_1(pp, t0, t3, t2, t1, p1, t9, t7, t4, t5, t6, t8, p0, true);
+		mov(t9, ptr [p2 + 8]);
+		montgomery3_1(pp, t1, t0, t3, t2, p1, t9, t7, t4, t5, t6, t8, p0, false);
+
+		mov(t9, ptr [p2 + 16]);
+		montgomery3_1(pp, t2, t1, t0, t3, p1, t9, t7, t4, t5, t6, t8, p0, false);
+
+		// [t3:t2:t1:t0]
+		mov(t4, t0);
+		mov(t5, t1);
+		mov(t6, t2);
+		sub_rm(Pack(t2, t1, t0), t7);
+		if (isFullBit_) sbb(t3, 0);
+		cmovc(t0, t4);
+		cmovc(t1, t5);
+		cmovc(t2, t6);
+		movq(p0, xm0);
+		store_mr(p0, Pack(t2, t1, t0));
+	}
+	/*
+		input (z, x, y) = (p0, p1)
+		z[0..2] <- montgomery(x[0..2], x[0..2])
+		destroy gt0, ..., gt9, xm0, xm1, p2
+	*/
+	void gen_montSqr3(const uint64_t *p, uint64_t pp)
+	{
+		StackFrame sf(this, 3, 10 | UseRDX);
+		const Reg64& p0 = sf.p[0];
+		const Reg64& p1 = sf.p[1];
+		const Reg64& p2 = sf.p[2]; // not used
+
+		const Reg64& t0 = sf.t[0];
+		const Reg64& t1 = sf.t[1];
+		const Reg64& t2 = sf.t[2];
+		const Reg64& t3 = sf.t[3];
+		const Reg64& t4 = sf.t[4];
+		const Reg64& t5 = sf.t[5];
+		const Reg64& t6 = sf.t[6];
+		const Reg64& t7 = sf.t[7];
+		const Reg64& t8 = sf.t[8];
+		const Reg64& t9 = sf.t[9];
+
+		mov(p2, p1);
 		movq(xm0, p0); // save p0
 		mov(t7, (uint64_t)p);
 		mov(t9, ptr [p2]);
@@ -1325,9 +1386,7 @@ private:
 		} else {
 			mul3x1(px, y, t2, t1, t0, t3);
 			// [rdx:y:t1:t0] = px[2..0] * y
-//			if (isFullBit_) xor_(t4, t4);
 			add_rr(Pack(c3, y, c1, c0), Pack(rdx, c2, t1, t0));
-//			if (isFullBit_) adc(t4, 0);
 			if (isFullBit_) setc(t4.cvt8());
 		}
 		// [t4:c3:y:c1:c0]
@@ -1343,10 +1402,8 @@ private:
 		adc(c3, rdx);
 		if (isFullBit_) {
 			if (isFirst) {
-//				adc(c0, 0);
 				setc(c0.cvt8());
 			} else {
-//				adc(c0, t4);
 				adc(c0.cvt8(), t4.cvt8());
 			}
 		}

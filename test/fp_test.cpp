@@ -452,11 +452,13 @@ void benchSub(const char *pStr, const char *xStr, const char *yStr)
 	CYBOZU_BENCH("add", T::add, x, x, x);
 	CYBOZU_BENCH("sub", T::sub, x, x, y);
 	CYBOZU_BENCH("mul", T::mul, x, x, x);
+	CYBOZU_BENCH("square", T::square, x, x);
 	CYBOZU_BENCH("inv", x += y;T::inv, x, x); // avoid same jmp
 	CYBOZU_BENCH("div", x += y;T::div, x, y, x);
 	puts("");
 }
 
+// square 76clk@sandy
 CYBOZU_TEST_AUTO(bench3)
 {
 	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
