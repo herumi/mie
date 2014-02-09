@@ -391,12 +391,13 @@ struct Test {
 			Zn add; // x + y
 			Zn sub; // x - y
 			Zn mul; // x * y
+			Zn sqr; // x * x
 		} tbl[] = {
-			{ 0, 1, 1, -1, 0 },
-			{ 9, 7, 16, 2, 63 },
-			{ 10, 13, 23, -3, 130 },
-			{ 2000, -1000, 1000, 3000, -2000000 },
-			{ -12345, -9999, -(12345 + 9999), - 12345 + 9999, 12345 * 9999 },
+			{ 0, 1, 1, -1, 0, 0 },
+			{ 9, 7, 16, 2, 63, 81 },
+			{ 10, 13, 23, -3, 130, 100 },
+			{ 2000, -1000, 1000, 3000, -2000000, 4000000 },
+			{ -12345, -9999, -(12345 + 9999), - 12345 + 9999, 12345 * 9999, 12345 * 12345 },
 		};
 		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 			const Fp x(castTo<Fp>(tbl[i].x));
@@ -422,6 +423,8 @@ struct Test {
 			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].sub));
 			z = x * y;
 			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].mul));
+			Fp::square(z, x);
+			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].sqr));
 
 			z = x / y;
 			z *= y;
@@ -526,6 +529,7 @@ struct Test {
 		CYBOZU_BENCH("add", operator+, x, x);
 		CYBOZU_BENCH("sub", operator-, x, y);
 		CYBOZU_BENCH("mul", operator*, x, x);
+		CYBOZU_BENCH("sqr", Fp::square, x, x);
 		CYBOZU_BENCH("div", y += x; operator/, x, y);
 	}
 };

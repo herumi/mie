@@ -186,6 +186,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 	void3op sub_;
 	void3op mul_;
 	uint3opI mulI_;
+	void2op sqr_;
 	void2op neg_;
 	void2op shr1_;
 	int2op preInv_;
@@ -242,6 +243,11 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		align(16);
 		mul_ = getCurr<void3op>();
 		gen_mul();
+		align(16);
+		sqr_ = getCurr<void2op>();
+		if (!gen_sqr()) {
+			sqr_ = 0;
+		}
 		align(16);
 		shr1_ = getCurr<void2op>();
 		gen_shr1();
@@ -567,6 +573,14 @@ struct FpGenerator : Xbyak::CodeGenerator {
 			throw cybozu::Exception("mie:FpGenerator:gen_mul:not implemented for") << pn_;
 		}
 	}
+	bool gen_sqr()
+	{
+		if (pn_ == 3) {
+			gen_montSqr3(p_, pp_);
+			return true;
+		}
+		return false;
+	}
 	/*
 		input (pz[], px[], py[])
 		z[] <- montgomery(x[], y[])
@@ -706,6 +720,62 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		cmovc(t2, t6);
 		movq(p0, xm0);
 		store_mr(p0, Pack(t2, t1, t0));
+	}
+	/*
+		input (pz, px)
+		z[0..2] <- montgomery(px[0..2], px[0..2])
+		destroy gt0, ..., gt9, xm0, xm1, p2
+	*/
+	void gen_montSqr3(const uint64_t *p, uint64_t pp)
+	{
+		StackFrame sf(this, 3, 10 | UseRDX, 16 * 3);
+		const Reg64& pz = sf.p[0];
+		const Reg64& px = sf.p[1];
+		const Reg64& py = sf.p[2]; // not used
+
+		const Reg64& t0 = sf.t[0];
+		const Reg64& t1 = sf.t[1];
+		const Reg64& t2 = sf.t[2];
+		const Reg64& t3 = sf.t[3];
+		const Reg64& t4 = sf.t[4];
+		const Reg64& t5 = sf.t[5];
+		const Reg64& t6 = sf.t[6];
+		const Reg64& t7 = sf.t[7];
+		const Reg64& t8 = sf.t[8];
+		const Reg64& t9 = sf.t[9];
+
+		mov(py, px);
+		movq(xm0, pz); // save pz
+		mov(t7, (uint64_t)p);
+		mov(t9, ptr [py]);
+		mul3x1_sqr1(px, t9, t3, t2, t1, t0);
+
+		mov(t0, rdx);
+		montgomery3_sub(pp, t0, t3, t2, t1, px, t9, t7, t4, t5, t6, t8, pz, true);
+
+		mov(t9, ptr [py + 8]);
+		mul3x1_sqr2(px, t9, t6, t5, t4, t8);
+		add_rr(Pack(t1, t9, t3, t2), Pack(rdx, t0, t5, t4));
+		if (isFullBit_) setc(pz.cvt8());
+		montgomery3_sub(pp, t1, t0, t3, t2, px, t9, t7, t4, t5, t6, t8, pz, false);
+
+		mov(t9, ptr [py + 16]);
+		mul3x1_sqr3(px, t9, t6, t5, t4, t8);
+		add_rr(Pack(t2, t9, t0, t3), Pack(rdx, t1, t5, t4));
+		if (isFullBit_) setc(pz.cvt8());
+		montgomery3_sub(pp, t2, t1, t0, t3, px, t9, t7, t4, t5, t6, t8, pz, false);
+
+		// [t3:t2:t1:t0]
+		mov(t4, t0);
+		mov(t5, t1);
+		mov(t6, t2);
+		sub_rm(Pack(t2, t1, t0), t7);
+		if (isFullBit_) sbb(t3, 0);
+		cmovc(t0, t4);
+		cmovc(t1, t5);
+		cmovc(t2, t6);
+		movq(pz, xm0);
+		store_mr(pz, Pack(t2, t1, t0));
 	}
 	static inline void debug_put_inner(const uint64_t *ptr, int n)
 	{
@@ -1303,7 +1373,115 @@ private:
 		adc(rdx, 0);
 		mov(x, rax);
 	}
+	/*
+		[x2:x1:x0] * x0
+	*/
+	void mul3x1_sqr1(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	{
+		mov(rax, ptr [py]);
+		mul(x);
+		mov(t0, rax);
+		mov(t1, rdx);
+		mov(rax, ptr [py + 8]);
+		mul(x);
+		mov(ptr [rsp + 0 * 8], rax); // x0 * x1
+		mov(ptr [rsp + 1 * 8], rdx);
+		mov(t, rax);
+		mov(t2, rdx);
+		mov(rax, ptr [py + 8 * 2]);
+		mul(x);
+		mov(ptr [rsp + 2 * 8], rax); // x0 * x2
+		mov(ptr [rsp + 3 * 8], rdx);
+		/*
+			rdx:rax
+			     t2:t
+			        t1:t0
+		*/
+		add(t1, t);
+		adc(rax, t2);
+		adc(rdx, 0);
+		mov(x, rax);
+	}
+	/*
+		[x2:x1:x0] * x1
+	*/
+	void mul3x1_sqr2(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	{
+		mov(t0, ptr [rsp + 0 * 8]);// x0 * x1
+		mov(t1, ptr [rsp + 1 * 8]);
+		mov(rax, ptr [py + 8]);
+		mul(x);
+		mov(t, rax);
+		mov(t2, rdx);
+		mov(rax, ptr [py + 8 * 2]);
+		mul(x);
+		mov(ptr [rsp + 4 * 8], rax); // x1 * x2
+		mov(ptr [rsp + 5 * 8], rdx);
+		/*
+			rdx:rax
+			     t2:t
+			        t1:t0
+		*/
+		add(t1, t);
+		adc(rax, t2);
+		adc(rdx, 0);
+		mov(x, rax);
+	}
+	/*
+		[x2:x1:x0] * x2
+	*/
+	void mul3x1_sqr3(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	{
+		mov(t0, ptr [rsp + 2 * 8]); // x0 * x2
+		mov(t1, ptr [rsp + 3 * 8]);
+		mov(t, ptr [rsp + 4 * 8]); // x1 * x2
+		mov(t2, ptr [rsp + 5 * 8]);
+		mov(rax, ptr [py + 8 * 2]);
+		mul(x);
+		/*
+			rdx:rax
+			     t2:t
+			        t1:t0
+		*/
+		add(t1, t);
+		adc(rax, t2);
+		adc(rdx, 0);
+		mov(x, rax);
+	}
 
+	/*
+		c = [c3:y:c1:c0] = c + x[2..0] * y
+		q = uint64_t(c0 * pp)
+		c = (c + q * p) >> 64
+		input  [c3:c2:c1:c0], px, y, p
+		output [c0:c3:c2:c1] ; c0 == 0 unless isFullBit_
+
+		@note use rax, rdx, destroy y
+	*/
+	void montgomery3_sub(uint64_t pp, const Reg64& c3, const Reg64& c2, const Reg64& c1, const Reg64& c0,
+		const Reg64& /*px*/, const Reg64& y, const Reg64& p,
+		const Reg64& t0, const Reg64& t1, const Reg64& t2, const Reg64& t3, const Reg64& t4, bool isFirst)
+	{
+		// input [c3:y:c1:0]
+		// [t4:c3:y:c1:c0]
+		// t4 = 0 or 1 if isFullBit_, = 0 otherwise
+		mov(rax, pp);
+		mul(c0); // q = rax
+		mov(c2, rax);
+		mul3x1(p, c2, t2, t1, t0, t3);
+		// [rdx:c2:t1:t0] = p * q
+		add(c0, t0); // always c0 is zero
+		adc(c1, t1);
+		adc(c2, y);
+		adc(c3, rdx);
+		if (isFullBit_) {
+			if (isFirst) {
+				setc(c0.cvt8());
+			} else {
+				adc(c0.cvt8(), t4.cvt8());
+			}
+		}
+	}
 	/*
 		c = [c3:c2:c1:c0]
 		c += x[2..0] * y
@@ -1325,31 +1503,10 @@ private:
 		} else {
 			mul3x1(px, y, t2, t1, t0, t3);
 			// [rdx:y:t1:t0] = px[2..0] * y
-//			if (isFullBit_) xor_(t4, t4);
 			add_rr(Pack(c3, y, c1, c0), Pack(rdx, c2, t1, t0));
-//			if (isFullBit_) adc(t4, 0);
 			if (isFullBit_) setc(t4.cvt8());
 		}
-		// [t4:c3:y:c1:c0]
-		// t4 = 0 or 1 if isFullBit_, = 0 otherwise
-		mov(rax, pp);
-		mul(c0); // q = rax
-		mov(c2, rax);
-		mul3x1(p, c2, t2, t1, t0, t3);
-		// [rdx:c2:t1:t0] = p * q
-		add(c0, t0); // always c0 is zero
-		adc(c1, t1);
-		adc(c2, y);
-		adc(c3, rdx);
-		if (isFullBit_) {
-			if (isFirst) {
-//				adc(c0, 0);
-				setc(c0.cvt8());
-			} else {
-//				adc(c0, t4);
-				adc(c0.cvt8(), t4.cvt8());
-			}
-		}
+		montgomery3_sub(pp, c3, c2, c1, c0, px, y, p, t0, t1, t2, t3, t4, isFirst);
 	}
 	/*
 		pc[0..n] += x[0..n-1] * y ; pc[] = 0 if isFirst

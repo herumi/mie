@@ -239,12 +239,13 @@ CYBOZU_TEST_AUTO(ope)
 		int add; // x + y
 		int sub; // x - y
 		int mul; // x * y
+		int sqr; // x^2
 	} tbl[] = {
-		{ 0, 1, 1, m - 1, 0 },
-		{ 9, 5, 14, 4, 45 },
-		{ 10, 13, 23, m - 3, 130 },
-		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m },
-		{ 12345, 9999, 12345 + 9999, 12345 - 9999, (12345 * 9999) % m },
+		{ 0, 1, 1, m - 1, 0, 0 },
+		{ 9, 5, 14, 4, 45, 81 },
+		{ 10, 13, 23, m - 3, 130, 100 },
+		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m, (2000 * 2000) % m },
+		{ 12345, 9999, 12345 + 9999, 12345 - 9999, (12345 * 9999) % m, (12345 * 12345) % m },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		const Fp x(tbl[i].x);
@@ -268,6 +269,9 @@ CYBOZU_TEST_AUTO(ope)
 		CYBOZU_TEST_EQUAL(z, tbl[i].sub);
 		z = x * y;
 		CYBOZU_TEST_EQUAL(z, tbl[i].mul);
+
+		Fp::square(z, x);
+		CYBOZU_TEST_EQUAL(z, tbl[i].sqr);
 
 		z = x / y;
 		z *= y;
@@ -452,11 +456,13 @@ void benchSub(const char *pStr, const char *xStr, const char *yStr)
 	CYBOZU_BENCH("add", T::add, x, x, x);
 	CYBOZU_BENCH("sub", T::sub, x, x, y);
 	CYBOZU_BENCH("mul", T::mul, x, x, x);
+	CYBOZU_BENCH("square", T::square, x, x);
 	CYBOZU_BENCH("inv", x += y;T::inv, x, x); // avoid same jmp
 	CYBOZU_BENCH("div", x += y;T::div, x, y, x);
 	puts("");
 }
 
+// square 76clk@sandy
 CYBOZU_TEST_AUTO(bench3)
 {
 	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
