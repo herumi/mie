@@ -1584,24 +1584,36 @@ private:
 	*/
 	void mul4x1(const RegExp& py, const Reg64& x, const Reg64& t3, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
 	{
-		mov(rax, ptr [py]);
-		mul(x);
-		mov(t0, rax);
-		mov(t1, rdx);
-		mov(rax, ptr [py + 8]);
-		mul(x);
-		mov(t, rax);
-		mov(t2, rdx);
-		mov(rax, ptr [py + 8 * 2]);
-		mul(x);
-		mov(t3, rax);
-		mov(rax, x);
-		mov(x, rdx);
-		mul(qword [py + 8 * 3]);
-		add(t1, t);
-		adc(t2, t3);
-		adc(x, rax);
-		adc(rdx, 0);
+		if (useMulx_) {
+			mov(rdx, x);
+			mulx(t1, t0, ptr [py + 8 * 0]);
+			mulx(t2, rax, ptr [py + 8 * 1]);
+			add(t1, rax);
+			mulx(x, rax, ptr [py + 8 * 2]);
+			adc(t2, rax);
+			mulx(rdx, rax, ptr [py + 8 * 3]);
+			adc(x, rax);
+			adc(rdx, 0);
+		} else {
+			mov(rax, ptr [py]);
+			mul(x);
+			mov(t0, rax);
+			mov(t1, rdx);
+			mov(rax, ptr [py + 8]);
+			mul(x);
+			mov(t, rax);
+			mov(t2, rdx);
+			mov(rax, ptr [py + 8 * 2]);
+			mul(x);
+			mov(t3, rax);
+			mov(rax, x);
+			mov(x, rdx);
+			mul(qword [py + 8 * 3]);
+			add(t1, t);
+			adc(t2, t3);
+			adc(x, rax);
+			adc(rdx, 0);
+		}
 	}
 
 	/*
