@@ -731,7 +731,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		StackFrame sf(this, 3, 10 | UseRDX, 16 * 3);
 		const Reg64& pz = sf.p[0];
 		const Reg64& px = sf.p[1];
-		const Reg64& py = sf.p[2]; // not used
+//		const Reg64& py = sf.p[2]; // not used
 
 		const Reg64& t0 = sf.t[0];
 		const Reg64& t1 = sf.t[1];
@@ -744,38 +744,36 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		const Reg64& t8 = sf.t[8];
 		const Reg64& t9 = sf.t[9];
 
-		mov(py, px);
 		movq(xm0, pz); // save pz
 		mov(t7, (uint64_t)p);
-		mov(t9, ptr [py]);
+		mov(t9, ptr [px]);
 		mul3x1_sqr1(px, t9, t3, t2, t1, t0);
-
 		mov(t0, rdx);
-		montgomery3_sub(pp, t0, t3, t2, t1, px, t9, t7, t4, t5, t6, t8, pz, true);
+		montgomery3_sub(pp, t0, t9, t2, t1, px, t3, t7, t4, t5, t6, t8, pz, true);
 
-		mov(t9, ptr [py + 8]);
-		mul3x1_sqr2(px, t9, t6, t5, t4, t8);
-		add_rr(Pack(t1, t9, t3, t2), Pack(rdx, t0, t5, t4));
+		mov(t3, ptr [px + 8]);
+		mul3x1_sqr2(px, t3, t6, t5, t4);
+		add_rr(Pack(t1, t0, t9, t2), Pack(rdx, rax, t5, t4));
 		if (isFullBit_) setc(pz.cvt8());
-		montgomery3_sub(pp, t1, t0, t3, t2, px, t9, t7, t4, t5, t6, t8, pz, false);
+		montgomery3_sub(pp, t1, t3, t9, t2, px, t0, t7, t4, t5, t6, t8, pz, false);
 
-		mov(t9, ptr [py + 16]);
-		mul3x1_sqr3(px, t9, t6, t5, t4, t8);
-		add_rr(Pack(t2, t9, t0, t3), Pack(rdx, t1, t5, t4));
+		mov(t0, ptr [px + 16]);
+		mul3x1_sqr3(t0, t5, t4);
+		add_rr(Pack(t2, t1, t3, t9), Pack(rdx, rax, t5, t4));
 		if (isFullBit_) setc(pz.cvt8());
-		montgomery3_sub(pp, t2, t1, t0, t3, px, t9, t7, t4, t5, t6, t8, pz, false);
+		montgomery3_sub(pp, t2, t0, t3, t9, px, t1, t7, t4, t5, t6, t8, pz, false);
 
-		// [t3:t2:t1:t0]
-		mov(t4, t0);
-		mov(t5, t1);
+		// [t9:t2:t1:t3]
+		mov(t4, t3);
+		mov(t5, t0);
 		mov(t6, t2);
-		sub_rm(Pack(t2, t1, t0), t7);
-		if (isFullBit_) sbb(t3, 0);
-		cmovc(t0, t4);
-		cmovc(t1, t5);
+		sub_rm(Pack(t2, t0, t3), t7);
+		if (isFullBit_) sbb(t9, 0);
+		cmovc(t3, t4);
+		cmovc(t0, t5);
 		cmovc(t2, t6);
 		movq(pz, xm0);
-		store_mr(pz, Pack(t2, t1, t0));
+		store_mr(pz, Pack(t2, t0, t3));
 	}
 	static inline void debug_put_inner(const uint64_t *ptr, int n)
 	{
@@ -1353,100 +1351,110 @@ private:
 	*/
 	void mul3x1(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
 	{
-		mov(rax, ptr [py]);
-		mul(x);
-		mov(t0, rax);
-		mov(t1, rdx);
-		mov(rax, ptr [py + 8]);
-		mul(x);
-		mov(t, rax);
-		mov(t2, rdx);
-		mov(rax, ptr [py + 8 * 2]);
-		mul(x);
-		/*
-			rdx:rax
-			     t2:t
-			        t1:t0
-		*/
-		add(t1, t);
-		adc(rax, t2);
-		adc(rdx, 0);
-		mov(x, rax);
+		if (useMulx_) {
+			// mulx(H, L, x) = [H:L] = x * rdx
+			/*
+				rdx:x
+				    t:t1
+				      rax:t0
+			*/
+			mov(rdx, x);
+			mulx(rax, t0, ptr [py]); // [rax:t0] = py[0] * x
+			mulx(t, t1, ptr [py + 8]); // [t:t1] = py[1] * x
+			add(t1, rax);
+			mulx(rdx, x, ptr [py + 8 * 2]);
+			adc(x, t);
+			adc(rdx, 0);
+		} else {
+			mov(rax, ptr [py]);
+			mul(x);
+			mov(t0, rax);
+			mov(t1, rdx);
+			mov(rax, ptr [py + 8]);
+			mul(x);
+			mov(t, rax);
+			mov(t2, rdx);
+			mov(rax, ptr [py + 8 * 2]);
+			mul(x);
+			/*
+				rdx:rax
+				     t2:t
+				        t1:t0
+			*/
+			add(t1, t);
+			adc(rax, t2);
+			adc(rdx, 0);
+			mov(x, rax);
+		}
 	}
 	/*
 		[x2:x1:x0] * x0
 	*/
-	void mul3x1_sqr1(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	void mul3x1_sqr1(const RegExp& px, const Reg64& x0, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
 	{
-		mov(rax, ptr [py]);
-		mul(x);
+		mov(rax, x0);
+		mul(x0);
 		mov(t0, rax);
 		mov(t1, rdx);
-		mov(rax, ptr [py + 8]);
-		mul(x);
-		mov(ptr [rsp + 0 * 8], rax); // x0 * x1
-		mov(ptr [rsp + 1 * 8], rdx);
+		mov(rax, ptr [px + 8]);
+		mul(x0);
+		mov(ptr [rsp + 0 * 8], rax); // (x0 * x1)_L
+		mov(ptr [rsp + 1 * 8], rdx); // (x0 * x1)_H
 		mov(t, rax);
 		mov(t2, rdx);
-		mov(rax, ptr [py + 8 * 2]);
-		mul(x);
-		mov(ptr [rsp + 2 * 8], rax); // x0 * x2
-		mov(ptr [rsp + 3 * 8], rdx);
+		mov(rax, ptr [px + 8 * 2]);
+		mul(x0);
+		mov(ptr [rsp + 2 * 8], rax); // (x0 * x2)_L
+		mov(ptr [rsp + 3 * 8], rdx); // (x0 * x2)_H
 		/*
 			rdx:rax
 			     t2:t
 			        t1:t0
 		*/
 		add(t1, t);
-		adc(rax, t2);
+		adc(t2, rax);
 		adc(rdx, 0);
-		mov(x, rax);
 	}
 	/*
 		[x2:x1:x0] * x1
 	*/
-	void mul3x1_sqr2(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	void mul3x1_sqr2(const RegExp& px, const Reg64& x1, const Reg64& t2, const Reg64& t1, const Reg64& t0)
 	{
-		mov(t0, ptr [rsp + 0 * 8]);// x0 * x1
-		mov(t1, ptr [rsp + 1 * 8]);
-		mov(rax, ptr [py + 8]);
-		mul(x);
-		mov(t, rax);
+		mov(t0, ptr [rsp + 0 * 8]);// (x0 * x1)_L
+		mov(rax, x1);
+		mul(x1);
+		mov(t1, rax);
 		mov(t2, rdx);
-		mov(rax, ptr [py + 8 * 2]);
-		mul(x);
-		mov(ptr [rsp + 4 * 8], rax); // x1 * x2
-		mov(ptr [rsp + 5 * 8], rdx);
+		mov(rax, ptr [px + 8 * 2]);
+		mul(x1);
+		mov(ptr [rsp + 4 * 8], rax); // (x1 * x2)_L
+		mov(ptr [rsp + 5 * 8], rdx); // (x1 * x2)_H
 		/*
 			rdx:rax
-			     t2:t
-			        t1:t0
+			     t2:t1
+			         t:t0
 		*/
-		add(t1, t);
+		add(t1, ptr [rsp + 1 * 8]); // (x0 * x1)_H
 		adc(rax, t2);
 		adc(rdx, 0);
-		mov(x, rax);
 	}
 	/*
-		[x2:x1:x0] * x2
+		[rdx:rax:t1:t0] = [x2:x1:x0] * x2
 	*/
-	void mul3x1_sqr3(const RegExp& py, const Reg64& x, const Reg64& t2, const Reg64& t1, const Reg64& t0, const Reg64& t)
+	void mul3x1_sqr3(const Reg64& x2, const Reg64& t1, const Reg64& t0)
 	{
-		mov(t0, ptr [rsp + 2 * 8]); // x0 * x2
-		mov(t1, ptr [rsp + 3 * 8]);
-		mov(t, ptr [rsp + 4 * 8]); // x1 * x2
-		mov(t2, ptr [rsp + 5 * 8]);
-		mov(rax, ptr [py + 8 * 2]);
-		mul(x);
+		mov(rax, x2);
+		mul(x2);
 		/*
 			rdx:rax
 			     t2:t
 			        t1:t0
 		*/
-		add(t1, t);
-		adc(rax, t2);
+		mov(t0, ptr [rsp + 2 * 8]); // (x0 * x2)_L
+		mov(t1, ptr [rsp + 3 * 8]); // (x0 * x2)_H
+		add(t1, ptr [rsp + 4 * 8]); // (x1 * x2)_L
+		adc(rax, ptr [rsp + 5 * 8]); // (x1 * x2)_H
 		adc(rdx, 0);
-		mov(x, rax);
 	}
 
 	/*
