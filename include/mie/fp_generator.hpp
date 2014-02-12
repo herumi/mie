@@ -709,7 +709,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		mov(t9, ptr [p2 + 16]);
 		montgomery3_1(pp, t2, t1, t0, t3, p1, t9, t7, t4, t5, t6, t8, p0, false);
 
-		// [t3:t2:t1:t0]
+		// [(t3):t2:t1:t0]
 		mov(t4, t0);
 		mov(t5, t1);
 		mov(t6, t2);
@@ -763,7 +763,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		if (isFullBit_) setc(pz.cvt8());
 		montgomery3_sub(pp, t2, t0, t3, t9, px, t1, t7, t4, t5, t6, t8, pz, false);
 
-		// [t9:t2:t1:t3]
+		// [t9:t2:t0:t3]
 		mov(t4, t3);
 		mov(t5, t0);
 		mov(t6, t2);
