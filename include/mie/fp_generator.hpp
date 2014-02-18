@@ -1019,7 +1019,7 @@ struct FpGenerator : Xbyak::CodeGenerator {
 		*/
 		size_t rspPos = 0;
 
-		assert(sf.t.size() >= pn_);
+		assert(sf.t.size() >= (size_t)pn_);
 		Pack remain = sf.t;
 
 		const MixPack rr(remain, rspPos, pn_);
