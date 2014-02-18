@@ -129,6 +129,7 @@ struct Test {
 		compare();
 		modulo();
 		ope();
+		cvtInt();
 		power();
 		neg_power();
 		power_Zn();
@@ -430,6 +431,18 @@ struct Test {
 			z *= y;
 			CYBOZU_TEST_EQUAL(z, castTo<Fp>(tbl[i].x));
 		}
+	}
+	void cvtInt()
+	{
+		Fp x;
+		x = 12345;
+		uint64_t y = x.cvtInt();
+		CYBOZU_TEST_EQUAL(y, 12345);
+		x.fromStr("123456789012342342342342342");
+		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
+		bool err = false;
+		CYBOZU_TEST_NO_EXCEPTION(x.cvtInt(&err));
+		CYBOZU_TEST_ASSERT(err);
 	}
 
 	void power()
