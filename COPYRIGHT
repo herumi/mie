@@ -1,0 +1,47 @@
+
+Copyright (c) 2012 MITSUNARI Shigeo
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+Neither the name of the copyright owner nor the names of its contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.
+-----------------------------------------------------------------------------
+εβ½εγΌεβΉεβ³εγΌεγ²η½ΆκΎΎε΅λεγΐε¤¦εγ΄ε¦¬κΏΆκΎΎε΅λεΰΆη¤²θΦ¶εαÒε£λεα¶ε΅χεαªεα¨ε΅λεβΔηΙοεβΎε΅ϊεΰΆζ»¥θΊ¶εΆ°λύ΅θ½¶εβΔθΊ€εα
+εαÒη ΄ιπ°εΆ­ρωΐε£κεΰΆη«νςΆΔηΈ¦ε΅κεβ°εΆµθΏΏντ¨εαΈκ¨±ιο―εαΚε£μεαΎεαÒε€‚
+
+εβ½εγΌεβΉεβ³εγΌεγ²ε£ςιζΊλ ΔηΈ¦ε΅ωεβ¶η ΄ιπ°ε€ΆζΈ΄κ¨ΠεΆ°ορΞζ½Ψθ¨©π£¨ξ¦ΊεΰΆθΨ®λύ΅θ½¶θΊ€π¨§εΰΆε΅κεβ°εΆµθΊ¶κ¨Πη©νπ΄¬λύ΅ςΆ…
+εβΔηΐ­εβΆε£λεαΖεΆªεΰ‚
+εγΐε¤¦εγ΄ε¦¬κΏΆκΎΎεΆ©ιζΊλ ΔηΈ¦ε΅ωεβ¶η ΄ιπ°ε€Άλ ΔηΈ¦ι²«εα«θ½Πη±άεΆ°εγ²ε¤―εγ¥εγ΅εγ³εγ°ι­²εΆ°πµ®θΛωεα«εΰΆζΈ΄κ¨ΠεΆ°ορΞζ½
+μª©π£¨ξ¦ΊεΰΆθΨ®λύ΅θ½¶θΊ€π¨§εΰΆε΅κεβ°εΆµθΊ¶κ¨Πη©νπ΄¬λύ΅ςΆªε£ςιπ«εβΆε£λεαΖεΆªεΰ‚
+λϋΈρύΆεα«εβ°ε£λνιΉιθ¥εα®πª±ιο―εαªεαΞεΆ­εΰΆθΨ®εβ½εγΚε¥θεβ¦εβ§εβΆεα¶ε£ιμ¶Ύντήε΅χεαήκ£½ισΆεΆ°κ°£θΎΪεΆΐεαήεΆ±π΄©κ¥²θΑ¦λ€²
+εα«εΰΆκΑχθΏΨθ¨©οΰªεΆ°ιπΊη±νεαΎεαήεΆ±εβ³εγ³εγ°ε¦¬εγΖε¦§εγΌεβΏεγΌεα®ιπΊη±νεβΔζ½Ώντ¨εαΞεΆ¨εα―εαªεβ²εΆ¬εα¨ε€‚
+λό¬εβ½εγΚε¥θεβ¦εβ§εβΆεα―εΰΆκΑχθΏΨθ¨©οΰªε΅κεβ°εΆµεβ³εγ³εγ°ε¦¬εγΖε¦§εγΌεβΏεγΌεα«εβ°εΆ¥εα¦εΰΈιΎΐνκ¶εα®εαΎεαΎεΰΊθ½πθΐΦε΅υ
+εβΈεΆ¨εα΄ε£κεΰΆθΟξξ¦Ίς½Òι¤ΊεβΔηΙοεβΎε΅ϊεΰΆηΙζμ§­νϊ¨εΆ¬θΏΏντ¨ιο―ογ½λΰ§εΰΆε΅κεβ°εΆµνιΉκ°ΤεΆ°νϋ®νϊ¨εΆ­κ±ΎεαÒε£λρα©ιπ°θ€§
+εα«ρφΆεαÒε£λλϊΞλ»ÒεΆ°θΑΪκ¨Όεβ¤ηΐ­εβΆε€ΆεΆΐεαήε΅ύεβΈεΆ­ρωΐη®Τε΅υεβΈεΆ¬εα¨ε€Άε΅δεα¶εΆ¬εβ¶ζΏΪκ¨Όεβ¤ε΅βεβ΄εΆΐεαΦε£σεΰ‚
+ορΞζ½Ψθ¨©οΰªε£βεβ³εγ³εγ°ε¦¬εγΖε¦§εγΌεβΏεγΌεβ¤ε€ΆζΊ¶ιΘ³εα®εα¨ε΅λεβΖε£ςιυΎε£οεαΤε€ λπΊη®³νωΊντήεΆ°ιξήηΦΆεα¨ε΅λεβΖε£ς
+ιυΎε£οεαΤε€Άε΅λεα¤π΄¬θ½»εα®μΆΉλλ εαΈη¥Βι΄¨εΆ©εα¤ε£λεα¶ηΌµμΆΌπ΄¬θ½»εα§εα¤ε£λεα¶ρΌ°λ΅ξκ¦±εαΪεΆ°θ½ΜεΆ°ώΎ²ζΈΊθ³Κκ΅Έι¤Όεα§
+εα¤ε£λεα¶ε£ςιυΎε£οεαΤε€Άζ»®εα«εαΪεΆ°εβ°ε΅ζεαªλπΊη®³εαΈιÒΌντήε΅ωεβ¶ηΎ±ογ½λΰ§εβΔιή§εβ²ε΅υεβΈεΆ¨εα¨εΆ΅εα¨εαΞεΆ¨εβ¤ε€
+λό¬εβ½εγΚε¥θεβ¦εβ§εβΆεα®θΏΏντ¨εα«εβ°εΆ¥εα¦νωΊντήε΅χεαήρΌ°ζ»£λϋΏισΆεΆΐεαήεΆ±θ½£ντ¨εβµεγΌεγΖε¤»εα®π¬ΏραΘε€Άζ½Ώντ¨εα®
+ιφªκ¦±εΰΆε¥ηεγΌεβΏεα®ιφªκ¦±εΰΆη°«νϋ΄εΆ°ιφªκ¦±εΰΆθ¥­ιλÒεΆ°θΊ­λφ­εβ¤ηΐ­εβΆε€ΆεΆΐεαήε΅ύεβΈεΆ­ρωΐη®Τε΅υεβΈεΆ¬εα¨ρΌ²ιΦ¶λξ¥
+λπΊη®³εΰΆλΛσλξ¥λπΊη®³εΰΆηΆΈνωΊνϊ¨εΆ¬λπΊη®³εΰΆι²»ιθ¥λπΊη®³εΰΆθ®΄ξΏ°νϊ¨θΏνκ°³εΰΆεΆΐεαήεΆ±ξ·ΐθΫόλπΊη®³εα«εα¤εα¨εΆ¨εΰ
+θΊ€ιθ®κ²¬θ½»εβΔκ² εβΎεΆ¬εα¨ε£βεα®εα¨εαΞεΆΐεαÒε€‚
