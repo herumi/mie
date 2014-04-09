@@ -405,6 +405,14 @@ void findChar_test(const std::string& text)
 	for (int c = '0'; c <= '9'; c++) {
 		benchmark("findChar_C", Frange_char<findChar_C>(), "findChar", Frange_char<mie::findChar>(), *pstr, std::string(1, (char)c));
 	}
+	{
+		const char *tt = NULL;
+		const char *q1 = findChar_C(tt, tt, 'a');
+		const char *q2 = mie::findChar(tt, tt, 'a');
+		TEST_EQUAL((int)(q1 - tt), 0);
+		TEST_EQUAL((int)(q2 - tt), 0);
+	}
+	puts("ok");
 }
 
 void findChar_any_test(const std::string& text)
@@ -433,6 +441,13 @@ void findChar_any_test(const std::string& text)
 	for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 		const std::string key = tbl[i];
 		benchmark("findChar_any_C", Frange<findChar_any_C>(), "findChar_any", Frange<mie::findChar_any>(), *pstr, key);
+	}
+	{
+		const char *tt = NULL;
+		const char *q1 = findChar_any_C(tt, tt, "abcd", 4);
+		const char *q2 = mie::findChar_any(tt, tt, "abcd", 4);
+		TEST_EQUAL((int)(q1 - tt), 0);
+		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
 }
@@ -466,6 +481,14 @@ void findChar_range_test(const std::string& text)
 	}
 	std::string key = "azAZ<>"; // QQQ:same as in FfindChar_range_emu
 	benchmark("findChar_range_emu", FfindChar_range_emu(), "findChar_range", Frange<mie::findChar_range>(), text, key);
+	{
+		const char *tt = NULL;
+		const char *q1 = findChar_range_C(tt, tt, "abcd", 4);
+		const char *q2 = mie::findChar_range(tt, tt, "abcd", 4);
+		TEST_EQUAL((int)(q1 - tt), 0);
+		TEST_EQUAL((int)(q2 - tt), 0);
+	}
+	puts("ok");
 }
 
 void findStr_test(const std::string& text)
@@ -501,8 +524,8 @@ void findStr_test(const std::string& text)
 	{
 		MIE_ALIGN(16) const char tt[]="\0a\0bAbc\0ef123";
 		const char *key = "bc\0ef12";
-		const char *q1 = findCaseStr_C(tt, tt + 13, key, 7);
-		const char *q2 = mie::findCaseStr(tt, tt + 13, key, 7);
+		const char *q1 = findStr_C(tt, tt + 13, key, 7);
+		const char *q2 = mie::findStr(tt, tt + 13, key, 7);
 #ifdef __linux__
 		const char *q3 = (const char*)memmem((const void*)tt, 13, (const void*)key, 7);
 #endif
@@ -511,6 +534,13 @@ void findStr_test(const std::string& text)
 #ifdef __linux__
 		TEST_EQUAL((int)(q3 - tt), 5);
 #endif
+	}
+	{
+		const char *tt = NULL;
+		const char *q1 = findStr_C(tt, tt, "test", 4);
+		const char *q2 = mie::findStr(tt, tt, "test", 4);
+		TEST_EQUAL((int)(q1 - tt), 0);
+		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
 }
@@ -631,12 +661,19 @@ void findCaseStr_test(const std::string& text)
 		TEST_EQUAL((int)(q1 - tt), 5);
 		TEST_EQUAL((int)(q2 - tt), 5);
 	}
+	{
+		const char *tt = NULL;
+		const char *q1 = findCaseStr_C(tt, tt, "test", 4);
+		const char *q2 = mie::findCaseStr(tt, tt, "test", 4);
+		TEST_EQUAL((int)(q1 - tt), 0);
+		TEST_EQUAL((int)(q2 - tt), 0);
+	}
 	puts("ok");
 }
 
 int main(int argc, char *argv[])
 {
-	if (!mie::isAvaiableSSE42()) {
+	if (!mie::isAvailableSSE42()) {
 		fprintf(stderr, "SSE4.2 is not supported\n");
 //		return 1;
 	}
