@@ -366,6 +366,24 @@ public:
 	bool operator==(const MontFpT& rhs) const { return compare(*this, rhs) == 0; }
 	bool operator!=(const MontFpT& rhs) const { return compare(*this, rhs) != 0; }
 	static inline size_t getModBitLen() { return modBitLen_; }
+	static inline uint64_t cvtInt(const MontFpT& x, bool *err = 0)
+	{
+		MontFpT t;
+		mul(t, x, one_);
+		for (size_t i = 1; i < N; i++) {
+			if (t.v_[i]) {
+				if (err) {
+					*err = true;
+					return 0;
+				} else {
+					throw cybozu::Exception("MontFp:cvtInt:too large") << x;
+				}
+			}
+		}
+		if (err) *err = false;
+		return t.v_[0];
+	}
+	uint64_t cvtInt(bool *err = 0) const { return cvtInt(*this, err); }
 };
 
 template<size_t N, class tag>mpz_class MontFpT<N, tag>::pOrg_;

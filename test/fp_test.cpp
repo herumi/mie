@@ -239,12 +239,13 @@ CYBOZU_TEST_AUTO(ope)
 		int add; // x + y
 		int sub; // x - y
 		int mul; // x * y
+		int sqr; // x^2
 	} tbl[] = {
-		{ 0, 1, 1, m - 1, 0 },
-		{ 9, 5, 14, 4, 45 },
-		{ 10, 13, 23, m - 3, 130 },
-		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m },
-		{ 12345, 9999, 12345 + 9999, 12345 - 9999, (12345 * 9999) % m },
+		{ 0, 1, 1, m - 1, 0, 0 },
+		{ 9, 5, 14, 4, 45, 81 },
+		{ 10, 13, 23, m - 3, 130, 100 },
+		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m, (2000 * 2000) % m },
+		{ 12345, 9999, 12345 + 9999, 12345 - 9999, (12345 * 9999) % m, (12345 * 12345) % m },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		const Fp x(tbl[i].x);
@@ -268,6 +269,9 @@ CYBOZU_TEST_AUTO(ope)
 		CYBOZU_TEST_EQUAL(z, tbl[i].sub);
 		z = x * y;
 		CYBOZU_TEST_EQUAL(z, tbl[i].mul);
+
+		Fp::square(z, x);
+		CYBOZU_TEST_EQUAL(z, tbl[i].sqr);
 
 		z = x / y;
 		z *= y;
@@ -415,6 +419,17 @@ CYBOZU_TEST_AUTO(toStr)
 		mie::Gmp::toStr(xs, x, 16);
 		y.toStr(ys, 16);
 		CYBOZU_TEST_EQUAL(xs, ys);
+	}
+	{
+		Fp x;
+		x = 12345;
+		uint64_t y = x.cvtInt();
+		CYBOZU_TEST_EQUAL(y, 12345);
+		x.fromStr("123456789012342342342342342");
+		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
+		bool err = false;
+		CYBOZU_TEST_NO_EXCEPTION(x.cvtInt(&err));
+		CYBOZU_TEST_ASSERT(err);
 	}
 }
 
