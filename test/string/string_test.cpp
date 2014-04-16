@@ -16,6 +16,8 @@
 #endif
 //#define USE_BOOST_BM
 
+typedef std::basic_string<unsigned short> Wcstring;
+
 // strcasestr(key must not have capital character)
 const char *strcasestr_C(const char *str, const char *key)
 {
@@ -264,21 +266,52 @@ const char *findStr2_C(const char *begin, const char *end, const char *key, size
 }
 
 /////////////////////////////////////////////////
+template<class C>
+size_t myWcslen(const C* str)
+{
+	size_t i = 0;
+	while (str[i]) {
+		i++;
+	}
+	return i;
+}
 void strlen_test()
 {
 	puts("strlen_test");
-	std::string str;
-	for (int i = 0; i < 16; i++) {
-		str += 'a';
-		size_t a = strlen(str.c_str());
-		size_t b = mie::strlen(str.c_str());
-		TEST_EQUAL(a, b);
+	{
+		std::string str;
+		for (int i = 0; i < 33; i++) {
+			size_t a = strlen(str.c_str());
+			size_t b = mie::strlen(str.c_str());
+			TEST_EQUAL(a, b);
+			str += 'a';
+		}
+		str = "0123456789abcdefghijklmn\0";
+		for (int i = 0; i < 16; i++) {
+			size_t a = strlen(&str[i]);
+			size_t b = mie::strlen(&str[i]);
+			TEST_EQUAL(a, b);
+		}
 	}
-	str = "0123456789abcdefghijklmn\0";
-	for (int i = 0; i < 16; i++) {
-		size_t a = strlen(&str[i]);
-		size_t b = strlen(&str[i]);
-		TEST_EQUAL(a, b);
+	{
+		Wcstring str;
+		for (int i = 0; i < 33; i++) {
+			size_t a = myWcslen(str.c_str());
+			size_t b = mie::wcslen(str.c_str());
+			TEST_EQUAL(a, b);
+			str += (MIE_STRING_WCHAR_T)'a';
+		}
+		str.clear();
+		const std::string cs = "0123456789abcdefghijklmn";
+		for (size_t i = 0; i < cs.size(); i++) {
+			str += cs[i];
+		}
+		str += (MIE_STRING_WCHAR_T)0;
+		for (int i = 0; i < 16; i++) {
+			size_t a = myWcslen(&str[i]);
+			size_t b = mie::wcslen(&str[i]);
+			TEST_EQUAL(a, b);
+		}
 	}
 	puts("ok");
 }
@@ -675,7 +708,7 @@ int main(int argc, char *argv[])
 {
 	if (!mie::isAvailableSSE42()) {
 		fprintf(stderr, "SSE4.2 is not supported\n");
-//		return 1;
+		return 0;
 	}
 	argc--, argv++;
 	const std::string text = (argc == 1) ? LoadFile(argv[0]) : "";

@@ -17,6 +17,16 @@
 	#pragma warning(disable : 4127) // constant condition
 #endif
 
+// #define MIE_STRING_USE_WIN_WCHAR_T
+
+#ifndef MIE_STRING_WCHAR_T
+	#if defined(_MSC_VER) && defined(MIE_STRING_USE_WIN_WCHAR_T)
+		#define MIE_STRING_WCHAR_T wchar_t
+	#else
+		#define MIE_STRING_WCHAR_T unsigned short
+	#endif
+#endif
+
 namespace mie {
 
 namespace str_util_impl {
@@ -32,6 +42,7 @@ const size_t findChar_rangeOffset = findChar_anyOffset + 64;
 const size_t findStrOffset = findChar_rangeOffset + 64;
 const size_t strcasestrOffset = findStrOffset + 160;
 const size_t findCaseStrOffset = strcasestrOffset + 224;
+const size_t wcslenOffset = findCaseStrOffset + 272;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -84,6 +95,9 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(findCaseStrOffset);
 		gen_findStr(isSandyBridge, true);
+
+		nextOffset(wcslenOffset);
+		gen_strlen(true);
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
 		::exit(1);
@@ -98,7 +112,7 @@ private:
 	{
 		size_t cur = getSize();
 		if (cur >= pos) {
-			fprintf(stderr, "over %d %d\n", (int)cur, (int)pos);
+			fprintf(stderr, "mie:StringCode:code size is over %d %d\n", (int)cur, (int)pos);
 			::exit(1);
 		}
 		while (cur < pos) {
@@ -249,7 +263,7 @@ private:
 		ret();
 		outLocalLabel();
 	}
-	void gen_strlen()
+	void gen_strlen(bool isWcs = false)
 	{
 		inLocalLabel();
 		using namespace Xbyak;
@@ -268,7 +282,9 @@ private:
 		const Reg32& a = eax;
 		mov(edx, ptr [esp + 4]);
 #endif
-		mov(eax, 0xff01);
+		const uint32_t c1 = isWcs ? 0xffff0001 : 0xff01;
+		const uint32_t c2 = isWcs ? 0x15 : 0x14;
+		mov(eax, c1);
 		movd(xm0, eax);
 
 		mov(a, p);
@@ -276,10 +292,11 @@ private:
 	L("@@");
 		add(a, 16);
 	L(".in");
-		pcmpistri(xm0, ptr [a], 0x14);
+		pcmpistri(xm0, ptr [a], c2);
 		jnz("@b");
-		add(a, c);
 		sub(a, p);
+		if (isWcs) shr(a, 1);
+		add(a, c);
 		ret();
 		outLocalLabel();
 	}
@@ -638,6 +655,11 @@ inline char *strchr(char *str, int c)
 inline size_t strlen(const char *str)
 {
 	return Xbyak::CastTo<size_t(*)(const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strlenOffset)(str);
+}
+
+inline size_t wcslen(const MIE_STRING_WCHAR_T *str)
+{
+	return Xbyak::CastTo<size_t(*)(const MIE_STRING_WCHAR_T*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcslenOffset)(str);
 }
 
 /*
