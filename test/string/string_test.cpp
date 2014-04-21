@@ -167,11 +167,12 @@ struct FfindChar_range_emu {
 	}
 };
 
-const char *strchr_range_C(const char *str, const char *key)
+template<class C, class UC>
+const C *strchr_range_T(const C *str, const C *key)
 {
 	while (*str) {
-		unsigned char c = (unsigned char)*str;
-		for (const unsigned char *p = (const unsigned char *)key; *p; p += 2) {
+		UC  c = (UC)*str;
+		for (const UC *p = (const UC *)key; *p; p += 2) {
 			if (p[0] <= c && c <= p[1]) {
 				return str;
 			}
@@ -179,6 +180,15 @@ const char *strchr_range_C(const char *str, const char *key)
 		str++;
 	}
 	return 0;
+}
+const char *strchr_range_C(const char *str, const char *key)
+{
+	return strchr_range_T<char, unsigned char>(str, key);
+}
+
+const MIE_STRING_WCHAR_T *wcschr_range_C(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return strchr_range_T<MIE_STRING_WCHAR_T, MIE_STRING_WCHAR_T>(str, key);
 }
 
 const char *mystrstr_C(const char *str, const char *key)
@@ -433,6 +443,21 @@ void strchr_range_test(const std::string& text)
 		benchmark("strchr_range_C", Fstrstr<strchr_range_C>(), "strchr_range", Fstrstr<mie::strchr_range>(), *pstr, key);
 	}
 	puts("ok");
+	{
+		Wcstring str;
+		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+			str += c;
+		}
+		const MIE_STRING_WCHAR_T tbl[][8] = {
+			{ 1, 1 },
+			{ '0', '9' },
+			{ 'a', 'z', '0', '9', 'A', 'Z' },
+			{ 'a', 'c', 'e', 'f', 'g', 'i', 'x', 'z' },
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			TEST_EQUAL(mie::wcschr_range(&str[0], tbl[i]), wcschr_range_C(&str[0], tbl[i]));
+		}
+	}
 }
 
 void strstr_test()
