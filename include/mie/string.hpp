@@ -43,6 +43,7 @@ const size_t findStrOffset = findChar_rangeOffset + 64;
 const size_t strcasestrOffset = findStrOffset + 160;
 const size_t findCaseStrOffset = strcasestrOffset + 224;
 const size_t wcslenOffset = findCaseStrOffset + 272;
+const size_t wcschrOffset = wcslenOffset + 48;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -98,6 +99,9 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(wcslenOffset);
 		gen_strlen(true);
+
+		nextOffset(wcschrOffset);
+		gen_strchr(M_one, true);
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
 		::exit(1);
@@ -300,7 +304,7 @@ private:
 		ret();
 		outLocalLabel();
 	}
-	void gen_strchr(int mode)
+	void gen_strchr(int mode, bool isWcs = false)
 	{
 		inLocalLabel();
 		using namespace Xbyak;
@@ -316,7 +320,11 @@ private:
 		const Reg64& c = rcx;
 		const Reg64& a = rax;
 		if (mode == M_one) {
-			and_(c1, 0xff);
+			if (isWcs) {
+				movzx(c1, c1.cvt16());
+			} else {
+				movzx(c1, c1.cvt8());
+			}
 			movq(xm0, c1);
 		} else {
 			movdqu(xm0, ptr [c1]);
@@ -326,7 +334,11 @@ private:
 		const Reg32& a = eax;
 		const Reg32& c = ecx;
 		if (mode == M_one) {
-			movzx(eax, byte [esp + 8]);
+			if (isWcs) {
+				movzx(eax, word [esp + 8]);
+			} else {
+				movzx(eax, byte [esp + 8]);
+			}
 			movd(xm0, eax);
 		} else {
 			mov(eax, ptr [esp + 8]);
@@ -334,7 +346,7 @@ private:
 		}
 		mov(a, ptr [esp + 4]);
 #endif
-		const int v = mode == M_range ? 4 : 0;
+		const int v = (mode == M_range ? 4 : 0) + (isWcs ? 1 : 0);
 		jmp(".in");
 	L("@@");
 		add(a, 16);
@@ -342,7 +354,11 @@ private:
 		pcmpistri(xm0, ptr [a], v);
 		ja("@b");
 		jnc(".notfound");
-		add(a, c);
+		if (isWcs) {
+			lea(a, ptr [a + c * 2]);
+		} else {
+			add(a, c);
+		}
 		ret();
 	L(".notfound");
 		xor_(a, a);
@@ -650,6 +666,18 @@ inline const char *strchr(const char *str, int c)
 inline char *strchr(char *str, int c)
 {
 	return Xbyak::CastTo<char*(*)(char*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchrOffset)(str, c);
+}
+
+// const version of wcschr(c != 0)
+inline const MIE_STRING_WCHAR_T *wcschr(const MIE_STRING_WCHAR_T *str, int c)
+{
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T*(*)(const MIE_STRING_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
+}
+
+// non const version of wcschr(c != 0)
+inline MIE_STRING_WCHAR_T *wcschr(MIE_STRING_WCHAR_T *str, int c)
+{
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T*(*)(MIE_STRING_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
 }
 
 inline size_t strlen(const char *str)

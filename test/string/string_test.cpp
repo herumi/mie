@@ -330,6 +330,21 @@ void strchr_test(const std::string& text)
 	for (int c = '0'; c <= '9'; c++) {
 		benchmark("strchr_C", Fstrchr<STRCHR>(), "strchr", Fstrchr<mie::strchr>(), *pstr, std::string(1, (char)c));
 	}
+	{
+		const MIE_STRING_WCHAR_T s[] = { 2, 3, 0 };
+		TEST_EQUAL(mie::wcschr(s, 5), (const MIE_STRING_WCHAR_T*)0);
+	}
+	{
+		const int len = 1024;
+		Wcstring str;
+		str.resize(len + 1);
+		for (int i = 0; i < len; i++) {
+			str[i] = (MIE_STRING_WCHAR_T)(i + 1);
+		}
+		for (MIE_STRING_WCHAR_T c = 1; c < len; c++) {
+			TEST_EQUAL(mie::wcschr(&str[0], c), &str[c - 1]);
+		}
+	}
 }
 
 void strchr_any_test(const std::string& text)
