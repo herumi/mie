@@ -714,7 +714,7 @@ inline char *strchr_any(char *str, const char *key)
 
 /*
 	find key[0] or key[1], ... in str
-	@note wcslen(key) <= 16, key[i] != 0
+	@note wcslen(key) <= 8, key[i] != 0
 */
 inline const MIE_STRING_WCHAR_T *wcschr_any(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
 {
@@ -740,7 +740,7 @@ inline char *strchr_range(char *str, const char *key)
 
 /*
 	find c such that key[0] <= c && c <= key[1], key[2] <= c && c <= key[3], ... in str
-	@note strlen(key) <= 16, key[i] != 0
+	@note wcslen(key) <= 8, key[i] != 0
 */
 inline const MIE_STRING_WCHAR_T *wcschr_range(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
 {
