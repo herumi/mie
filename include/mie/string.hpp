@@ -44,6 +44,8 @@ const size_t strcasestrOffset = findStrOffset + 160;
 const size_t findCaseStrOffset = strcasestrOffset + 224;
 const size_t wcslenOffset = findCaseStrOffset + 272;
 const size_t wcschrOffset = wcslenOffset + 48;
+const size_t wcschr_anyOffset = wcschrOffset + 48;
+const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -102,6 +104,13 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(wcschrOffset);
 		gen_strchr(M_one, true);
+
+		nextOffset(wcschr_anyOffset);
+		gen_strchr(M_any, true);
+
+		nextOffset(wcschr_rangeOffset);
+		gen_strchr(M_range, true);
+
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
 		::exit(1);
@@ -701,6 +710,19 @@ inline const char *strchr_any(const char *str, const char *key)
 inline char *strchr_any(char *str, const char *key)
 {
 	return Xbyak::CastTo<char *(*)(char*, const char *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr_anyOffset)(str, key);
+}
+
+/*
+	find key[0] or key[1], ... in str
+	@note wcslen(key) <= 16, key[i] != 0
+*/
+inline const MIE_STRING_WCHAR_T *wcschr_any(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
+}
+inline MIE_STRING_WCHAR_T *wcschr_any(MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
 }
 
 /*

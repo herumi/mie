@@ -194,11 +194,12 @@ const char *mystrstr_C(const char *str, const char *key)
 	return 0;
 }
 
-const char *strchr_any_C(const char *str, const char *key)
+template<class C>
+const C *strchr_any_T(const C *str, const C *key)
 {
 	while (*str) {
-		unsigned char c = (unsigned char)*str;
-		for (const unsigned char *p = (const unsigned char *)key; *p; p++) {
+		const C c = *str;
+		for (const C *p = key; *p; p++) {
 			if (c == *p) {
 				return str;
 			}
@@ -206,6 +207,14 @@ const char *strchr_any_C(const char *str, const char *key)
 		str++;
 	}
 	return 0;
+}
+const char *strchr_any_C(const char *str, const char *key)
+{
+	return strchr_any_T<char>(str, key);
+}
+const MIE_STRING_WCHAR_T *wcschr_any_C(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return strchr_any_T<MIE_STRING_WCHAR_T>(str, key);
 }
 
 const char *findChar_C(const char *begin, const char *end, char c)
@@ -378,6 +387,23 @@ void strchr_any_test(const std::string& text)
 		const std::string key = tbl[i];
 		benchmark("strchr_any_C", Fstrstr<strchr_any_C>(), "strchr_any", Fstrstr<mie::strchr_any>(), *pstr, key);
 //		benchmark("find_first_of", Fstr_find_first_of(), "strchr_any", Fstrstr<mie::strchr_any>(), *pstr, key);
+	}
+	{
+		Wcstring str;
+		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+			str += c;
+		}
+		const MIE_STRING_WCHAR_T tbl[][8] = {
+			{ 1 },
+			{ 128 },
+			{ 1, 2 },
+			{ 5, 10, 20, 32 },
+			{ 65534, 2, 3, 4, 25, 123, 23 },
+			{ 65535 },
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			TEST_EQUAL(mie::wcschr_any(&str[0], tbl[i]), wcschr_any_C(&str[0], tbl[i]));
+		}
 	}
 	puts("ok");
 }
