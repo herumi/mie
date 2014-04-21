@@ -739,6 +739,19 @@ inline char *strchr_range(char *str, const char *key)
 }
 
 /*
+	find c such that key[0] <= c && c <= key[1], key[2] <= c && c <= key[3], ... in str
+	@note strlen(key) <= 16, key[i] != 0
+*/
+inline const MIE_STRING_WCHAR_T *wcschr_range(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+}
+inline MIE_STRING_WCHAR_T *wcschr_range(MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+{
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+}
+
+/*
 	find c in [begin, end)
 	if c is not found then return end
 */
