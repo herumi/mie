@@ -47,6 +47,8 @@ const size_t wcschrOffset = wcslenOffset + 48;
 const size_t wcschr_anyOffset = wcschrOffset + 48;
 const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
 const size_t findWcharOffset = wcschr_rangeOffset + 64;
+const size_t findWchar_anyOffset = findWcharOffset + 64;
+const size_t findWchar_rangeOffset = findWchar_anyOffset + 64;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -114,6 +116,13 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(findWcharOffset);
 		gen_findChar(M_one, true);
+
+		nextOffset(findWchar_anyOffset);
+		gen_findChar(M_any, true);
+
+		nextOffset(findWchar_rangeOffset);
+		gen_findChar(M_range, true);
+
 
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
@@ -391,7 +400,7 @@ private:
 		const Reg64& end = r10;
 		if (mode == M_one) {
 			if (isWcs) {
-				movzx(r8d, r8w);
+				movzx(r8d, r8w); // c:3rd
 			} else {
 				movzx(r8d, r8b); // c:3rd
 			}
@@ -837,6 +846,32 @@ inline char *findChar_any(char *begin, const char *end, const char *key, size_t 
 }
 
 /*
+	find any of key[0..keySize - 1] in [begin, end)
+	if char is not found then return end
+	@note keySize <= 8
+*/
+inline const MIE_STRING_WCHAR_T *findWchar_any(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+}
+inline MIE_STRING_WCHAR_T *findWchar_any(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+}
+
+/*
 	find character in range [key[0]..key[1]], [key[2]..key[3]], ... in [begin, end)
 	if char is not found then return end
 	@note keySize <= 16
@@ -861,6 +896,33 @@ inline char *findChar_range(char *begin, const char *end, const char *key, size_
 	}
 	return Xbyak::CastTo<char *(*)(char*, const char *, const char *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar_rangeOffset)(begin, end, key, keySize);
 }
+
+/*
+	find character in range [key[0]..key[1]], [key[2]..key[3]], ... in [begin, end)
+	if char is not found then return end
+	@note keySize <= 8
+*/
+inline const MIE_STRING_WCHAR_T *findWchar_range(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+}
+inline MIE_STRING_WCHAR_T *findWchar_range(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+}
+
 /*
 	find [key, key + keySize) in [begin, end)
 */
