@@ -237,10 +237,11 @@ const MIE_STRING_WCHAR_T *findWchar_C(const MIE_STRING_WCHAR_T *begin, const MIE
 	return std::find(begin, end, c);
 }
 
-const char *findChar_any_C(const char *begin, const char *end, const char *key, size_t keySize)
+template<class C>
+const C *findChar_any_T(const C *begin, const C *end, const C *key, size_t keySize)
 {
 	while (begin != end) {
-		unsigned char c = (unsigned char)*begin;
+		const C c = *begin;
 		for (size_t i = 0; i < keySize; i++) {
 			if (c == key[i]) {
 				return begin;
@@ -251,10 +252,21 @@ const char *findChar_any_C(const char *begin, const char *end, const char *key, 
 	return end;
 }
 
-const char *findChar_range_C(const char *begin, const char *end, const char *key, size_t keySize)
+const char *findChar_any_C(const char *begin, const char *end, const char *key, size_t keySize)
+{
+	return findChar_any_T<char>(begin, end, key, keySize);
+}
+
+const MIE_STRING_WCHAR_T *findWchar_any_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	return findChar_any_T<MIE_STRING_WCHAR_T>(begin, end, key, keySize);
+}
+
+template<class C, class UC>
+const C *findChar_range_T(const C *begin, const C *end, const C *key, size_t keySize)
 {
 	while (begin != end) {
-		unsigned char c = (unsigned char)*begin;
+		const UC c = (UC)*begin;
 		for (size_t i = 0; i < keySize; i += 2) {
 			if (key[i] <= c && c <= key[i + 1]) {
 				return begin;
@@ -263,6 +275,10 @@ const char *findChar_range_C(const char *begin, const char *end, const char *key
 		begin++;
 	}
 	return end;
+}
+const char *findChar_range_C(const char *begin, const char *end, const char *key, size_t keySize)
+{
+	return findChar_range_T<char, unsigned char>(begin, end, key, keySize);
 }
 
 const char *findStr_C(const char *begin, const char *end, const char *key, size_t keySize)
@@ -567,6 +583,27 @@ void findChar_any_test(const std::string& text)
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
+	{
+		Wcstring str;
+		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+			str += c;
+		}
+		const MIE_STRING_WCHAR_T tbl[][9] = {
+			{ 'z' },
+			{ 'X', 'Y', 'Z' },
+			{ 'a', 'x', '0', '3', 'Z', 'U', 1234, 9999 },
+			{ '0', '1', '2', '3' },
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			const MIE_STRING_WCHAR_T *begin = str.c_str();
+			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_STRING_WCHAR_T *key = tbl[i];
+			const size_t keySize =  myWcslen(tbl[i]);
+			const MIE_STRING_WCHAR_T *q1 = mie::findWchar_any(begin, end, key, keySize);
+			const MIE_STRING_WCHAR_T *q2 = findWchar_any_C(begin, end, key, keySize);
+			TEST_EQUAL(q1, q2);
+		}
+	}
 }
 
 void findChar_range_test(const std::string& text)
