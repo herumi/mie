@@ -46,6 +46,7 @@ const size_t wcslenOffset = findCaseStrOffset + 272;
 const size_t wcschrOffset = wcslenOffset + 48;
 const size_t wcschr_anyOffset = wcschrOffset + 48;
 const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
+const size_t findWcharOffset = wcschr_rangeOffset + 64;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -110,6 +111,9 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(wcschr_rangeOffset);
 		gen_strchr(M_range, true);
+
+		nextOffset(findWcharOffset);
+		gen_findChar(M_one, true);
 
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
@@ -374,9 +378,10 @@ private:
 		ret();
 		outLocalLabel();
 	}
-	void gen_findChar(int mode)
+	void gen_findChar(int mode, bool isWcs = false)
 	{
 		// findChar(p(=begin), end, c)
+		// findChar(p(=begin), end, key, keySize)
 		inLocalLabel();
 		using namespace Xbyak;
 
@@ -385,7 +390,11 @@ private:
 		const Reg64& p = r9;
 		const Reg64& end = r10;
 		if (mode == M_one) {
-			movzx(r8d, r8b); // c:3rd
+			if (isWcs) {
+				movzx(r8d, r8w);
+			} else {
+				movzx(r8d, r8b); // c:3rd
+			}
 			movq(xm0, r8);
 		} else {
 			movdqu(xm0, ptr [r8]); // key:3rd
@@ -397,7 +406,11 @@ private:
 		const Reg64& p = rdi; // 1st
 		const Reg64& end = rsi; // 2nd
 		if (mode == M_one) {
-			movzx(edx, dl); // c:3rd
+			if (isWcs) {
+				movzx(edx, dx); // c:3rd
+			} else {
+				movzx(edx, dl); // c:3rd
+			}
 			movq(xm0, rdx);
 		} else {
 			movdqu(xm0, ptr [rdx]); // key:3rd
@@ -419,7 +432,11 @@ private:
 		mov(p, ptr [esp + P_ + 4]);
 		mov(end, ptr [esp + P_ + 8]);
 		if (mode == M_one) {
-			movzx(eax, byte [esp + P_ + 12]);
+			if (isWcs) {
+				movzx(eax, word [esp + P_ + 12]);
+			} else {
+				movzx(eax, byte [esp + P_ + 12]);
+			}
 			movd(xm0, eax);
 		} else {
 			mov(eax, ptr [esp + P_ + 12]);
@@ -436,7 +453,7 @@ private:
 			output : a
 			destroy: a, c, d, p
 		*/
-		const int v = mode == M_range ? 4 : 0;
+		const int v = (mode == M_range ? 4 : 0) + (isWcs ? 1 : 0);
 		mov(d, end);
 		sub(d, p); // len
 		jmp(".in");
@@ -447,7 +464,11 @@ private:
 		pcmpestri(xm0, ptr [p], v);
 		ja("@b");
 		jnc(".notfound");
-		lea(a, ptr [p + c]);
+		if (isWcs) {
+			lea(a, ptr [p + c * 2]);
+		} else {
+			lea(a, ptr [p + c]);
+		}
 #ifdef XBYAK32
 		pop(edi);
 		pop(esi);
@@ -768,6 +789,25 @@ inline char *findChar(char *begin, const char *end, char c)
 		return begin;
 	}
 	return Xbyak::CastTo<char *(*)(char*, const char *, char c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findCharOffset)(begin, end, c);
+}
+
+/*
+	find c in [begin, end)
+	if c is not found then return end
+*/
+inline const MIE_STRING_WCHAR_T *findWchar(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+{
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, MIE_STRING_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
+}
+inline MIE_STRING_WCHAR_T *findWchar(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+{
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, MIE_STRING_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
 }
 
 /*

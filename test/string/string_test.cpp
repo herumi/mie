@@ -232,6 +232,11 @@ const char *findChar_C(const char *begin, const char *end, char c)
 	return std::find(begin, end, c);
 }
 
+const MIE_STRING_WCHAR_T *findWchar_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+{
+	return std::find(begin, end, c);
+}
+
 const char *findChar_any_C(const char *begin, const char *end, const char *key, size_t keySize)
 {
 	while (begin != end) {
@@ -512,6 +517,19 @@ void findChar_test(const std::string& text)
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
+	{
+		Wcstring str;
+		for (MIE_STRING_WCHAR_T c = 1; c < 65534; c++) {
+			str += c;
+		}
+		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+			const MIE_STRING_WCHAR_T *begin = str.c_str();
+			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_STRING_WCHAR_T *q1 = mie::findWchar(begin, end, c);
+			const MIE_STRING_WCHAR_T *q2 = findWchar_C(begin, end, c);
+			TEST_EQUAL(q1, q2);
+		}
+	}
 }
 
 void findChar_any_test(const std::string& text)
