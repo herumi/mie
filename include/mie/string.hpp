@@ -42,7 +42,9 @@ const size_t findChar_rangeOffset = findChar_anyOffset + 64;
 const size_t findStrOffset = findChar_rangeOffset + 64;
 const size_t strcasestrOffset = findStrOffset + 160;
 const size_t findCaseStrOffset = strcasestrOffset + 224;
-const size_t wcslenOffset = findCaseStrOffset + 272;
+
+const size_t wcsstrOffset = findCaseStrOffset + 272;
+const size_t wcslenOffset = wcsstrOffset + 96;
 const size_t wcschrOffset = wcslenOffset + 48;
 const size_t wcschr_anyOffset = wcschrOffset + 48;
 const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
@@ -103,6 +105,9 @@ struct StringCode : Xbyak::CodeGenerator {
 
 		nextOffset(findCaseStrOffset);
 		gen_findStr(isSandyBridge, true);
+
+		nextOffset(wcsstrOffset);
+		gen_strstr(isSandyBridge, false, true);
 
 		nextOffset(wcslenOffset);
 		gen_strlen(true);
@@ -186,8 +191,9 @@ private:
 	}
 	// char *strstr(str, key)
 	// @note key must not have capital characters[A-Z] if caseInsensitive is true
-	void gen_strstr(bool isSandyBridge, bool caseInsensitive = false)
+	void gen_strstr(bool isSandyBridge, bool caseInsensitive = false, bool isWcs = false)
 	{
+		assert(!(caseInsensitive && isWcs));
 		inLocalLabel();
 		using namespace Xbyak;
 		const Xmm& t0 = xm2;
@@ -227,6 +233,7 @@ private:
 			setLowerReg(Am1, Zp1, amA, Reg32(save_a.getIdx()));
 		}
 
+		const int mode = isWcs ? 13 : 12; // 0b110? = [equal ordered:unsigned:(byte|word)]
 		/*
 			strstr(a, key);
 			input key
@@ -237,9 +244,9 @@ private:
 		if (caseInsensitive) {
 			movdqu(xm1, ptr [a]);
 			toLower(xm1, Am1, Zp1, amA, t0, t1);
-			pcmpistri(xm0, xm1, 12);
+			pcmpistri(xm0, xm1, mode);
 		} else {
-			pcmpistri(xm0, ptr [a], 12); // 12(1100b) = [equal ordered:unsigned:byte]
+			pcmpistri(xm0, ptr [a], mode);
 		}
 		if (isSandyBridge) {
 			lea(a, ptr [a + 16]);
@@ -252,10 +259,18 @@ private:
 		}
 		jnc(".notFound");
 		// get position
-		if (isSandyBridge) {
-			lea(a, ptr [a + c - 16]);
+		if (isWcs) {
+			if (isSandyBridge) {
+				lea(a, ptr [a + c * 2 - 16]);
+			} else {
+				lea(a, ptr [a + c * 2]);
+			}
 		} else {
-			add(a, c);
+			if (isSandyBridge) {
+				lea(a, ptr [a + c - 16]);
+			} else {
+				add(a, c);
+			}
 		}
 		mov(save_a, a); // save a
 		mov(save_key, key); // save key
@@ -264,10 +279,10 @@ private:
 			movdqu(xm1, ptr [save_a]);
 			toLower(xm1, Am1, Zp1, amA, t0, t1);
 			movdqu(t0, ptr [save_key]);
-			pcmpistri(t0, xm1, 12);
+			pcmpistri(t0, xm1, mode);
 		} else {
 			movdqu(xm1, ptr [save_key]);
-			pcmpistri(xm1, ptr [save_a], 12);
+			pcmpistri(xm1, ptr [save_a], mode);
 		}
 		jno(".next"); // if (OF == 0) goto .next
 		js(".found"); // if (SF == 1) goto .found
@@ -276,7 +291,7 @@ private:
 		add(save_key, 16);
 		jmp(".tailCmp");
 	L(".next");
-		add(a, 1);
+		add(a, isWcs ? 2 : 1);
 		jmp(".lp");
 	L(".notFound");
 		xor_(eax, eax);
@@ -688,13 +703,26 @@ inline bool isAvailableSSE42()
 // const version of strstr
 inline const char *strstr(const char *str, const char *key)
 {
-	return Xbyak::CastTo<const char*(*)(const char*, const char*)>(str_util_impl::InstanceIsHere<>::buf)(str, key);
+	return Xbyak::CastTo<const char*(*)(const char*, const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strstrOffset)(str, key);
 }
 
 // non const version of strstr
 inline char *strstr(char *str, const char *key)
 {
-	return Xbyak::CastTo<char*(*)(char*, const char*)>(str_util_impl::InstanceIsHere<>::buf)(str, key);
+	return Xbyak::CastTo<char*(*)(char*, const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strstrOffset)(str, key);
+}
+
+// functions like C
+// const version of wcsstr
+inline const MIE_WCHAR_T *wcsstr(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
+{
+	return Xbyak::CastTo<const MIE_WCHAR_T*(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcsstrOffset)(str, key);
+}
+
+// non const version of wcsstr
+inline MIE_WCHAR_T *wcsstr(MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
+{
+	return Xbyak::CastTo<MIE_WCHAR_T*(*)(MIE_WCHAR_T*, const MIE_WCHAR_T*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcsstrOffset)(str, key);
 }
 
 // const version of strchr(c != 0)

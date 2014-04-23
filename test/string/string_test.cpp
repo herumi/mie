@@ -203,6 +203,36 @@ const char *mystrstr_C(const char *str, const char *key)
 	}
 	return 0;
 }
+template<class C>
+size_t myWcslen(const C* str)
+{
+	size_t i = 0;
+	while (str[i]) {
+		i++;
+	}
+	return i;
+}
+template<class C>
+const C *myWcschr(const C *str, C c)
+{
+	while (*str) {
+		if (*str == c) return str;
+		str++;
+	}
+	return 0;
+}
+const MIE_WCHAR_T *mywcsstr_C(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
+{
+	size_t len = myWcslen(key);
+//	if (len == 1) return strchr(str, key[0]);
+	while (*str) {
+		const MIE_WCHAR_T *p = myWcschr(str, key[0]);
+		if (p == 0) return 0;
+		if (memcmp(p + 1, key + 1, (len - 1) * 2) == 0) return p;
+		str = p + 1;
+	}
+	return 0;
+}
 
 template<class C>
 const C *strchr_any_T(const C *str, const C *key)
@@ -311,15 +341,6 @@ const char *findStr2_C(const char *begin, const char *end, const char *key, size
 }
 
 /////////////////////////////////////////////////
-template<class C>
-size_t myWcslen(const C* str)
-{
-	size_t i = 0;
-	while (str[i]) {
-		i++;
-	}
-	return i;
-}
 void strlen_test()
 {
 	puts("strlen_test");
@@ -511,6 +532,29 @@ void strstr_test()
 		std::string key = tbl[i].key;
 		benchmark("strstr_C", Fstrstr<STRSTR>(), "strstr", Fstrstr<mie::strstr>(), str, key);
 		benchmark("strstr2_C", Fstrstr<mystrstr_C>(), "strstr", Fstrstr<mie::strstr>(), str, key);
+	}
+	{
+		Wcstring str;
+		for (MIE_WCHAR_T c = 1; c < 65534; c++) {
+			str += c;
+		}
+		str += 'a';
+		str += 'b';
+		str += 'c';
+		str += 'z';
+		const MIE_WCHAR_T tbl[][9] = {
+			{ 'x', 0 },
+			{ 5, 6, 7, 8, 9, 10, 11, 12, 0 },
+			{ 10000, 10001, 10002, 0 },
+			{ 200, 201, 203, 0 },
+			{ 'a', 'b', 'c', 'z', 0 },
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			const MIE_WCHAR_T *q1 = mywcsstr_C(str.c_str(), tbl[i]);
+			const MIE_WCHAR_T *q2 = mie::wcsstr(str.c_str(), tbl[i]);
+printf("i=%d %p %p\n", (int)i, q1, q2);
+			TEST_EQUAL(q1, q2);
+		}
 	}
 }
 
