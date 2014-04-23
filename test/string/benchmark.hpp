@@ -15,79 +15,100 @@ struct Ret {
 	operator long long() const { return val; }
 };
 
-template<const char* (*f)(const char*str, const char *key)>
-struct Fstrstr {
-	const char *str_;
-	const char *key_;
-	typedef const char* type;
-	void set(const std::string& str, const std::string& key)
+template<class C, const C* (*f)(const C *str, const C *key)>
+struct FstrstrT {
+	const C *str_;
+	const C *key_;
+	typedef const C* type;
+	void set(const std::basic_string<C>& str, const std::basic_string<C>& key)
 	{
 		str_ = &str[0];
 		key_ = &key[0];
 	}
-	Fstrstr() : str_(0), key_(0) { }
-	const char *begin() const { return str_; }
-	const char *end() const { return 0; }
-	const char *find(const char *p) const { return f(p, key_); }
+	FstrstrT() : str_(0), key_(0) { }
+	const C *begin() const { return str_; }
+	const C *end() const { return 0; }
+	const C *find(const C *p) const { return f(p, key_); }
 };
 
-template<const char* (*f)(const char*str, int c)>
-struct Fstrchr {
-	const char *str_;
+template<const char* (*f)(const char*str, const char *key)>
+struct Fstrstr : FstrstrT<char, f> {};
+
+template<const MIE_WCHAR_T* (*f)(const MIE_WCHAR_T*str, const MIE_WCHAR_T *key)>
+struct Fwstrstr : FstrstrT<MIE_WCHAR_T, f> {};
+
+template<class C, const C* (*f)(const C*str, int c)>
+struct FstrchrT {
+	const C *str_;
 	int c_;
-	typedef const char* type;
-	void set(const std::string& str, const std::string& key)
+	typedef const C* type;
+	void set(const std::basic_string<C>& str, const std::basic_string<C>& key)
 	{
 		str_ = &str[0];
 		c_ = key[0];
 	}
-	Fstrchr() : str_(0), c_(0) { }
-	const char *begin() const { return str_; }
-	const char *end() const { return 0; }
-	const char *find(const char *p) const { return f(p, c_); }
+	FstrchrT() : str_(0), c_(0) { }
+	const C *begin() const { return str_; }
+	const C *end() const { return 0; }
+	const C *find(const C *p) const { return f(p, c_); }
 };
 
-template<const char* (*f)(const char*begin, const char *end, const char *key, size_t size)>
-struct Frange {
-	const char *str_;
-	const char *end_;
-	const char *key_;
+template<const char* (*f)(const char*str, int c)>
+struct Fstrchr : FstrchrT<char, f> {};
+
+template<const MIE_WCHAR_T* (*f)(const MIE_WCHAR_T*str, int c)>
+struct Fwstrchr : FstrchrT<MIE_WCHAR_T, f> {};
+
+template<class C, const C* (*f)(const C*begin, const C *end, const C *key, size_t size)>
+struct FrangeT {
+	const C *str_;
+	const C *end_;
+	const C *key_;
 	size_t keySize_;
-	typedef const char* type;
-	void set(const std::string& str, const std::string& key)
+	typedef const C* type;
+	void set(const std::basic_string<C>& str, const std::basic_string<C>& key)
 	{
 		str_ = &str[0];
 		end_ = str_ + str.size();
 		key_ = &key[0];
 		keySize_ = key.size();
 	}
-	Frange() : str_(0), end_(0), key_(0), keySize_(0) { }
-	const char *begin() const { return str_; }
-	const char *end() const { return end_; }
-	const char *find(const char *p) const { return f(p, end_, key_, keySize_); }
+	FrangeT() : str_(0), end_(0), key_(0), keySize_(0) { }
+	const C *begin() const { return str_; }
+	const C *end() const { return end_; }
+	const C *find(const C *p) const { return f(p, end_, key_, keySize_); }
 };
 
-template<const char* (*f)(const char*begin, const char *end, char c)>
-struct Frange_char {
-	const char *str_;
-	const char *end_;
-	char c_;
+template<const char* (*f)(const char*begin, const char *end, const char *key, size_t size)>
+struct Frange : FrangeT<char, f> {};
+
+template<const MIE_WCHAR_T* (*f)(const MIE_WCHAR_T*begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t size)>
+struct Fwrange : FrangeT<MIE_WCHAR_T, f> {};
+
+template<class C, const C* (*f)(const C*begin, const C *end, C c)>
+struct Frange_char_T {
+	const C *str_;
+	const C *end_;
+	C c_;
 	size_t keySize_;
-	typedef const char* type;
-	void set(const std::string& str, const std::string& key)
+	typedef const C* type;
+	void set(const std::basic_string<C>& str, const std::basic_string<C>& key)
 	{
 		str_ = &str[0];
 		end_ = str_ + str.size();
 		c_ = key[0];
 	}
-	Frange_char() : str_(0), end_(0), c_(0) { }
-	const char *begin() const { return str_; }
-	const char *end() const { return end_; }
-	const char *find(const char *p) const { return f(p, end_, c_); }
+	Frange_char_T() : str_(0), end_(0), c_(0) { }
+	const C *begin() const { return str_; }
+	const C *end() const { return end_; }
+	const C *find(const C *p) const { return f(p, end_, c_); }
 };
 
-template<class F>
-Ret benchmark1(F f, const std::string& str, const std::string& key)
+template<const char* (*f)(const char*begin, const char *end, char c)>
+struct Frange_char : Frange_char_T<char, f> {};
+
+template<class C, class F>
+Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key, F f)
 {
 	const int N = 10;
 	int val = 0;
@@ -116,9 +137,26 @@ Ret benchmark1(F f, const std::string& str, const std::string& key)
 template<class F1, class F2>
 void benchmark(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::string& str, const std::string& key)
 {
-	Ret r1 = benchmark1(f1, str, key);
-	Ret r2 = benchmark1(f2, str, key);
+	Ret r1 = benchmark1(str, key, f1);
+	Ret r2 = benchmark1(str, key, f2);
 	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", key.substr(0, 25).c_str(), msg1, r1.clk, msg2, r2.clk, r1.clk / r2.clk);
+	TEST_EQUAL(r1, r2);
+}
+
+std::string wtos(const std::basic_string<MIE_WCHAR_T>& str)
+{
+	std::string ret;
+	for (size_t i = 0; i < str.size(); i++) {
+		ret += (char)str[i];
+	}
+	return ret;
+}
+template<class F1, class F2>
+void benchmarkW(const MIE_WCHAR_T *msg1, F1 f1, const MIE_WCHAR_T *msg2, F2 f2, const std::basic_string<MIE_WCHAR_T>& str, const std::basic_string<MIE_WCHAR_T>& key)
+{
+	Ret r1 = benchmark1(str, key, f1);
+	Ret r2 = benchmark1(str, key, f2);
+	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", wtos(key).substr(0, 25).c_str(), wtos(msg1).c_str(), r1.clk, wtos(msg2).c_str(), r2.clk, r1.clk / r2.clk);
 	TEST_EQUAL(r1, r2);
 }
 

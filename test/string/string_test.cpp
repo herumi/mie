@@ -316,15 +316,24 @@ const MIE_WCHAR_T *findWchar_range_C(const MIE_WCHAR_T *begin, const MIE_WCHAR_T
 	return findChar_range_T<MIE_WCHAR_T, MIE_WCHAR_T>(begin, end, key, keySize);
 }
 
-const char *findStr_C(const char *begin, const char *end, const char *key, size_t keySize)
+template<class C>
+const C *findStr_T(const C *begin, const C *end, const C *key, size_t keySize)
 {
 	while (begin + keySize <= end) {
-		if (memcmp(begin, key, keySize) == 0) {
+		if (memcmp(begin, key, keySize * sizeof(C)) == 0) {
 			return begin;
 		}
 		begin++;
 	}
 	return end;
+}
+const char *findStr_C(const char *begin, const char *end, const char *key, size_t keySize)
+{
+	return findStr_T<char>(begin, end, key, keySize);
+}
+const MIE_WCHAR_T *findWstr_C(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
+{
+	return findStr_T<MIE_WCHAR_T>(begin, end, key, keySize);
 }
 
 const char *findStr2_C(const char *begin, const char *end, const char *key, size_t keySize)
