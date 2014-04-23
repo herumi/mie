@@ -51,6 +51,7 @@ const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
 const size_t findWcharOffset = wcschr_rangeOffset + 64;
 const size_t findWchar_anyOffset = findWcharOffset + 64;
 const size_t findWchar_rangeOffset = findWchar_anyOffset + 64;
+const size_t findWstrOffset = findWchar_rangeOffset + 64;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -130,6 +131,9 @@ struct StringCode : Xbyak::CodeGenerator {
 		nextOffset(findWchar_rangeOffset);
 		gen_findChar(M_range, true);
 
+		nextOffset(findWstrOffset);
+		gen_findStr(isSandyBridge, true);
+
 
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
@@ -159,15 +163,16 @@ private:
 		amA : 'a' - 'A'
 		t : temporary register
 	*/
-	void setLowerReg(const Xbyak::Xmm& Am1, const Xbyak::Xmm& Zp1, const Xbyak::Xmm& amA, const Xbyak::Reg32& t)
+	void setLowerReg(const Xbyak::Xmm& Am1, const Xbyak::Xmm& Zp1, const Xbyak::Xmm& amA, const Xbyak::Reg32& t, bool isWcs)
 	{
-		mov(t, 0x40404040);
+		const unsigned int factor = isWcs ? 0x10001 : 0x01010101;
+		mov(t, ('A' - 1) * factor);
 		movd(Am1, t);
 		pshufd(Am1, Am1, 0); // 'A' - 1
-		mov(t, 0x5b5b5b5b);
+		mov(t, ('Z' + 1) * factor);
 		movd(Zp1, t);
 		pshufd(Zp1, Zp1, 0); // 'Z' + 1
-		mov(t, 0x20202020);
+		mov(t, ('a' - 'A') * factor);
 		movd(amA, t);
 		pshufd(amA, amA, 0); // 'a' - 'A'
 	}
@@ -179,21 +184,31 @@ private:
 		t0, t1 : temporary register
 	*/
 	void toLower(const Xbyak::Xmm& x, const Xbyak::Xmm& Am1, const Xbyak::Xmm& Zp1, const Xbyak::Xmm& amA
-		, const Xbyak::Xmm& t0, const Xbyak::Xmm& t1)
+		, const Xbyak::Xmm& t0, const Xbyak::Xmm& t1, bool isWcs)
 	{
-		movdqa(t0, x);
-		pcmpgtb(t0, Am1); // -1 if c > 'A' - 1
-		movdqa(t1, Zp1);
-		pcmpgtb(t1, x); // -1 if 'Z' + 1 > c
-		pand(t0, t1); // -1 if [A-Z]
-		pand(t0, amA); // 0x20 if c in [A-Z]
-		paddb(x, t0); // [A-Z] -> [a-z]
+		if (isWcs) {
+			movdqa(t0, x);
+			pcmpgtw(t0, Am1); // -1 if c > 'A' - 1
+			movdqa(t1, Zp1);
+			pcmpgtw(t1, x); // -1 if 'Z' + 1 > c
+			pand(t0, t1); // -1 if [A-Z]
+			pand(t0, amA); // 0x20 if c in [A-Z]
+			paddw(x, t0); // [A-Z] -> [a-z]
+		} else {
+			movdqa(t0, x);
+			pcmpgtb(t0, Am1); // -1 if c > 'A' - 1
+			movdqa(t1, Zp1);
+			pcmpgtb(t1, x); // -1 if 'Z' + 1 > c
+			pand(t0, t1); // -1 if [A-Z]
+			pand(t0, amA); // 0x20 if c in [A-Z]
+			paddb(x, t0); // [A-Z] -> [a-z]
+		}
 	}
 	// char *strstr(str, key)
-	// @note key must not have capital characters[A-Z] if caseInsensitive is true
+	// @note key must not have ascii capital characters[A-Z] if caseInsensitive is true
+	// don't care about non ascii alphabet characters even if isWcs is true
 	void gen_strstr(bool isSandyBridge, bool caseInsensitive = false, bool isWcs = false)
 	{
-		assert(!(caseInsensitive && isWcs));
 		inLocalLabel();
 		using namespace Xbyak;
 		const Xmm& t0 = xm2;
@@ -230,7 +245,7 @@ private:
 		mov(key, ptr [esp + P_ + 8]);
 #endif
 		if (caseInsensitive) {
-			setLowerReg(Am1, Zp1, amA, Reg32(save_a.getIdx()));
+			setLowerReg(Am1, Zp1, amA, Reg32(save_a.getIdx()), isWcs);
 		}
 
 		const int mode = isWcs ? 13 : 12; // 0b110? = [equal ordered:unsigned:(byte|word)]
@@ -243,7 +258,7 @@ private:
 	L(".lp");
 		if (caseInsensitive) {
 			movdqu(xm1, ptr [a]);
-			toLower(xm1, Am1, Zp1, amA, t0, t1);
+			toLower(xm1, Am1, Zp1, amA, t0, t1, isWcs);
 			pcmpistri(xm0, xm1, mode);
 		} else {
 			pcmpistri(xm0, ptr [a], mode);
@@ -277,7 +292,7 @@ private:
 	L(".tailCmp");
 		if (caseInsensitive) {
 			movdqu(xm1, ptr [save_a]);
-			toLower(xm1, Am1, Zp1, amA, t0, t1);
+			toLower(xm1, Am1, Zp1, amA, t0, t1, isWcs);
 			movdqu(t0, ptr [save_key]);
 			pcmpistri(t0, xm1, mode);
 		} else {
@@ -325,8 +340,8 @@ private:
 		const Reg32& a = eax;
 		mov(edx, ptr [esp + 4]);
 #endif
-		const uint32_t c1 = isWcs ? 0xffff0001 : 0xff01;
-		const uint32_t c2 = isWcs ? 0x15 : 0x14;
+		const unsigned int c1 = isWcs ? 0xffff0001 : 0xff01;
+		const unsigned int c2 = isWcs ? 0x15 : 0x14;
 		mov(eax, c1);
 		movd(xm0, eax);
 
@@ -510,7 +525,7 @@ private:
 		outLocalLabel();
 	}
 	// findStr(const char*begin, const char *end, const char *key, size_t keySize)
-	void gen_findStr(bool /*isSandyBridge*/, bool caseInsensitive = false)
+	void gen_findStr(bool /*isSandyBridge*/, bool caseInsensitive = false, bool isWcs = false)
 	{
 		inLocalLabel();
 		using namespace Xbyak;
@@ -579,9 +594,11 @@ private:
 		mov(eax, ptr [esp + P_ + 16]); // keySize
 #endif
 		if (caseInsensitive) {
-			setLowerReg(Am1, Zp1, amA, Reg32(save_p.getIdx()));
+			setLowerReg(Am1, Zp1, amA, Reg32(save_p.getIdx()), isWcs);
 		}
 
+		const int mode = isWcs ? 13 : 12; // 0b110? = [equal ordered:unsigned:(byte|word)]
+		const int charLen = isWcs ? 2 : 1;
 		/*
 			findStr(p, end, key, keySize)
 			input  : p, d:=len=end-p, xm0:key, a:keySize
@@ -591,10 +608,10 @@ private:
 	L(".lp");
 		if (caseInsensitive) {
 			movdqu(xm1, ptr [p]);
-			toLower(xm1, Am1, Zp1, amA, t0, t1);
-			pcmpestri(xm0, xm1, 12);
+			toLower(xm1, Am1, Zp1, amA, t0, t1, isWcs);
+			pcmpestri(xm0, xm1, mode);
 		} else {
-			pcmpestri(xmm0, ptr [p], 12); // 12(1100b) = [equal ordered:unsigned:byte]
+			pcmpestri(xmm0, ptr [p], mode); // 12(1100b) = [equal ordered:unsigned:byte]
 		}
 		if (true/* isSandyBridge */) {
 			lea(p, ptr [p + 16]);
@@ -609,14 +626,15 @@ private:
 		}
 		jnc(".notFound");
 		// get position
-		if (true/* isSandyBridge */) {
+		if (isWcs) {
+			lea(p, ptr [p + c * 2 - 16]);
+			sub(d, c);
+			sub(d, c);
+		} else {
 			lea(p, ptr [p + c - 16]);
 			sub(d, c);
-			add(d, 16);
-		} else {
-			add(p, c);
-			sub(d, c);
 		}
+		add(d, 16);
 		mov(save_p, p);
 		mov(save_key, key);
 		mov(save_a, a);
@@ -624,12 +642,12 @@ private:
 	L(".tailCmp");
 		if (caseInsensitive) {
 			movdqu(t0, ptr [save_p]);
-			toLower(t0, Am1, Zp1, amA, xm1, t1);
+			toLower(t0, Am1, Zp1, amA, xm1, t1, isWcs);
 			movdqu(xm1, ptr [save_key]);
-			pcmpestri(xm1, t0, 12);
+			pcmpestri(xm1, t0, mode);
 		} else {
 			movdqu(xm1, ptr [save_key]);
-			pcmpestri(xm1, ptr [save_p], 12);
+			pcmpestri(xm1, ptr [save_p], mode);
 		}
 		jno(".next"); // if (OF == 0) goto .next
 		js(".found"); // if (SF == 1) goto .found
@@ -640,13 +658,13 @@ private:
 		sub(d, 16);
 		jmp(".tailCmp");
 	L(".next");
-		add(p, 1);
+		add(p, charLen);
 		mov(a, save_a);
 #ifdef XBYAK32
 		mov(edx, save_d);
-		sub(edx, 1);
+		sub(edx, charLen);
 #else
-		lea(d, ptr [save_d - 1]);
+		lea(d, ptr [save_d - charLen]);
 #endif
 		jmp(".lp");
 	L(".notFound");
@@ -975,6 +993,30 @@ inline char *findStr(char*begin, const char *end, const char *key, size_t keySiz
 		return begin;
 	}
 	return Xbyak::CastTo<char *(*)(char*, const char *, const char *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findStrOffset)(begin, end, key, keySize);
+}
+
+/*
+	find [key, key + keySize) in [begin, end)
+*/
+inline const MIE_WCHAR_T *findWstr(const MIE_WCHAR_T*begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWstrOffset)(begin, end, key, keySize);
+}
+inline MIE_WCHAR_T *findWstr(MIE_WCHAR_T*begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWstrOffset)(begin, end, key, keySize);
 }
 
 /*
