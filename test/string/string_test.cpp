@@ -16,7 +16,7 @@
 #endif
 //#define USE_BOOST_BM
 
-typedef std::basic_string<unsigned short> Wcstring;
+typedef std::basic_string<MIE_STRING_WCHAR_T> Wcstring;
 
 // strcasestr(key must not have capital character)
 const char *strcasestr_C(const char *str, const char *key)
