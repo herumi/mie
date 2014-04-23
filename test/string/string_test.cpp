@@ -16,7 +16,7 @@
 #endif
 //#define USE_BOOST_BM
 
-typedef std::basic_string<MIE_STRING_WCHAR_T> Wcstring;
+typedef std::basic_string<MIE_WCHAR_T> Wcstring;
 
 // strcasestr(key must not have capital character)
 const char *strcasestr_C(const char *str, const char *key)
@@ -186,9 +186,9 @@ const char *strchr_range_C(const char *str, const char *key)
 	return strchr_range_T<char, unsigned char>(str, key);
 }
 
-const MIE_STRING_WCHAR_T *wcschr_range_C(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+const MIE_WCHAR_T *wcschr_range_C(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return strchr_range_T<MIE_STRING_WCHAR_T, MIE_STRING_WCHAR_T>(str, key);
+	return strchr_range_T<MIE_WCHAR_T, MIE_WCHAR_T>(str, key);
 }
 
 const char *mystrstr_C(const char *str, const char *key)
@@ -222,9 +222,9 @@ const char *strchr_any_C(const char *str, const char *key)
 {
 	return strchr_any_T<char>(str, key);
 }
-const MIE_STRING_WCHAR_T *wcschr_any_C(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+const MIE_WCHAR_T *wcschr_any_C(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return strchr_any_T<MIE_STRING_WCHAR_T>(str, key);
+	return strchr_any_T<MIE_WCHAR_T>(str, key);
 }
 
 const char *findChar_C(const char *begin, const char *end, char c)
@@ -232,7 +232,7 @@ const char *findChar_C(const char *begin, const char *end, char c)
 	return std::find(begin, end, c);
 }
 
-const MIE_STRING_WCHAR_T *findWchar_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+const MIE_WCHAR_T *findWchar_C(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, MIE_WCHAR_T c)
 {
 	return std::find(begin, end, c);
 }
@@ -257,9 +257,9 @@ const char *findChar_any_C(const char *begin, const char *end, const char *key, 
 	return findChar_any_T<char>(begin, end, key, keySize);
 }
 
-const MIE_STRING_WCHAR_T *findWchar_any_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+const MIE_WCHAR_T *findWchar_any_C(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
-	return findChar_any_T<MIE_STRING_WCHAR_T>(begin, end, key, keySize);
+	return findChar_any_T<MIE_WCHAR_T>(begin, end, key, keySize);
 }
 
 template<class C, class UC>
@@ -281,9 +281,9 @@ const char *findChar_range_C(const char *begin, const char *end, const char *key
 	return findChar_range_T<char, unsigned char>(begin, end, key, keySize);
 }
 
-const MIE_STRING_WCHAR_T *findWchar_range_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+const MIE_WCHAR_T *findWchar_range_C(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
-	return findChar_range_T<MIE_STRING_WCHAR_T, MIE_STRING_WCHAR_T>(begin, end, key, keySize);
+	return findChar_range_T<MIE_WCHAR_T, MIE_WCHAR_T>(begin, end, key, keySize);
 }
 
 const char *findStr_C(const char *begin, const char *end, const char *key, size_t keySize)
@@ -344,14 +344,14 @@ void strlen_test()
 			size_t a = myWcslen(str.c_str());
 			size_t b = mie::wcslen(str.c_str());
 			TEST_EQUAL(a, b);
-			str += (MIE_STRING_WCHAR_T)'a';
+			str += (MIE_WCHAR_T)'a';
 		}
 		str.clear();
 		const std::string cs = "0123456789abcdefghijklmn";
 		for (size_t i = 0; i < cs.size(); i++) {
 			str += cs[i];
 		}
-		str += (MIE_STRING_WCHAR_T)0;
+		str += (MIE_WCHAR_T)0;
 		for (int i = 0; i < 16; i++) {
 			size_t a = myWcslen(&str[i]);
 			size_t b = mie::wcslen(&str[i]);
@@ -376,17 +376,17 @@ void strchr_test(const std::string& text)
 		benchmark("strchr_C", Fstrchr<STRCHR>(), "strchr", Fstrchr<mie::strchr>(), *pstr, std::string(1, (char)c));
 	}
 	{
-		const MIE_STRING_WCHAR_T s[] = { 2, 3, 0 };
-		TEST_EQUAL(mie::wcschr(s, 5), (const MIE_STRING_WCHAR_T*)0);
+		const MIE_WCHAR_T s[] = { 2, 3, 0 };
+		TEST_EQUAL(mie::wcschr(s, 5), (const MIE_WCHAR_T*)0);
 	}
 	{
 		const int len = 1024;
 		Wcstring str;
 		str.resize(len + 1);
 		for (int i = 0; i < len; i++) {
-			str[i] = (MIE_STRING_WCHAR_T)(i + 1);
+			str[i] = (MIE_WCHAR_T)(i + 1);
 		}
-		for (MIE_STRING_WCHAR_T c = 1; c < len; c++) {
+		for (MIE_WCHAR_T c = 1; c < len; c++) {
 			TEST_EQUAL(mie::wcschr(&str[0], c), &str[c - 1]);
 		}
 	}
@@ -426,10 +426,10 @@ void strchr_any_test(const std::string& text)
 	}
 	{
 		Wcstring str;
-		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
 			str += c;
 		}
-		const MIE_STRING_WCHAR_T tbl[][8] = {
+		const MIE_WCHAR_T tbl[][8] = {
 			{ 1 },
 			{ 128 },
 			{ 1, 2 },
@@ -471,10 +471,10 @@ void strchr_range_test(const std::string& text)
 	puts("ok");
 	{
 		Wcstring str;
-		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
 			str += c;
 		}
-		const MIE_STRING_WCHAR_T tbl[][8] = {
+		const MIE_WCHAR_T tbl[][8] = {
 			{ 1, 1 },
 			{ '0', '9' },
 			{ 'a', 'z', '0', '9', 'A', 'Z' },
@@ -540,14 +540,14 @@ void findChar_test(const std::string& text)
 	puts("ok");
 	{
 		Wcstring str;
-		for (MIE_STRING_WCHAR_T c = 1; c < 65534; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65534; c++) {
 			str += c;
 		}
-		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
-			const MIE_STRING_WCHAR_T *begin = str.c_str();
-			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
-			const MIE_STRING_WCHAR_T *q1 = mie::findWchar(begin, end, c);
-			const MIE_STRING_WCHAR_T *q2 = findWchar_C(begin, end, c);
+		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
+			const MIE_WCHAR_T *begin = str.c_str();
+			const MIE_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_WCHAR_T *q1 = mie::findWchar(begin, end, c);
+			const MIE_WCHAR_T *q2 = findWchar_C(begin, end, c);
 			TEST_EQUAL(q1, q2);
 		}
 	}
@@ -590,22 +590,22 @@ void findChar_any_test(const std::string& text)
 	puts("ok");
 	{
 		Wcstring str;
-		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
 			str += c;
 		}
-		const MIE_STRING_WCHAR_T tbl[][9] = {
+		const MIE_WCHAR_T tbl[][9] = {
 			{ 'z' },
 			{ 'X', 'Y', 'Z' },
 			{ 'a', 'x', '0', '3', 'Z', 'U', 1234, 9999 },
 			{ '0', '1', '2', '3' },
 		};
 		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
-			const MIE_STRING_WCHAR_T *begin = str.c_str();
-			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
-			const MIE_STRING_WCHAR_T *key = tbl[i];
+			const MIE_WCHAR_T *begin = str.c_str();
+			const MIE_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_WCHAR_T *key = tbl[i];
 			const size_t keySize =  myWcslen(tbl[i]);
-			const MIE_STRING_WCHAR_T *q1 = mie::findWchar_any(begin, end, key, keySize);
-			const MIE_STRING_WCHAR_T *q2 = findWchar_any_C(begin, end, key, keySize);
+			const MIE_WCHAR_T *q1 = mie::findWchar_any(begin, end, key, keySize);
+			const MIE_WCHAR_T *q2 = findWchar_any_C(begin, end, key, keySize);
 			TEST_EQUAL(q1, q2);
 		}
 	}
@@ -650,22 +650,22 @@ void findChar_range_test(const std::string& text)
 	puts("ok");
 	{
 		Wcstring str;
-		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
 			str += c;
 		}
-		const MIE_STRING_WCHAR_T tbl[][9] = {
+		const MIE_WCHAR_T tbl[][9] = {
 			{ 'z', 'z' },
 			{ '0', '9' },
 			{ 1234, 5678, 'a', 'f', 'A', 'F' },
 			{ '0', '9', 'a', 'z', '/', '/' },
 		};
 		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
-			const MIE_STRING_WCHAR_T *begin = str.c_str();
-			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
-			const MIE_STRING_WCHAR_T *key = tbl[i];
+			const MIE_WCHAR_T *begin = str.c_str();
+			const MIE_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_WCHAR_T *key = tbl[i];
 			const size_t keySize =  myWcslen(tbl[i]);
-			const MIE_STRING_WCHAR_T *q1 = mie::findWchar_range(begin, end, key, keySize);
-			const MIE_STRING_WCHAR_T *q2 = findWchar_range_C(begin, end, key, keySize);
+			const MIE_WCHAR_T *q1 = mie::findWchar_range(begin, end, key, keySize);
+			const MIE_WCHAR_T *q2 = findWchar_range_C(begin, end, key, keySize);
 			TEST_EQUAL(q1, q2);
 		}
 	}
