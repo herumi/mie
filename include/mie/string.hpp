@@ -19,11 +19,11 @@
 
 // #define MIE_STRING_USE_WIN_WCHAR_T
 
-#ifndef MIE_STRING_WCHAR_T
+#ifndef MIE_WCHAR_T
 	#if defined(_MSC_VER) && defined(MIE_STRING_USE_WIN_WCHAR_T)
-		#define MIE_STRING_WCHAR_T wchar_t
+		#define MIE_WCHAR_T wchar_t
 	#else
-		#define MIE_STRING_WCHAR_T unsigned short
+		#define MIE_WCHAR_T unsigned short
 	#endif
 #endif
 
@@ -56,6 +56,8 @@ struct StringCode : Xbyak::CodeGenerator {
 		try
 		: Xbyak::CodeGenerator(size, buf)
 	{
+		assert(sizeof(MIE_WCHAR_T) == 2);
+		assert((MIE_WCHAR_T)(-1) > 0);
 		Xbyak::CodeArray::protect(buf, size, true);
 		if (!cpu.has(Xbyak::util::Cpu::tSSE42)) {
 #ifndef NDEBUG
@@ -708,15 +710,15 @@ inline char *strchr(char *str, int c)
 }
 
 // const version of wcschr(c != 0)
-inline const MIE_STRING_WCHAR_T *wcschr(const MIE_STRING_WCHAR_T *str, int c)
+inline const MIE_WCHAR_T *wcschr(const MIE_WCHAR_T *str, int c)
 {
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T*(*)(const MIE_STRING_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
+	return Xbyak::CastTo<const MIE_WCHAR_T*(*)(const MIE_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
 }
 
 // non const version of wcschr(c != 0)
-inline MIE_STRING_WCHAR_T *wcschr(MIE_STRING_WCHAR_T *str, int c)
+inline MIE_WCHAR_T *wcschr(MIE_WCHAR_T *str, int c)
 {
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T*(*)(MIE_STRING_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
+	return Xbyak::CastTo<MIE_WCHAR_T*(*)(MIE_WCHAR_T*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
 }
 
 inline size_t strlen(const char *str)
@@ -724,9 +726,9 @@ inline size_t strlen(const char *str)
 	return Xbyak::CastTo<size_t(*)(const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strlenOffset)(str);
 }
 
-inline size_t wcslen(const MIE_STRING_WCHAR_T *str)
+inline size_t wcslen(const MIE_WCHAR_T *str)
 {
-	return Xbyak::CastTo<size_t(*)(const MIE_STRING_WCHAR_T*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcslenOffset)(str);
+	return Xbyak::CastTo<size_t(*)(const MIE_WCHAR_T*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcslenOffset)(str);
 }
 
 /*
@@ -746,13 +748,13 @@ inline char *strchr_any(char *str, const char *key)
 	find key[0] or key[1], ... in str
 	@note wcslen(key) <= 8, key[i] != 0
 */
-inline const MIE_STRING_WCHAR_T *wcschr_any(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+inline const MIE_WCHAR_T *wcschr_any(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
 }
-inline MIE_STRING_WCHAR_T *wcschr_any(MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+inline MIE_WCHAR_T *wcschr_any(MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
 }
 
 /*
@@ -772,13 +774,13 @@ inline char *strchr_range(char *str, const char *key)
 	find c such that key[0] <= c && c <= key[1], key[2] <= c && c <= key[3], ... in str
 	@note wcslen(key) <= 8, key[i] != 0
 */
-inline const MIE_STRING_WCHAR_T *wcschr_range(const MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+inline const MIE_WCHAR_T *wcschr_range(const MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
 }
-inline MIE_STRING_WCHAR_T *wcschr_range(MIE_STRING_WCHAR_T *str, const MIE_STRING_WCHAR_T *key)
+inline MIE_WCHAR_T *wcschr_range(MIE_WCHAR_T *str, const MIE_WCHAR_T *key)
 {
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
 }
 
 /*
@@ -804,19 +806,19 @@ inline char *findChar(char *begin, const char *end, char c)
 	find c in [begin, end)
 	if c is not found then return end
 */
-inline const MIE_STRING_WCHAR_T *findWchar(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+inline const MIE_WCHAR_T *findWchar(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, MIE_WCHAR_T c)
 {
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, MIE_STRING_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *, MIE_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
 }
-inline MIE_STRING_WCHAR_T *findWchar(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, MIE_STRING_WCHAR_T c)
+inline MIE_WCHAR_T *findWchar(MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, MIE_WCHAR_T c)
 {
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, MIE_STRING_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *, MIE_WCHAR_T c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
 }
 
 /*
@@ -850,7 +852,7 @@ inline char *findChar_any(char *begin, const char *end, const char *key, size_t 
 	if char is not found then return end
 	@note keySize <= 8
 */
-inline const MIE_STRING_WCHAR_T *findWchar_any(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+inline const MIE_WCHAR_T *findWchar_any(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -858,9 +860,9 @@ inline const MIE_STRING_WCHAR_T *findWchar_any(const MIE_STRING_WCHAR_T *begin, 
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
 }
-inline MIE_STRING_WCHAR_T *findWchar_any(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+inline MIE_WCHAR_T *findWchar_any(MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -868,7 +870,7 @@ inline MIE_STRING_WCHAR_T *findWchar_any(MIE_STRING_WCHAR_T *begin, const MIE_ST
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
 }
 
 /*
@@ -902,7 +904,7 @@ inline char *findChar_range(char *begin, const char *end, const char *key, size_
 	if char is not found then return end
 	@note keySize <= 8
 */
-inline const MIE_STRING_WCHAR_T *findWchar_range(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+inline const MIE_WCHAR_T *findWchar_range(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -910,9 +912,9 @@ inline const MIE_STRING_WCHAR_T *findWchar_range(const MIE_STRING_WCHAR_T *begin
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_STRING_WCHAR_T *(*)(const MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<const MIE_WCHAR_T *(*)(const MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
 }
-inline MIE_STRING_WCHAR_T *findWchar_range(MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+inline MIE_WCHAR_T *findWchar_range(MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -920,7 +922,7 @@ inline MIE_STRING_WCHAR_T *findWchar_range(MIE_STRING_WCHAR_T *begin, const MIE_
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_STRING_WCHAR_T *(*)(MIE_STRING_WCHAR_T*, const MIE_STRING_WCHAR_T *, const MIE_STRING_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<MIE_WCHAR_T *(*)(MIE_WCHAR_T*, const MIE_WCHAR_T *, const MIE_WCHAR_T *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
 }
 
 /*
