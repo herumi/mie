@@ -281,6 +281,11 @@ const char *findChar_range_C(const char *begin, const char *end, const char *key
 	return findChar_range_T<char, unsigned char>(begin, end, key, keySize);
 }
 
+const MIE_STRING_WCHAR_T *findWchar_range_C(const MIE_STRING_WCHAR_T *begin, const MIE_STRING_WCHAR_T *end, const MIE_STRING_WCHAR_T *key, size_t keySize)
+{
+	return findChar_range_T<MIE_STRING_WCHAR_T, MIE_STRING_WCHAR_T>(begin, end, key, keySize);
+}
+
 const char *findStr_C(const char *begin, const char *end, const char *key, size_t keySize)
 {
 	while (begin + keySize <= end) {
@@ -643,6 +648,27 @@ void findChar_range_test(const std::string& text)
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
+	{
+		Wcstring str;
+		for (MIE_STRING_WCHAR_T c = 1; c < 65535; c++) {
+			str += c;
+		}
+		const MIE_STRING_WCHAR_T tbl[][9] = {
+			{ 'z', 'z' },
+			{ '0', '9' },
+			{ 1234, 5678, 'a', 'f', 'A', 'F' },
+			{ '0', '9', 'a', 'z', '/', '/' },
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			const MIE_STRING_WCHAR_T *begin = str.c_str();
+			const MIE_STRING_WCHAR_T *end = str.c_str() + str.size();
+			const MIE_STRING_WCHAR_T *key = tbl[i];
+			const size_t keySize =  myWcslen(tbl[i]);
+			const MIE_STRING_WCHAR_T *q1 = mie::findWchar_range(begin, end, key, keySize);
+			const MIE_STRING_WCHAR_T *q2 = findWchar_range_C(begin, end, key, keySize);
+			TEST_EQUAL(q1, q2);
+		}
+	}
 }
 
 void findStr_test(const std::string& text)
