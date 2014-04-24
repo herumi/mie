@@ -35,7 +35,7 @@ template<const char* (*f)(const char*str, const char *key)>
 struct Fstrstr : FstrstrT<char, f> {};
 
 template<const MIE_CHAR16* (*f)(const MIE_CHAR16*str, const MIE_CHAR16 *key)>
-struct Fwstrstr : FstrstrT<MIE_CHAR16, f> {};
+struct Fstrstr16 : FstrstrT<MIE_CHAR16, f> {};
 
 template<class C, const C* (*f)(const C*str, int c)>
 struct FstrchrT {
@@ -57,7 +57,7 @@ template<const char* (*f)(const char*str, int c)>
 struct Fstrchr : FstrchrT<char, f> {};
 
 template<const MIE_CHAR16* (*f)(const MIE_CHAR16*str, int c)>
-struct Fwstrchr : FstrchrT<MIE_CHAR16, f> {};
+struct Fstrchr16 : FstrchrT<MIE_CHAR16, f> {};
 
 template<class C, const C* (*f)(const C*begin, const C *end, const C *key, size_t size)>
 struct FrangeT {
@@ -83,7 +83,7 @@ template<const char* (*f)(const char*begin, const char *end, const char *key, si
 struct Frange : FrangeT<char, f> {};
 
 template<const MIE_CHAR16* (*f)(const MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t size)>
-struct Fwrange : FrangeT<MIE_CHAR16, f> {};
+struct Frange16 : FrangeT<MIE_CHAR16, f> {};
 
 template<class C, const C* (*f)(const C*begin, const C *end, C c)>
 struct Frange_char_T {
@@ -106,6 +106,9 @@ struct Frange_char_T {
 
 template<const char* (*f)(const char*begin, const char *end, char c)>
 struct Frange_char : Frange_char_T<char, f> {};
+
+template<const MIE_CHAR16* (*f)(const MIE_CHAR16*begin, const MIE_CHAR16 *end, MIE_CHAR16 c)>
+struct Frange_char16 : Frange_char_T<MIE_CHAR16, f> {};
 
 template<class C, class F>
 Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key, F f)
@@ -135,7 +138,7 @@ Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key,
 	return ret;
 }
 
-std::string wtos(const std::basic_string<MIE_CHAR16>& str)
+std::string u16tos(const std::basic_string<MIE_CHAR16>& str)
 {
 	std::string ret;
 	for (size_t i = 0; i < str.size(); i++) {
@@ -144,14 +147,14 @@ std::string wtos(const std::basic_string<MIE_CHAR16>& str)
 	return ret;
 }
 
-std::string wtos(const std::string& str) { return str; }
+std::string u16tos(const std::string& str) { return str; }
 
 template<class C, class F1, class F2>
 void benchmarkT(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<C>& str, const std::basic_string<C>& key)
 {
 	Ret r1 = benchmark1(str, key, f1);
 	Ret r2 = benchmark1(str, key, f2);
-	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", wtos(key.substr(0, 25)).c_str(), msg1, r1.clk, msg2, r2.clk, r1.clk / r2.clk);
+	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", u16tos(key.substr(0, 25)).c_str(), msg1, r1.clk, msg2, r2.clk, r1.clk / r2.clk);
 	TEST_EQUAL(r1, r2);
 }
 
@@ -162,7 +165,7 @@ void benchmark(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::stri
 }
 
 template<class F1, class F2>
-void benchmarkW(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<MIE_CHAR16>& str, const std::basic_string<MIE_CHAR16>& key)
+void benchmark16(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<MIE_CHAR16>& str, const std::basic_string<MIE_CHAR16>& key)
 {
 	benchmarkT<MIE_CHAR16, F1, F2>(msg1, f1, msg2, f2, str, key);
 }

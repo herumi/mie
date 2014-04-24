@@ -44,15 +44,15 @@ const size_t findStrOffset = findChar_rangeOffset + 64;
 const size_t strcasestrOffset = findStrOffset + 160;
 const size_t findCaseStrOffset = strcasestrOffset + 224;
 
-const size_t wcsstrOffset = findCaseStrOffset + 272;
-const size_t wcslenOffset = wcsstrOffset + 96;
-const size_t wcschrOffset = wcslenOffset + 48;
-const size_t wcschr_anyOffset = wcschrOffset + 48;
-const size_t wcschr_rangeOffset = wcschr_anyOffset + 48;
-const size_t findWcharOffset = wcschr_rangeOffset + 64;
-const size_t findWchar_anyOffset = findWcharOffset + 64;
-const size_t findWchar_rangeOffset = findWchar_anyOffset + 64;
-const size_t findWstrOffset = findWchar_rangeOffset + 64;
+const size_t strstr16Offset = findCaseStrOffset + 272;
+const size_t strlen16Offset = strstr16Offset + 96;
+const size_t strchr16Offset = strlen16Offset + 48;
+const size_t strchr16_anyOffset = strchr16Offset + 48;
+const size_t strchr16_rangeOffset = strchr16_anyOffset + 48;
+const size_t findChar16Offset = strchr16_rangeOffset + 64;
+const size_t findChar16_anyOffset = findChar16Offset + 64;
+const size_t findChar16_rangeOffset = findChar16_anyOffset + 64;
+const size_t findStr16Offset = findChar16_rangeOffset + 64;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -108,31 +108,31 @@ struct StringCode : Xbyak::CodeGenerator {
 		nextOffset(findCaseStrOffset);
 		gen_findStr(isSandyBridge, true);
 
-		nextOffset(wcsstrOffset);
+		nextOffset(strstr16Offset);
 		gen_strstr(isSandyBridge, false, true);
 
-		nextOffset(wcslenOffset);
+		nextOffset(strlen16Offset);
 		gen_strlen(true);
 
-		nextOffset(wcschrOffset);
+		nextOffset(strchr16Offset);
 		gen_strchr(M_one, true);
 
-		nextOffset(wcschr_anyOffset);
+		nextOffset(strchr16_anyOffset);
 		gen_strchr(M_any, true);
 
-		nextOffset(wcschr_rangeOffset);
+		nextOffset(strchr16_rangeOffset);
 		gen_strchr(M_range, true);
 
-		nextOffset(findWcharOffset);
+		nextOffset(findChar16Offset);
 		gen_findChar(M_one, true);
 
-		nextOffset(findWchar_anyOffset);
+		nextOffset(findChar16_anyOffset);
 		gen_findChar(M_any, true);
 
-		nextOffset(findWchar_rangeOffset);
+		nextOffset(findChar16_rangeOffset);
 		gen_findChar(M_range, true);
 
-		nextOffset(findWstrOffset);
+		nextOffset(findStr16Offset);
 		gen_findStr(isSandyBridge, true);
 
 
@@ -723,16 +723,16 @@ inline char *strstr(char *str, const char *key)
 }
 
 // functions like C
-// const version of wcsstr
-inline const MIE_CHAR16 *wcsstr(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
+// const version of strstr16
+inline const MIE_CHAR16 *strstr16(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcsstrOffset)(str, key);
+	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strstr16Offset)(str, key);
 }
 
-// non const version of wcsstr
-inline MIE_CHAR16 *wcsstr(MIE_CHAR16 *str, const MIE_CHAR16 *key)
+// non const version of strstr16
+inline MIE_CHAR16 *strstr16(MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcsstrOffset)(str, key);
+	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strstr16Offset)(str, key);
 }
 
 // const version of strchr(c != 0)
@@ -747,16 +747,16 @@ inline char *strchr(char *str, int c)
 	return Xbyak::CastTo<char*(*)(char*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchrOffset)(str, c);
 }
 
-// const version of wcschr(c != 0)
-inline const MIE_CHAR16 *wcschr(const MIE_CHAR16 *str, int c)
+// const version of strchr16(c != 0)
+inline const MIE_CHAR16 *strchr16(const MIE_CHAR16 *str, int c)
 {
-	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
+	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16Offset)(str, c);
 }
 
-// non const version of wcschr(c != 0)
-inline MIE_CHAR16 *wcschr(MIE_CHAR16 *str, int c)
+// non const version of strchr16(c != 0)
+inline MIE_CHAR16 *strchr16(MIE_CHAR16 *str, int c)
 {
-	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschrOffset)(str, c);
+	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, int)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16Offset)(str, c);
 }
 
 inline size_t strlen(const char *str)
@@ -764,9 +764,9 @@ inline size_t strlen(const char *str)
 	return Xbyak::CastTo<size_t(*)(const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strlenOffset)(str);
 }
 
-inline size_t wcslen(const MIE_CHAR16 *str)
+inline size_t strlen16(const MIE_CHAR16 *str)
 {
-	return Xbyak::CastTo<size_t(*)(const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcslenOffset)(str);
+	return Xbyak::CastTo<size_t(*)(const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strlen16Offset)(str);
 }
 
 /*
@@ -784,15 +784,15 @@ inline char *strchr_any(char *str, const char *key)
 
 /*
 	find key[0] or key[1], ... in str
-	@note wcslen(key) <= 8, key[i] != 0
+	@note strlen16(key) <= 8, key[i] != 0
 */
-inline const MIE_CHAR16 *wcschr_any(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
+inline const MIE_CHAR16 *strchr16_any(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16_anyOffset)(str, key);
 }
-inline MIE_CHAR16 *wcschr_any(MIE_CHAR16 *str, const MIE_CHAR16 *key)
+inline MIE_CHAR16 *strchr16_any(MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_anyOffset)(str, key);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16_anyOffset)(str, key);
 }
 
 /*
@@ -810,15 +810,15 @@ inline char *strchr_range(char *str, const char *key)
 
 /*
 	find c such that key[0] <= c && c <= key[1], key[2] <= c && c <= key[3], ... in str
-	@note wcslen(key) <= 8, key[i] != 0
+	@note strlen16(key) <= 8, key[i] != 0
 */
-inline const MIE_CHAR16 *wcschr_range(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
+inline const MIE_CHAR16 *strchr16_range(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16_rangeOffset)(str, key);
 }
-inline MIE_CHAR16 *wcschr_range(MIE_CHAR16 *str, const MIE_CHAR16 *key)
+inline MIE_CHAR16 *strchr16_range(MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::wcschr_rangeOffset)(str, key);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *key)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strchr16_rangeOffset)(str, key);
 }
 
 /*
@@ -844,19 +844,19 @@ inline char *findChar(char *begin, const char *end, char c)
 	find c in [begin, end)
 	if c is not found then return end
 */
-inline const MIE_CHAR16 *findWchar(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, MIE_CHAR16 c)
+inline const MIE_CHAR16 *findChar16(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, MIE_CHAR16 c)
 {
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, MIE_CHAR16 c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, MIE_CHAR16 c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16Offset)(begin, end, c);
 }
-inline MIE_CHAR16 *findWchar(MIE_CHAR16 *begin, const MIE_CHAR16 *end, MIE_CHAR16 c)
+inline MIE_CHAR16 *findChar16(MIE_CHAR16 *begin, const MIE_CHAR16 *end, MIE_CHAR16 c)
 {
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, MIE_CHAR16 c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWcharOffset)(begin, end, c);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, MIE_CHAR16 c)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16Offset)(begin, end, c);
 }
 
 /*
@@ -890,7 +890,7 @@ inline char *findChar_any(char *begin, const char *end, const char *key, size_t 
 	if char is not found then return end
 	@note keySize <= 8
 */
-inline const MIE_CHAR16 *findWchar_any(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline const MIE_CHAR16 *findChar16_any(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -898,9 +898,9 @@ inline const MIE_CHAR16 *findWchar_any(const MIE_CHAR16 *begin, const MIE_CHAR16
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16_anyOffset)(begin, end, key, keySize);
 }
-inline MIE_CHAR16 *findWchar_any(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline MIE_CHAR16 *findChar16_any(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -908,7 +908,7 @@ inline MIE_CHAR16 *findWchar_any(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_anyOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16_anyOffset)(begin, end, key, keySize);
 }
 
 /*
@@ -944,7 +944,7 @@ inline char *findChar_range(char *begin, const char *end, const char *key, size_
 	if char is not found then return end
 	@note keySize <= 8
 */
-inline const MIE_CHAR16 *findWchar_range(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline const MIE_CHAR16 *findChar16_range(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	assert((keySize % 2) == 0);
 	if (keySize == 0) {
@@ -953,9 +953,9 @@ inline const MIE_CHAR16 *findWchar_range(const MIE_CHAR16 *begin, const MIE_CHAR
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16_rangeOffset)(begin, end, key, keySize);
 }
-inline MIE_CHAR16 *findWchar_range(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline MIE_CHAR16 *findChar16_range(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	assert((keySize % 2) == 0);
 	if (keySize == 0) {
@@ -964,7 +964,7 @@ inline MIE_CHAR16 *findWchar_range(MIE_CHAR16 *begin, const MIE_CHAR16 *end, con
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWchar_rangeOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findChar16_rangeOffset)(begin, end, key, keySize);
 }
 
 /*
@@ -994,7 +994,7 @@ inline char *findStr(char*begin, const char *end, const char *key, size_t keySiz
 /*
 	find [key, key + keySize) in [begin, end)
 */
-inline const MIE_CHAR16 *findWstr(const MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline const MIE_CHAR16 *findStr16(const MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -1002,9 +1002,9 @@ inline const MIE_CHAR16 *findWstr(const MIE_CHAR16*begin, const MIE_CHAR16 *end,
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWstrOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findStr16Offset)(begin, end, key, keySize);
 }
-inline MIE_CHAR16 *findWstr(MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+inline MIE_CHAR16 *findStr16(MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
 {
 	if (keySize == 0) {
 		return begin;
@@ -1012,7 +1012,7 @@ inline MIE_CHAR16 *findWstr(MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_C
 	if (begin == end) {
 		return begin;
 	}
-	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findWstrOffset)(begin, end, key, keySize);
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findStr16Offset)(begin, end, key, keySize);
 }
 
 /*
