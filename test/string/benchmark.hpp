@@ -110,7 +110,7 @@ struct Frange_char : Frange_char_T<char, f> {};
 template<class C, class F>
 Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key, F f)
 {
-	const int N = 10;
+	const int N = 1;
 	int val = 0;
 	f.set(str, key);
 	Xbyak::util::Clock clk;
@@ -122,25 +122,17 @@ Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key,
 			clk.begin();
 			typename F::type q = f.find(p);
 			clk.end();
+
 			if (q == end) break;
 			val += (int)(q - p);
 			p = q + 1;
 		}
 	}
-	if (val == 0) val = (int)(str.size()) * N;
+ if (val == 0) val = (int)(str.size()) * N;
 	Ret ret;
 	ret.val = val;
 	ret.clk = clk.getClock() / (double)val;
 	return ret;
-}
-
-template<class F1, class F2>
-void benchmark(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::string& str, const std::string& key)
-{
-	Ret r1 = benchmark1(str, key, f1);
-	Ret r2 = benchmark1(str, key, f2);
-	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", key.substr(0, 25).c_str(), msg1, r1.clk, msg2, r2.clk, r1.clk / r2.clk);
-	TEST_EQUAL(r1, r2);
 }
 
 std::string wtos(const std::basic_string<MIE_WCHAR_T>& str)
@@ -151,13 +143,28 @@ std::string wtos(const std::basic_string<MIE_WCHAR_T>& str)
 	}
 	return ret;
 }
-template<class F1, class F2>
-void benchmarkW(const MIE_WCHAR_T *msg1, F1 f1, const MIE_WCHAR_T *msg2, F2 f2, const std::basic_string<MIE_WCHAR_T>& str, const std::basic_string<MIE_WCHAR_T>& key)
+
+std::string wtos(const std::string& str) { return str; }
+
+template<class C, class F1, class F2>
+void benchmarkT(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<C>& str, const std::basic_string<C>& key)
 {
 	Ret r1 = benchmark1(str, key, f1);
 	Ret r2 = benchmark1(str, key, f2);
-	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", wtos(key).substr(0, 25).c_str(), wtos(msg1).c_str(), r1.clk, wtos(msg2).c_str(), r2.clk, r1.clk / r2.clk);
+	printf("%25s %16s % 6.2f %16s % 6.2f %5.2f\n", wtos(key.substr(0, 25)).c_str(), msg1, r1.clk, msg2, r2.clk, r1.clk / r2.clk);
 	TEST_EQUAL(r1, r2);
+}
+
+template<class F1, class F2>
+void benchmark(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::string& str, const std::string& key)
+{
+	benchmarkT<char, F1, F2>(msg1, f1, msg2, f2, str, key);
+}
+
+template<class F1, class F2>
+void benchmarkW(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<MIE_WCHAR_T>& str, const std::basic_string<MIE_WCHAR_T>& key)
+{
+	benchmarkT<MIE_WCHAR_T, F1, F2>(msg1, f1, msg2, f2, str, key);
 }
 
 template<class F1, class F2>

@@ -561,7 +561,6 @@ void strstr_test()
 		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 			const MIE_WCHAR_T *q1 = mywcsstr_C(str.c_str(), tbl[i]);
 			const MIE_WCHAR_T *q2 = mie::wcsstr(str.c_str(), tbl[i]);
-printf("i=%d %p %p\n", (int)i, q1, q2);
 			TEST_EQUAL(q1, q2);
 		}
 	}
@@ -667,7 +666,8 @@ void findChar_any_test(const std::string& text)
 void findChar_range_test(const std::string& text)
 {
 	puts("findChar_range_test");
-	std::string str = "123a456abcdefghijklmnob123aa3vnraw3nXbcdevra";
+#if 1
+    std::string str = "123a456abcdefghijklmnob123aa3vnraw3nXbcdevra";
 	for (int j = 0; j < 3; j++) {
 		for (int i = 0; i < 256; i++) {
 			str += (char)i;
@@ -701,18 +701,25 @@ void findChar_range_test(const std::string& text)
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
 	puts("ok");
-	{
+#endif
+    {
 		Wcstring str;
-		for (MIE_WCHAR_T c = 1; c < 65535; c++) {
+		for (MIE_WCHAR_T c = 1; c < 65534; c++) {
 			str += c;
 		}
 		const MIE_WCHAR_T tbl[][9] = {
 			{ 'z', 'z' },
 			{ '0', '9' },
-			{ 1234, 5678, 'a', 'f', 'A', 'F' },
+			{ 1234, 5678, 'a', 'f', 'A', 'F', 10000, 20000 },
 			{ '0', '9', 'a', 'z', '/', '/' },
+			{ 65534, 65535 },
 		};
-		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+		for (size_t i = 1; i < NUM_OF_ARRAY(tbl); i++) {
+#if 0
+            printf("i=%d\n", (int)i);
+            benchmarkW("findWchar_range_C", Fwrange<findWchar_range_C>(), "findWchar_range", Fwrange<mie::findWchar_range>(), str, tbl[i]);
+            benchmarkW("findWchar_range_C", Fwrange<findWchar_range_C>(), "findWchar_range", Fwrange<mie::findWchar_range>(), str, tbl[i]);
+#else
 			const MIE_WCHAR_T *begin = str.c_str();
 			const MIE_WCHAR_T *end = str.c_str() + str.size();
 			const MIE_WCHAR_T *key = tbl[i];
@@ -720,6 +727,7 @@ void findChar_range_test(const std::string& text)
 			const MIE_WCHAR_T *q1 = mie::findWchar_range(begin, end, key, keySize);
 			const MIE_WCHAR_T *q2 = findWchar_range_C(begin, end, key, keySize);
 			TEST_EQUAL(q1, q2);
+#endif
 		}
 	}
 }
@@ -941,6 +949,8 @@ int main(int argc, char *argv[])
 	}
 
 	try {
+//		findChar_range_test(text);
+//return 0;
 //		benchmarkTbl("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), text, keyTbl);
 //		return 0;
 #ifdef USE_BOOST_BM

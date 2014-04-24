@@ -593,6 +593,7 @@ private:
 		movdqu(xm0, ptr [key]);
 		mov(eax, ptr [esp + P_ + 16]); // keySize
 #endif
+        if (isWcs) shr(d, 1);
 		if (caseInsensitive) {
 			setLowerReg(Am1, Zp1, amA, Reg32(save_p.getIdx()), isWcs);
 		}
@@ -613,28 +614,18 @@ private:
 		} else {
 			pcmpestri(xmm0, ptr [p], mode); // 12(1100b) = [equal ordered:unsigned:byte]
 		}
-		if (true/* isSandyBridge */) {
-			lea(p, ptr [p + 16]);
-			lea(d, ptr [d - 16]);
-			ja(".lp"); // if (CF == 0 and ZF = 0) goto .lp
-		} else {
-			jbe(".headCmp"); //  if (CF == 1 or ZF == 1) goto .headCmp
-			add(p, 16);
-			sub(d, 16);
-			jmp(".lp");
-	L(".headCmp");
-		}
+		lea(p, ptr [p + 16]);
+		lea(d, ptr [d - (isWcs ? 8 : 16)]);
+		ja(".lp"); // if (CF == 0 and ZF = 0) goto .lp
 		jnc(".notFound");
 		// get position
 		if (isWcs) {
-			lea(p, ptr [p + c * 2 - 16]);
-			sub(d, c);
-			sub(d, c);
-		} else {
-			lea(p, ptr [p + c - 16]);
-			sub(d, c);
-		}
-		add(d, 16);
+    		lea(p, ptr [p + c * 2 - 16]);
+        } else {
+    		lea(p, ptr [p + c - 16]);
+        }
+		sub(d, c);
+		add(d, isWcs ? 8 : 16);
 		mov(save_p, p);
 		mov(save_key, key);
 		mov(save_a, a);
@@ -655,16 +646,16 @@ private:
 		add(save_p, 16);
 		add(save_key, 16);
 		sub(a, 16);
-		sub(d, 16);
+		sub(d, isWcs ? 8 : 16);
 		jmp(".tailCmp");
 	L(".next");
 		add(p, charLen);
 		mov(a, save_a);
 #ifdef XBYAK32
 		mov(edx, save_d);
-		sub(edx, charLen);
+		sub(edx, 1);
 #else
-		lea(d, ptr [save_d - charLen]);
+		lea(d, ptr [save_d - 1]);
 #endif
 		jmp(".lp");
 	L(".notFound");
@@ -926,6 +917,7 @@ inline MIE_WCHAR_T *findWchar_any(MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, co
 */
 inline const char *findChar_range(const char *begin, const char *end, const char *key, size_t keySize)
 {
+	assert((keySize % 2) == 0);
 	if (keySize == 0) {
 		return begin;
 	}
@@ -936,6 +928,7 @@ inline const char *findChar_range(const char *begin, const char *end, const char
 }
 inline char *findChar_range(char *begin, const char *end, const char *key, size_t keySize)
 {
+	assert((keySize % 2) == 0);
 	if (keySize == 0) {
 		return begin;
 	}
@@ -952,6 +945,7 @@ inline char *findChar_range(char *begin, const char *end, const char *key, size_
 */
 inline const MIE_WCHAR_T *findWchar_range(const MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
+	assert((keySize % 2) == 0);
 	if (keySize == 0) {
 		return begin;
 	}
@@ -962,6 +956,7 @@ inline const MIE_WCHAR_T *findWchar_range(const MIE_WCHAR_T *begin, const MIE_WC
 }
 inline MIE_WCHAR_T *findWchar_range(MIE_WCHAR_T *begin, const MIE_WCHAR_T *end, const MIE_WCHAR_T *key, size_t keySize)
 {
+	assert((keySize % 2) == 0);
 	if (keySize == 0) {
 		return begin;
 	}
