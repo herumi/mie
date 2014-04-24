@@ -178,8 +178,8 @@ void benchmarkTbl(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::s
 	}
 }
 
-template<class F1, class F2>
-void verify(F1 f1, F2 f2, const std::string& str, const std::string& key)
+template<class F1, class F2, class C, class Key>
+void verify(F1 f1, F2 f2, const std::basic_string<C>& str, const Key& key)
 {
 	f1.set(str, key);
 	f2.set(str, key);

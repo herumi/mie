@@ -53,6 +53,8 @@ const size_t findChar16Offset = strchr16_rangeOffset + 64;
 const size_t findChar16_anyOffset = findChar16Offset + 64;
 const size_t findChar16_rangeOffset = findChar16_anyOffset + 64;
 const size_t findStr16Offset = findChar16_rangeOffset + 64;
+const size_t strcasestr16Offset = findStr16Offset + 240;
+const size_t findCaseStr16Offset = strcasestr16Offset + 224;
 
 struct StringCode : Xbyak::CodeGenerator {
 	const Xbyak::util::Cpu cpu;
@@ -135,6 +137,11 @@ struct StringCode : Xbyak::CodeGenerator {
 		nextOffset(findStr16Offset);
 		gen_findStr(isSandyBridge, true);
 
+		nextOffset(strcasestr16Offset);
+		gen_strstr(isSandyBridge, true, true);
+
+		nextOffset(findCaseStr16Offset);
+		gen_findStr(isSandyBridge, true, true);
 
 	} catch (std::exception& e) {
 		printf("ERR:%s\n", e.what());
@@ -1030,6 +1037,20 @@ inline char *strcasestr(char *str, const char *key)
 	return Xbyak::CastTo<char*(*)(char*, const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestrOffset)(str, key);
 }
 /*
+	case insensitive strstr
+	@note key must not have capital MIE_CHAR16acters [A-Z]
+*/
+inline const MIE_CHAR16 *strcasestr16(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
+{
+	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestr16Offset)(str, key);
+}
+
+// non const version of strstr
+inline MIE_CHAR16 *strcasestr16(MIE_CHAR16 *str, const MIE_CHAR16 *key)
+{
+	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestr16Offset)(str, key);
+}
+/*
 	case insensitive find [key, key + keySize) in [begin, end)
 	@note key must not have capital characters [A-Z]
 */
@@ -1052,6 +1073,30 @@ inline char *findCaseStr(char*begin, const char *end, const char *key, size_t ke
 		return begin;
 	}
 	return Xbyak::CastTo<char *(*)(char*, const char *, const char *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findCaseStrOffset)(begin, end, key, keySize);
+}
+/*
+	case insensitive find [key, key + keySize) in [begin, end)
+	@note key must not have capital characters [A-Z]
+*/
+inline const MIE_CHAR16 *findCaseStr16(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<const MIE_CHAR16 *(*)(const MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findCaseStr16Offset)(begin, end, key, keySize);
+}
+inline MIE_CHAR16 *findCaseStr16(MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+{
+	if (keySize == 0) {
+		return begin;
+	}
+	if (begin == end) {
+		return begin;
+	}
+	return Xbyak::CastTo<MIE_CHAR16 *(*)(MIE_CHAR16*, const MIE_CHAR16 *, const MIE_CHAR16 *,size_t)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::findCaseStr16Offset)(begin, end, key, keySize);
 }
 
 } // mie

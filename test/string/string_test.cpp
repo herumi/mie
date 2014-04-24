@@ -913,6 +913,7 @@ void findCaseStr_test(const std::string& text)
 }
 
 int main(int argc, char *argv[])
+	try
 {
 	if (!mie::isAvailableSSE42()) {
 		fprintf(stderr, "SSE4.2 is not supported\n");
@@ -948,57 +949,54 @@ int main(int argc, char *argv[])
 		keyTbl.push_back(tbl[i]);
 	}
 
-	try {
-//		findChar_range_test(text);
-//return 0;
-//		benchmarkTbl("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), text, keyTbl);
-//		return 0;
+//	findChar_range_test(text);
+//	return 0;
+//	benchmarkTbl("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), text, keyTbl);
+//	return 0;
 #ifdef USE_BOOST_BM
-		benchmarkTbl("boost", Frange_boost_bm_find(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
-		return 0;
+	benchmarkTbl("boost", Frange_boost_bm_find(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
+	return 0;
 #endif
 #ifdef USE_MISCHASAN
-		benchmarkTbl("mischasan", Fmischasan_strstr(), "strstr", Fstrstr<STRSTR>(), text, keyTbl);
-		benchmarkTbl("mischasan", Fmischasan_strstr(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
-		return 0;
+	benchmarkTbl("mischasan", Fmischasan_strstr(), "strstr", Fstrstr<STRSTR>(), text, keyTbl);
+	benchmarkTbl("mischasan", Fmischasan_strstr(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
+	return 0;
 #endif
-		strcasestr_test(text);
-		findCaseStr_test(text);
+	strcasestr_test(text);
+	findCaseStr_test(text);
 #if 1
-		/*
-			compare strstr with strcasestr
-			strcasestr speed is about 0.66~0.70 times speed of strstr
-		*/
-		if (!text.empty()) {
-			std::string itext = text;
-			for (size_t i = 0; i < itext.size(); i++) {
-				char c = itext[i];
-				if ('A' <= c && c <= 'Z') itext[i] = c + 'a' - 'A';
-			}
-			benchmarkTbl("mie::strstr", Fstrstr<mie::strstr>(), "mie::strcasestr", Fstrstr<mie::strcasestr>(), itext, keyTbl);
+	/*
+		compare strstr with strcasestr
+		strcasestr speed is about 0.66~0.70 times speed of strstr
+	*/
+	if (!text.empty()) {
+		std::string itext = text;
+		for (size_t i = 0; i < itext.size(); i++) {
+			char c = itext[i];
+			if ('A' <= c && c <= 'Z') itext[i] = c + 'a' - 'A';
 		}
-#endif
-		strlen_test();
-		strchr_test(text);
-		strchr_any_test(text);
-		strchr_range_test(text);
-
-		strstr_test();
-		if (!text.empty()) {
-			benchmarkTbl("strstr_C", Fstrstr<STRSTR>(), "strstr", Fstrstr<mie::strstr>(), text, keyTbl);
-			benchmarkTbl("mystrstr_C", Fstrstr<mystrstr_C>(), "strstr", Fstrstr<mie::strstr>(), text, keyTbl);
-			benchmarkTbl("string::find", Fstr_find(), "findStr", Frange<mie::findStr>(), text, keyTbl);
-		}
-
-		findChar_test(text);
-		findChar_any_test(text);
-		findChar_range_test(text);
-		findStr_test(text);
-		return 0;
-	} catch (std::exception& e) {
-		printf("ERR:%s\n", e.what());
-	} catch (...) {
-		printf("unknown error\n");
+		benchmarkTbl("mie::strstr", Fstrstr<mie::strstr>(), "mie::strcasestr", Fstrstr<mie::strcasestr>(), itext, keyTbl);
 	}
+#endif
+	strlen_test();
+	strchr_test(text);
+	strchr_any_test(text);
+	strchr_range_test(text);
+
+	strstr_test();
+	if (!text.empty()) {
+		benchmarkTbl("strstr_C", Fstrstr<STRSTR>(), "strstr", Fstrstr<mie::strstr>(), text, keyTbl);
+		benchmarkTbl("mystrstr_C", Fstrstr<mystrstr_C>(), "strstr", Fstrstr<mie::strstr>(), text, keyTbl);
+		benchmarkTbl("string::find", Fstr_find(), "findStr", Frange<mie::findStr>(), text, keyTbl);
+	}
+
+	findChar_test(text);
+	findChar_any_test(text);
+	findChar_range_test(text);
+	findStr_test(text);
+	return 0;
+} catch (std::exception& e) {
+	printf("ERR:%s\n", e.what());
 	return 1;
 }
+
