@@ -53,7 +53,7 @@ const size_t findChar16Offset = strchr16_rangeOffset + 64;
 const size_t findChar16_anyOffset = findChar16Offset + 64;
 const size_t findChar16_rangeOffset = findChar16_anyOffset + 64;
 const size_t findStr16Offset = findChar16_rangeOffset + 64;
-const size_t strcasestr16Offset = findStr16Offset + 240;
+const size_t strcasestr16Offset = findStr16Offset + 272;
 const size_t findCaseStr16Offset = strcasestr16Offset + 224;
 
 struct StringCode : Xbyak::CodeGenerator {

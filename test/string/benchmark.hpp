@@ -138,7 +138,7 @@ Ret benchmark1(const std::basic_string<C>& str, const std::basic_string<C>& key,
 	return ret;
 }
 
-std::string u16tos(const std::basic_string<MIE_CHAR16>& str)
+inline std::string u16tos(const std::basic_string<MIE_CHAR16>& str)
 {
 	std::string ret;
 	for (size_t i = 0; i < str.size(); i++) {
@@ -147,8 +147,16 @@ std::string u16tos(const std::basic_string<MIE_CHAR16>& str)
 	return ret;
 }
 
-std::string u16tos(const std::string& str) { return str; }
+inline std::string u16tos(const std::string& str) { return str; }
 
+inline std::basic_string<MIE_CHAR16> stou16(const std::string& str)
+{
+	std::basic_string<MIE_CHAR16> ret;
+	for (size_t i = 0; i < str.size(); i++) {
+		ret += (MIE_CHAR16)str[i];
+	}
+	return ret;
+}
 template<class C, class F1, class F2>
 void benchmarkT(const char *msg1, F1 f1, const char *msg2, F2 f2, const std::basic_string<C>& str, const std::basic_string<C>& key)
 {

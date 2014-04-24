@@ -36,6 +36,21 @@ const char *strcasestr_C(const char *str, const char *key)
 	return 0;
 #endif
 }
+
+MIE_CHAR16 toLower16(MIE_CHAR16 c)
+{
+	if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
+	return c;
+}
+
+bool isSame16(const MIE_CHAR16 *p, const MIE_CHAR16 *q, size_t size)
+{
+	for (size_t i = 0; i < size; i++) {
+		if (toLower16(p[i]) != q[i]) return false;
+	}
+	return true;
+}
+
 int memicmp_C(const char *p, const char *q, size_t len)
 {
 	for (size_t i = 0; i < len; i++) {
@@ -221,6 +236,18 @@ const C *myWcschr(const C *str, C c)
 	}
 	return 0;
 }
+
+// strcasestr(key must not have capital character)
+const MIE_CHAR16 *strcasestr16_C(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
+{
+	const size_t keySize = strlen_T(key);
+	while (*str) {
+		if (isSame16(str, key, keySize) == 0) return str;
+		str++;
+	}
+	return 0;
+}
+
 const MIE_CHAR16 *mystrstr16_C(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
 	size_t len = strlen_T(key);
@@ -800,6 +827,7 @@ void strcasestr_test(const std::string& text)
 		if ('A' <= i && i <= 'Z') continue;
 		std::string key(1, (char)i);
 		verify(Fstrstr<strcasestr_C>(), Fstrstr<mie::strcasestr>(), str, key);
+		verify(Fstrstr16<strcasestr16_C>(), Fstrstr16<mie::strcasestr16>(), stou16(str), stou16(key));
 	}
 	str = "@AZ[`az{";
 	for (int i = 0; i < 7; i++) {
@@ -917,7 +945,7 @@ int main(int argc, char *argv[])
 {
 	if (!mie::isAvailableSSE42()) {
 		fprintf(stderr, "SSE4.2 is not supported\n");
-		return 0;
+		return 1;
 	}
 	argc--, argv++;
 	const std::string text = (argc == 1) ? LoadFile(argv[0]) : "";
