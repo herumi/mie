@@ -43,10 +43,12 @@ MIE_CHAR16 toLower16(MIE_CHAR16 c)
 	return c;
 }
 
-bool isSame16(const MIE_CHAR16 *p, const MIE_CHAR16 *q, size_t size)
+bool isCaseSame16(const MIE_CHAR16 *p, const MIE_CHAR16 *q, size_t size)
 {
 	for (size_t i = 0; i < size; i++) {
-		if (toLower16(p[i]) != q[i]) return false;
+		if (toLower16(p[i]) != q[i]) {
+			return false;
+		}
 	}
 	return true;
 }
@@ -68,6 +70,15 @@ const char *findCaseStr_C(const char *begin, const char *end, const char *key, s
 #else
 		if (memicmp_C(begin, key, keySize) == 0) return begin;
 #endif
+		begin++;
+	}
+	return end;
+}
+
+const MIE_CHAR16 *findCaseStr16_C(const MIE_CHAR16 *begin, const MIE_CHAR16 *end, const MIE_CHAR16 *key, size_t keySize)
+{
+	while (begin + keySize <= end) {
+		if (isCaseSame16(begin, key, keySize)) return begin;
 		begin++;
 	}
 	return end;
@@ -242,7 +253,7 @@ const MIE_CHAR16 *strcasestr16_C(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
 	const size_t keySize = strlen_T(key);
 	while (*str) {
-		if (isSame16(str, key, keySize) == 0) return str;
+		if (isCaseSame16(str, key, keySize)) return str;
 		str++;
 	}
 	return 0;
@@ -251,7 +262,6 @@ const MIE_CHAR16 *strcasestr16_C(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 const MIE_CHAR16 *mystrstr16_C(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
 	size_t len = strlen_T(key);
-//	if (len == 1) return strchr(str, key[0]);
 	while (*str) {
 		const MIE_CHAR16 *p = myWcschr(str, key[0]);
 		if (p == 0) return 0;
@@ -666,7 +676,6 @@ void findChar_any_test(const std::string& text)
 		TEST_EQUAL((int)(q1 - tt), 0);
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
-	puts("ok");
 	{
 		String16 str;
 		for (MIE_CHAR16 c = 1; c < 65535; c++) {
@@ -688,13 +697,13 @@ void findChar_any_test(const std::string& text)
 			TEST_EQUAL(q1, q2);
 		}
 	}
+	puts("ok");
 }
 
 void findChar_range_test(const std::string& text)
 {
 	puts("findChar_range_test");
-#if 1
-    std::string str = "123a456abcdefghijklmnob123aa3vnraw3nXbcdevra";
+	std::string str = "123a456abcdefghijklmnob123aa3vnraw3nXbcdevra";
 	for (int j = 0; j < 3; j++) {
 		for (int i = 0; i < 256; i++) {
 			str += (char)i;
@@ -710,7 +719,7 @@ void findChar_range_test(const std::string& text)
 		"zz",
 		"09",
 		"az09",
-		"0-9a-fA-F",
+		"09afAF",
 		"09afAF//..",
 	};
 	const std::string *pstr = text.empty() ? &str : &text;
@@ -727,9 +736,7 @@ void findChar_range_test(const std::string& text)
 		TEST_EQUAL((int)(q1 - tt), 0);
 		TEST_EQUAL((int)(q2 - tt), 0);
 	}
-	puts("ok");
-#endif
-    {
+	{
 		String16 str;
 		for (MIE_CHAR16 c = 1; c < 65534; c++) {
 			str += c;
@@ -742,21 +749,10 @@ void findChar_range_test(const std::string& text)
 			{ 65534, 65535 },
 		};
 		for (size_t i = 1; i < NUM_OF_ARRAY(tbl); i++) {
-#if 0
-            printf("i=%d\n", (int)i);
-            benchmark16("findChar16_range_C", Fwrange<findChar16_range_C>(), "findChar16_range", Fwrange<mie::findChar16_range>(), str, tbl[i]);
-            benchmark16("findChar16_range_C", Fwrange<findChar16_range_C>(), "findChar16_range", Fwrange<mie::findChar16_range>(), str, tbl[i]);
-#else
-			const MIE_CHAR16 *begin = str.c_str();
-			const MIE_CHAR16 *end = str.c_str() + str.size();
-			const MIE_CHAR16 *key = tbl[i];
-			const size_t keySize =  strlen_T(tbl[i]);
-			const MIE_CHAR16 *q1 = mie::findChar16_range(begin, end, key, keySize);
-			const MIE_CHAR16 *q2 = findChar16_range_C(begin, end, key, keySize);
-			TEST_EQUAL(q1, q2);
-#endif
+			verify(Frange16<findChar16_range_C>(), Frange16<mie::findChar16_range>(), str, tbl[i]);
 		}
 	}
+	puts("ok");
 }
 
 void findStr_test(const std::string& text)
@@ -846,6 +842,7 @@ void strcasestr_test(const std::string& text)
 	};
 	for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 		verify(Fstrstr<strcasestr_C>(), Fstrstr<mie::strcasestr>(), str, tbl[i]);
+		verify(Fstrstr16<strcasestr16_C>(), Fstrstr16<mie::strcasestr16>(), stou16(str), stou16(tbl[i]));
 	}
 	if (!text.empty()) {
 		const char tbl[][32] = {
@@ -884,6 +881,7 @@ void findCaseStr_test(const std::string& text)
 		if ('A' <= i && i <= 'Z') continue;
 		std::string key(1, (char)i);
 		verify(Frange<findCaseStr_C>(), Frange<mie::findCaseStr>(), str, key);
+		verify(Frange16<findCaseStr16_C>(), Frange16<mie::findCaseStr16>(), stou16(str), stou16(key));
 	}
 	str = "@AZ[`az{";
 	for (int i = 0; i < 7; i++) {
@@ -902,6 +900,7 @@ void findCaseStr_test(const std::string& text)
 	};
 	for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 		verify(Frange<findCaseStr_C>(), Frange<mie::findCaseStr>(), str, tbl[i]);
+		verify(Frange16<findCaseStr16_C>(), Frange16<mie::findCaseStr16>(), stou16(str), stou16(tbl[i]));
 	}
 	if (!text.empty()) {
 		const char tbl[][32] = {
@@ -977,10 +976,6 @@ int main(int argc, char *argv[])
 		keyTbl.push_back(tbl[i]);
 	}
 
-//	findChar_range_test(text);
-//	return 0;
-//	benchmarkTbl("memmem", Fmemmem(), "findStr", Frange<mie::findStr>(), text, keyTbl);
-//	return 0;
 #ifdef USE_BOOST_BM
 	benchmarkTbl("boost", Frange_boost_bm_find(), "mie::strstr", Fstrstr<mie::strstr>(), text, keyTbl);
 	return 0;

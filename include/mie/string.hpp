@@ -429,8 +429,8 @@ private:
 	}
 	void gen_findChar(int mode, bool isWcs = false)
 	{
-		// findChar(p(=begin), end, c)
-		// findChar(p(=begin), end, key, keySize)
+		// mode = M_one ; findChar(p(=begin), end, c)
+		// mode = M_any/M_range ; findChar(p(=begin), end, key, keySize)
 		inLocalLabel();
 		using namespace Xbyak;
 
@@ -505,10 +505,11 @@ private:
 		const int v = (mode == M_range ? 4 : 0) + (isWcs ? 1 : 0);
 		mov(d, end);
 		sub(d, p); // len
+		if (isWcs) shr(d, 1);
 		jmp(".in");
 	L("@@");
 		add(p, 16);
-		sub(d, 16);
+		sub(d, isWcs ? 8 : 16);
 	L(".in");
 		pcmpestri(xm0, ptr [p], v);
 		ja("@b");
@@ -653,7 +654,7 @@ private:
 		// rare case
 		add(save_p, 16);
 		add(save_key, 16);
-		sub(a, 16);
+		sub(a, isWcs ? 8 : 16);
 		sub(d, isWcs ? 8 : 16);
 		jmp(".tailCmp");
 	L(".next");
@@ -709,7 +710,6 @@ struct DummyCall {
 };
 
 } // str_util_impl
-
 
 inline bool isAvailableSSE42()
 {
@@ -1028,12 +1028,14 @@ inline MIE_CHAR16 *findStr16(MIE_CHAR16*begin, const MIE_CHAR16 *end, const MIE_
 */
 inline const char *strcasestr(const char *str, const char *key)
 {
+	if (*str == 0) return 0;
 	return Xbyak::CastTo<const char*(*)(const char*, const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestrOffset)(str, key);
 }
 
 // non const version of strstr
 inline char *strcasestr(char *str, const char *key)
 {
+	if (*str == 0) return 0;
 	return Xbyak::CastTo<char*(*)(char*, const char*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestrOffset)(str, key);
 }
 /*
@@ -1042,12 +1044,14 @@ inline char *strcasestr(char *str, const char *key)
 */
 inline const MIE_CHAR16 *strcasestr16(const MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
+	if (*str == 0) return 0;
 	return Xbyak::CastTo<const MIE_CHAR16*(*)(const MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestr16Offset)(str, key);
 }
 
 // non const version of strstr
 inline MIE_CHAR16 *strcasestr16(MIE_CHAR16 *str, const MIE_CHAR16 *key)
 {
+	if (*str == 0) return 0;
 	return Xbyak::CastTo<MIE_CHAR16*(*)(MIE_CHAR16*, const MIE_CHAR16*)>(str_util_impl::InstanceIsHere<>::buf + str_util_impl::strcasestr16Offset)(str, key);
 }
 /*

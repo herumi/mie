@@ -118,7 +118,7 @@ inline bool LoadFile(AlignedArray<char>& textBuf, const std::string& fileName)
 	std::ifstream ifs(fileName.c_str(), std::ios::binary);
 	if (!ifs) return false;
 	ifs.seekg(0, std::ifstream::end);
-	const size_t size = ifs.tellg();
+	const size_t size = (size_t)ifs.tellg();
 	ifs.seekg(0);
 	fprintf(stderr, "size=%d\n", (int)size);
 	textBuf.resize(size + 1);
