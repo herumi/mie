@@ -24,7 +24,15 @@
 	#pragma warning(pop)
 #endif
 #ifdef _WIN32
-#if _MSC_VER == 1800
+#if _MSC_VER == 1900
+#ifdef _DEBUG
+#pragma comment(lib, "14/mpird.lib")
+#pragma comment(lib, "14/mpirxxd.lib")
+#else
+#pragma comment(lib, "14/mpir.lib")
+#pragma comment(lib, "14/mpirxx.lib")
+#endif
+#elif _MSC_VER == 1800
 #ifdef _DEBUG
 #pragma comment(lib, "12/mpird.lib")
 #pragma comment(lib, "12/mpirxxd.lib")
