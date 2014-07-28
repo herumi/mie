@@ -255,7 +255,7 @@ public:
 	{
 		std::vector<uint32_t> buf(fp::getRoundNum(modBitLen_, 32));
 		assert(!buf.empty());
-		rg.read(&buf[0], buf.size());;
+		rg.read(&buf[0], buf.size());
 		setMaskMod(buf);
 	}
 	/*
