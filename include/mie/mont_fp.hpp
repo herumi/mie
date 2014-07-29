@@ -339,13 +339,7 @@ public:
 #endif
 	static inline int compare(const MontFpT& x, const MontFpT& y)
 	{
-		for (size_t i = 0; i < N; i++) {
-			const uint64_t a = x.v_[N - 1 - i];
-			const uint64_t b = y.v_[N - 1 - i];
-			if (a > b) return 1;
-			if (a < b) return -1;
-		}
-		return 0;
+		return fp::compareArray(x.v_, y.v_, N);
 	}
 	static inline bool isZero(const MontFpT& x)
 	{

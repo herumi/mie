@@ -176,6 +176,40 @@ void setMaskedRaw(std::vector<S>& buf, const S *inBuf, size_t n, size_t bitLen)
 	fp::maskBuffer(&buf[0], buf.size(), bitLen);
 }
 
+/*
+	compare x[0, n) with y[0, n)
+*/
+template<class S>
+int compareArray(const S* x, const S* y, size_t n)
+{
+	for (size_t i = 0; i < n; i++) {
+		const S a = x[n - 1 - i];
+		const S b = y[n - 1 - i];
+		if (a > b) return 1;
+		if (a < b) return -1;
+	}
+	return 0;
+}
+/*
+	get random value less than in[]
+	n = (bitLen + sizeof(S) * 8) / (sizeof(S) * 8)
+	input  in[0..n)
+	output out[n..n)
+	0 <= out < in
+*/
+template<class RG, class S>
+inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
+{
+	const size_t unitBitSize = sizeof(S) * 8;
+	const size_t n = getRoundNum(bitLen, unitBitSize);
+	const size_t rem = bitLen & (unitBitSize - 1);
+	for (;;) {
+		rg.read(out, n);
+		if (rem > 0) out[n - 1] &= (S(1) << rem) - 1;
+		if (compareArray(out, in, n) < 0) return;
+	}
+}
+
 } // fp
 
 namespace fp_local {
