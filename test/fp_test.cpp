@@ -40,6 +40,29 @@ struct Init {
 
 CYBOZU_TEST_SETUP_FIXTURE(Init);
 
+CYBOZU_TEST_AUTO(compareArray)
+{
+	const struct {
+		uint32_t a[4];
+		uint32_t b[4];
+		size_t n;
+		int expect;
+	} tbl[] = {
+		{ { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ { 0, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, -1 },
+		{ { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, 0 },
+		{ { 3, 1, 1, 0 }, { 2, 1, 1, 0 }, 4, 1 },
+		{ { 9, 2, 1, 1 }, { 1, 3, 1, 1 }, 4, -1 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 3, 0 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 4, -1 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		int e = mie::fp::compareArray(tbl[i].a, tbl[i].b, tbl[i].n);
+		CYBOZU_TEST_EQUAL(e, tbl[i].expect);
+	}
+}
+
 #ifndef MIE_ONLY_BENCH
 CYBOZU_TEST_AUTO(cstr)
 {
