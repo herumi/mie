@@ -35,7 +35,6 @@ int main()
 	Fp::setModulo(para.p);
 	Ec::setParam(para.a, para.b);
 	const Ec P(Fp(para.gx), Fp(para.gy));
-	const size_t len = para.bitLen;
 
 	/*
 		Alice setups a private key a and public key aP
@@ -43,7 +42,7 @@ int main()
 	Zn a;
 	Ec aP;
 
-	a.initRand(rg, len); // random
+	a.setRand(rg);
 	Ec::power(aP, P, a); // aP = a * P;
 
 	std::cout << "aP=" << aP << std::endl;
@@ -54,7 +53,7 @@ int main()
 	Zn b;
 	Ec bP;
 
-	b.initRand(rg, len); // random
+	b.setRand(rg);
 	Ec::power(bP, P, b); // bP = b * P;
 
 	std::cout << "bP=" << bP << std::endl;

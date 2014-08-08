@@ -285,12 +285,11 @@ public:
 		T::clear(v);
 	}
 	template<class RG>
-	void initRand(RG& rg, size_t)
+	void setRand(RG& rg)
 	{
-		std::vector<uint32_t> buf(fp::getRoundNum(modBitLen_, 32));
-		assert(!buf.empty());
-		rg.read(&buf[0], buf.size());
-		setMaskMod(buf);
+		std::vector<BlockType> buf(fp::getRoundNum(modBitLen_, sizeof(BlockType) * 8));
+		fp::getRandVal(buf.data(), rg, T::getBlock(m_), modBitLen_);
+		T::setRaw(v, buf.data(), buf.size());
 	}
 	/*
 		ignore the value of inBuf over modulo

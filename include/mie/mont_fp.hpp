@@ -158,12 +158,9 @@ public:
 		for (size_t i = 0; i < N; i++) v_[i] = 0;
 	}
 	template<class RG>
-	void initRand(RG& rg, size_t)
+	void setRand(RG& rg)
 	{
-		std::vector<uint32_t> buf(fp::getRoundNum(modBitLen_, 32));
-		assert(!buf.empty());
-		rg.read(&buf[0], buf.size());;
-		setMaskMod(buf);
+		fp::getRandVal(v_, rg, p_.v_, modBitLen_);
 	}
 	template<class S>
 	void setRaw(const S *inBuf, size_t n)
@@ -185,7 +182,7 @@ public:
 			throw cybozu::Exception("fp:MontFpT:setModulo") << pstr << base;
 		}
 		modBitLen_ = Gmp::getBitLen(pOrg_);
-		if (fp::getRoundNum(modBitLen_, 64) != N) {
+		if (fp::getRoundNum(modBitLen_, 64) > N) {
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
 		p_.fromRawGmp(pOrg_);
