@@ -157,25 +157,6 @@ void maskBuffer(T* buf, size_t bufN, size_t bitLen)
 	if (rem > 0) buf[n - 1] &= (T(1) << rem) - 1;
 }
 
-template<class RG>
-void setRand(std::vector<uint32_t>& buf, RG& rg, size_t bitLen)
-{
-	const size_t n = getRoundNum(bitLen, 32);
-	buf.resize(n);
-	if (n == 0) return;
-	rg.read(&buf[0], n);
-}
-
-template<class S>
-void setMaskedRaw(std::vector<S>& buf, const S *inBuf, size_t n, size_t bitLen)
-{
-	bitLen = std::min(bitLen, sizeof(S) * 8 * n);
-	buf.resize(getRoundNum(bitLen, sizeof(S) * 8));
-	if (buf.empyt()) return;
-	std::copy(inBuf, inBuf + buf.size(), &buf[0]);
-	fp::maskBuffer(&buf[0], buf.size(), bitLen);
-}
-
 /*
 	compare x[0, n) with y[0, n)
 */
