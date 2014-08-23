@@ -142,19 +142,21 @@ inline const char *verifyStr(bool *isMinus, int *base, const std::string& str)
 	return p;
 }
 
-inline size_t getRoundNum(size_t x, size_t size)
+template<class S>
+size_t getRoundNum(size_t x)
 {
+	const size_t size = sizeof(S) * 8;
 	return (x + size - 1) / size;
 }
 
-template<class T>
-void maskBuffer(T* buf, size_t bufN, size_t bitLen)
+template<class S>
+void maskBuffer(S* buf, size_t bufN, size_t bitLen)
 {
-	size_t bitSizeT = sizeof(T) * 8;
-	if (bitLen >= bitSizeT * bufN) return;
-	const size_t rem = bitLen & (bitSizeT - 1);
-	const size_t n = getRoundNum(bitLen, bitSizeT);
-	if (rem > 0) buf[n - 1] &= (T(1) << rem) - 1;
+	size_t unitSize = sizeof(S) * 8;
+	if (bitLen >= unitSize * bufN) return;
+	const size_t n = getRoundNum<S>(bitLen);
+	const size_t rem = bitLen & (unitSize - 1);
+	if (rem > 0) buf[n - 1] &= (S(1) << rem) - 1;
 }
 
 /*
@@ -182,7 +184,7 @@ template<class RG, class S>
 inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 {
 	const size_t unitBitSize = sizeof(S) * 8;
-	const size_t n = getRoundNum(bitLen, unitBitSize);
+	const size_t n = getRoundNum<S>(bitLen);
 	const size_t rem = bitLen & (unitBitSize - 1);
 	for (;;) {
 		rg.read(out, n);
@@ -209,7 +211,7 @@ public:
 	explicit BinaryExpression(const T& x, bool compress = false)
 		: bitLen_(typename T::getBinaryRepBitLen(x, compress))
 	{
-		const size_t n = getRoundNum(bitLen_, sizeof(BlockType) * 8);
+		const size_t n = getRoundNum<BlockType>(bitLen_);
 		v_.resize(n);
 		typename T::getBinaryRep(v_.data(), n, compress);
 	}
@@ -219,7 +221,7 @@ public:
 	*/
 	void set(const BlockType* buf, size_t bitLen)
 	{
-		const size_t n = getRoundNum(bitLen, sizeof(BlockType) * 8);
+		const size_t n = getRoundNum<BlockType>(bitLen);
 		v_.assign(buf, buf + n);
 		bitLen_ = bitLen;
 	}
@@ -305,7 +307,7 @@ public:
 	template<class RG>
 	void setRand(RG& rg)
 	{
-		std::vector<BlockType> buf(fp::getRoundNum(modBitLen_, sizeof(BlockType) * 8));
+		std::vector<BlockType> buf(fp::getRoundNum<BlockType>(modBitLen_));
 		fp::getRandVal(buf.data(), rg, T::getBlock(m_), modBitLen_);
 		T::setRaw(v, buf.data(), buf.size());
 	}
@@ -315,7 +317,7 @@ public:
 	template<class S>
 	void setRaw(const S *inBuf, size_t n)
 	{
-		n = std::min(n, fp::getRoundNum(modBitLen_, sizeof(S) * 8));
+		n = std::min(n, fp::getRoundNum<S>(modBitLen_));
 		if (n == 0) {
 			clear();
 			return;
@@ -450,7 +452,7 @@ private:
 	template<class S>
 	void setMaskMod(std::vector<S>& buf)
 	{
-		assert(buf.size() <= fp::getRoundNum(modBitLen_, sizeof(S) * 8));
+		assert(buf.size() <= fp::getRoundNum<S>(modBitLen_));
 		assert(!buf.empty());
 		fp::maskBuffer(&buf[0], buf.size(), modBitLen_);
 		T::setRaw(v, &buf[0], buf.size());

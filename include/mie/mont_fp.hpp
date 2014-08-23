@@ -165,7 +165,7 @@ public:
 	template<class S>
 	void setRaw(const S *inBuf, size_t n)
 	{
-		n = std::min(n, fp::getRoundNum(modBitLen_, sizeof(S) * 8));
+		n = std::min(n, fp::getRoundNum<S>(modBitLen_));
 		if (n == 0) {
 			clear();
 			return;
@@ -182,7 +182,7 @@ public:
 			throw cybozu::Exception("fp:MontFpT:setModulo") << pstr << base;
 		}
 		modBitLen_ = Gmp::getBitLen(pOrg_);
-		if (fp::getRoundNum(modBitLen_, 64) > N) {
+		if (fp::getRoundNum<uint64_t>(modBitLen_) > N) {
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
 		p_.fromRawGmp(pOrg_);
