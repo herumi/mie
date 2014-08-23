@@ -208,6 +208,10 @@ public:
 		: bitLen_(0)
 	{
 	}
+	/*
+		@param x [in]
+		@param compres [in] use compressed expression if possible
+	*/
 	explicit BinaryExpression(const T& x, bool compress = false)
 		: bitLen_(typename T::getBinaryRepBitLen(x, compress))
 	{
