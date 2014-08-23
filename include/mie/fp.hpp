@@ -191,6 +191,43 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 	}
 }
 
+/*
+	binary expression of T
+*/
+template<class T>
+class BinaryExpression {
+public:
+	typedef typename T::BlockType BlockType;
+	typedef std::vector<BlockType> Vec;
+	size_t bitLen_;
+	Vec v_;
+public:
+	BinaryExpression()
+		: bitLen_(0)
+	{
+	}
+	explicit BinaryExpression(const T& x, bool compress = false)
+		: bitLen_(typename T::getBinaryRepBitLen(x, compress))
+	{
+		const size_t n = getRoundNum(bitLen_, sizeof(BlockType) * 8);
+		v_.resize(n);
+		typename T::getBinaryRep(v_.data(), n, compress);
+	}
+	/*
+		@param buf [in] buffer
+		@param bitLen [in] bit size of buffer(not number of elements)
+	*/
+	void set(const BlockType* buf, size_t bitLen)
+	{
+		const size_t n = getRoundNum(bitLen, sizeof(BlockType) * 8);
+		v_.assign(buf, buf + n);
+		bitLen_ = bitLen;
+	}
+	size_t getBitLen() const { return bitLen_; }
+	size_t getBlockSize() const { return v_.size(); }
+	BlockType *getBlock() const { return v_.data(); }
+};
+
 } // fp
 
 namespace fp_local {
