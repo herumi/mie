@@ -213,17 +213,18 @@ public:
 		@param compres [in] use compressed expression if possible
 	*/
 	explicit BinaryExpression(const T& x, bool compress = false)
-		: bitLen_(typename T::getBinaryRepBitLen(x, compress))
+		: bitLen_(T::getBinaryExpressionBitLen(x, compress))
 	{
 		const size_t n = getRoundNum<BlockType>(bitLen_);
 		v_.resize(n);
-		typename T::getBinaryRep(v_.data(), n, compress);
+		T::getBinaryExpression(v_.data(), x, n, compress);
 	}
 	/*
 		@param buf [in] buffer
 		@param bitLen [in] bit size of buffer(not number of elements)
+		@param compress [in] not used
 	*/
-	void set(const BlockType* buf, size_t bitLen)
+	void set(const BlockType* buf, size_t bitLen, bool = false)
 	{
 		const size_t n = getRoundNum<BlockType>(bitLen);
 		v_.assign(buf, buf + n);
@@ -231,7 +232,7 @@ public:
 	}
 	size_t getBitLen() const { return bitLen_; }
 	size_t getBlockSize() const { return v_.size(); }
-	BlockType *getBlock() const { return v_.data(); }
+	const BlockType *getBlock() const { return v_.data(); }
 };
 
 } // fp
@@ -402,6 +403,24 @@ public:
 	static inline size_t getBitLen(const FpT& x)
 	{
 		return T::getBitLen(x.v);
+	}
+	/*
+		does not support compressed expression
+	*/
+	static inline size_t getBinaryExpressionBitLen(const FpT& x, bool = false)
+	{
+		return getBitLen(x);
+	}
+	static inline void getBinaryExpression(BlockType *buf, const FpT& x, size_t n, bool = false)
+	{
+		const size_t bs = getBlockSize(x);
+		const BlockType *block = getBlock(x);
+		if (bs == 0 && n == 1) { // QQQ : for GMP(later move to gmp_util.hpp)
+			buf[0] = 0;
+			return;
+		}
+		if (n != bs) throw cybozu::Exception("FpT:getBinaryExpression:bad n") << n << bs;
+		for (size_t i = 0; i < n; i++) buf[i] = block[i];
 	}
 	static inline void shr(FpT& z, const FpT& x, size_t n)
 	{

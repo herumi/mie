@@ -5,6 +5,10 @@
 #include <cybozu/benchmark.hpp>
 #include <time.h>
 
+#ifdef _MSC_VER
+	#pragma warning(disable: 4127) // const condition
+#endif
+
 #if defined(_WIN64) || defined(__x86_64__)
 //	#define USE_MONT_FP
 #endif
@@ -519,6 +523,43 @@ CYBOZU_TEST_AUTO(toStr16)
 		CYBOZU_TEST_EQUAL(str, tbl[i].str);
 		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, true);
 		CYBOZU_TEST_EQUAL(str, std::string("0x") + tbl[i].str);
+	}
+}
+
+CYBOZU_TEST_AUTO(binaryRepl)
+{
+	const struct {
+		const char *s;
+		uint32_t v[6];
+		size_t vn;
+		size_t bitLen;
+	} tbl[] = {
+		{ "0", { 0, 0, 0, 0, 0 }, 1, 1 },
+		{ "1234", { 1234, 0, 0, 0, 0 }, 1, 11 },
+		{ "0xaabbccdd12345678", { 0x12345678, 0xaabbccdd, 0, 0, 0 }, 2, 64 },
+		{ "0x11112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0 }, 4, 125 },
+		{ "0x9911112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0x99, 0 }, 5, 136 },
+	};
+	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Fp x(tbl[i].s);
+		mie::fp::BinaryExpression<Fp> be(x);
+		CYBOZU_TEST_EQUAL(be.getBitLen(), tbl[i].bitLen);
+		const Fp::BlockType *block = be.getBlock();
+		if (sizeof(Fp::BlockType) == 4) {
+			const size_t n = tbl[i].vn;
+			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
+			for (size_t j = 0; j < n; j++) {
+				CYBOZU_TEST_EQUAL(block[j], tbl[i].v[j]);
+			}
+		} else {
+			const size_t n = (tbl[i].vn + 1) / 2;
+			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
+			for (size_t j = 0; j < n; j++) {
+				uint64_t v = (uint64_t(tbl[i].v[j * 2 + 1]) << 32) | tbl[i].v[j * 2];
+				CYBOZU_TEST_EQUAL(block[j], v);
+			}
+		}
 	}
 }
 #endif
