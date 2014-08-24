@@ -1,32 +1,127 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
+#include <mie/fp_util.hpp>
 #include <cybozu/test.hpp>
-#include <mie/fp.hpp>
-#include <mie/gmp_util.hpp>
-#include <cybozu/benchmark.hpp>
-#include <time.h>
 
-#ifdef _MSC_VER
-	#pragma warning(disable: 4127) // const condition
-#endif
+CYBOZU_TEST_AUTO(toStr16)
+{
+	const struct {
+		uint32_t x[4];
+		size_t n;
+		const char *str;
+	} tbl[] = {
+		{ { 0, 0, 0, 0 }, 0, "0" },
+		{ { 0x123, 0, 0, 0 }, 1, "123" },
+		{ { 0x12345678, 0xaabbcc, 0, 0 }, 2, "aabbcc12345678" },
+		{ { 0, 0x12, 0x234a, 0 }, 3, "234a0000001200000000" },
+		{ { 1, 2, 0xffffffff, 0x123abc }, 4, "123abcffffffff0000000200000001" },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		std::string str;
+		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, false);
+		CYBOZU_TEST_EQUAL(str, tbl[i].str);
+		mie::fp::toStr16(str, tbl[i].x, tbl[i].n, true);
+		CYBOZU_TEST_EQUAL(str, std::string("0x") + tbl[i].str);
+	}
+}
 
-#if defined(_WIN64) || defined(__x86_64__)
-//	#define USE_MONT_FP
-#endif
-#ifdef USE_MONT_FP
-#include <mie/mont_fp.hpp>
-typedef mie::MontFpT<3> Fp3;
-typedef mie::MontFpT<4> Fp4;
-typedef mie::MontFpT<6> Fp6;
-typedef mie::MontFpT<9> Fp9;
-#else
-typedef mie::FpT<mie::Gmp> Fp3;
-typedef mie::FpT<mie::Gmp> Fp4;
-typedef mie::FpT<mie::Gmp> Fp6;
-typedef mie::FpT<mie::Gmp> Fp9;
-#endif
+// CYBOZU_TEST_AUTO(toStr2) // QQQ 
+// CYBOZU_TEST_AUTO(verifyStr) // QQQ 
 
-typedef mie::FpT<mie::Gmp> Fp;
+CYBOZU_TEST_AUTO(fromStr16)
+{
+	const struct {
+		const char *str;
+		uint64_t x[4];
+	} tbl[] = {
+		{ "0", { 0, 0, 0, 0 } },
+		{ "5", { 5, 0, 0, 0 } },
+		{ "123", { 0x123, 0, 0, 0 } },
+		{ "123456789012345679adbc", { uint64_t(0x789012345679adbcull), 0x123456, 0, 0 } },
+		{ "ffffffff26f2fc170f69466a74defd8d", { uint64_t(0x0f69466a74defd8dull), uint64_t(0xffffffff26f2fc17ull), 0, 0 } },
+		{ "100000000000000000000000000000033", { uint64_t(0x0000000000000033ull), 0, 1, 0 } },
+		{ "11ee12312312940000000000000000000000000002342343", { uint64_t(0x0000000002342343ull), uint64_t(0x0000000000000000ull), uint64_t(0x11ee123123129400ull), 0 } },
+		{ "1234567890abcdefABCDEF123456789aba32134723424242424", { uint64_t(0x2134723424242424ull), uint64_t(0xDEF123456789aba3ull), uint64_t(0x4567890abcdefABCull), 0x123 } },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		const size_t xN = 4;
+		uint64_t x[xN];
+		mie::fp::fromStr16(x, xN, tbl[i].str, strlen(tbl[i].str));
+		for (size_t j = 0; j < xN; j++) {
+			CYBOZU_TEST_EQUAL(x[j], tbl[i].x[j]);
+		}
+	}
+}
 
+CYBOZU_TEST_AUTO(compareArray)
+{
+	const struct {
+		uint32_t a[4];
+		uint32_t b[4];
+		size_t n;
+		int expect;
+	} tbl[] = {
+		{ { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ { 0, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, -1 },
+		{ { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, 0 },
+		{ { 3, 1, 1, 0 }, { 2, 1, 1, 0 }, 4, 1 },
+		{ { 9, 2, 1, 1 }, { 1, 3, 1, 1 }, 4, -1 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 3, 0 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 4, -1 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		int e = mie::fp::compareArray(tbl[i].a, tbl[i].b, tbl[i].n);
+		CYBOZU_TEST_EQUAL(e, tbl[i].expect);
+	}
+}
+
+struct Rand {
+	std::vector<uint32_t> v;
+	size_t pos;
+	int count;
+	void read(uint32_t *x, size_t n)
+	{
+		if (v.size() < pos + n) throw cybozu::Exception("Rand:get:bad n") << v.size() << pos << n;
+		std::copy(v.begin() + pos, v.begin() + pos + n, x);
+		pos += n;
+		count++;
+	}
+	Rand(const uint32_t *x, size_t n)
+		: pos(0)
+		, count(0)
+	{
+		for (size_t i = 0; i < n; i++) {
+			v.push_back(x[i]);
+		}
+	}
+};
+
+CYBOZU_TEST_AUTO(getRandVal)
+{
+	const size_t rn = 8;
+	const struct {
+		uint32_t r[rn];
+		uint32_t mod[2];
+		size_t bitLen;
+		int count;
+		uint32_t expect[2];
+	} tbl[] = {
+		{ { 1, 2, 3, 4, 5, 6, 7, 8 }, { 5, 6 }, 64, 1, { 1, 2 } },
+		{ { 0xfffffffc, 0x7, 3, 4, 5, 6, 7, 8 }, { 0xfffffffe, 0x3 }, 34, 1, { 0xfffffffc, 0x3 } },
+		{ { 0xfffffffc, 0x7, 3, 4, 5, 6, 7, 8 }, { 0xfffffffb, 0x3 }, 34, 2, { 3, 0 } },
+		{ { 2, 3, 5, 7, 4, 3, 0, 3 }, { 1, 0x3 }, 34, 4, { 0, 3 } },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Rand rg(tbl[i].r, rn);
+		uint32_t out[2];
+		mie::fp::getRandVal(out, rg, tbl[i].mod, tbl[i].bitLen);
+		CYBOZU_TEST_EQUAL(out[0], tbl[i].expect[0]);
+		CYBOZU_TEST_EQUAL(out[1], tbl[i].expect[1]);
+		CYBOZU_TEST_EQUAL(rg.count, tbl[i].count);
+	}
+}
+
+#if 0
 const int m = 65537;
 struct Init {
 	Init()
@@ -44,6 +139,73 @@ struct Init {
 
 CYBOZU_TEST_SETUP_FIXTURE(Init);
 
+CYBOZU_TEST_AUTO(compareArray)
+{
+	const struct {
+		uint32_t a[4];
+		uint32_t b[4];
+		size_t n;
+		int expect;
+	} tbl[] = {
+		{ { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ { 0, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, -1 },
+		{ { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, 1, 0 },
+		{ { 3, 1, 1, 0 }, { 2, 1, 1, 0 }, 4, 1 },
+		{ { 9, 2, 1, 1 }, { 1, 3, 1, 1 }, 4, -1 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 3, 0 },
+		{ { 1, 7, 8, 4 }, { 1, 7, 8, 9 }, 4, -1 },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		int e = mie::fp::compareArray(tbl[i].a, tbl[i].b, tbl[i].n);
+		CYBOZU_TEST_EQUAL(e, tbl[i].expect);
+	}
+}
+
+struct Rand {
+	std::vector<uint32_t> v;
+	size_t pos;
+	int count;
+	void read(uint32_t *x, size_t n)
+	{
+		if (v.size() < pos + n) throw cybozu::Exception("Rand:get:bad n") << v.size() << pos << n;
+		std::copy(v.begin() + pos, v.begin() + pos + n, x);
+		pos += n;
+		count++;
+	}
+	Rand(const uint32_t *x, size_t n)
+		: pos(0)
+		, count(0)
+	{
+		for (size_t i = 0; i < n; i++) {
+			v.push_back(x[i]);
+		}
+	}
+};
+CYBOZU_TEST_AUTO(getRandVal)
+{
+	const size_t rn = 8;
+	const struct {
+		uint32_t r[rn];
+		uint32_t mod[2];
+		size_t bitLen;
+		int count;
+		uint32_t expect[2];
+	} tbl[] = {
+		{ { 1, 2, 3, 4, 5, 6, 7, 8 }, { 5, 6 }, 64, 1, { 1, 2 } },
+		{ { 0xfffffffc, 0x7, 3, 4, 5, 6, 7, 8 }, { 0xfffffffe, 0x3 }, 34, 1, { 0xfffffffc, 0x3 } },
+		{ { 0xfffffffc, 0x7, 3, 4, 5, 6, 7, 8 }, { 0xfffffffb, 0x3 }, 34, 2, { 3, 0 } },
+		{ { 2, 3, 5, 7, 4, 3, 0, 3 }, { 1, 0x3 }, 34, 4, { 0, 3 } },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		Rand rg(tbl[i].r, rn);
+		uint32_t out[2];
+		mie::fp::getRandVal(out, rg, tbl[i].mod, tbl[i].bitLen);
+		CYBOZU_TEST_EQUAL(out[0], tbl[i].expect[0]);
+		CYBOZU_TEST_EQUAL(out[1], tbl[i].expect[1]);
+		CYBOZU_TEST_EQUAL(rg.count, tbl[i].count);
+	}
+}
 #ifndef MIE_ONLY_BENCH
 CYBOZU_TEST_AUTO(cstr)
 {
@@ -478,53 +640,5 @@ CYBOZU_TEST_AUTO(binaryRepl)
 }
 #endif
 
-#ifdef NDEBUG
-template<class T>
-void benchSub(const char *pStr, const char *xStr, const char *yStr)
-{
-	T::setModulo(pStr);
-	T x(xStr);
-	T y(yStr);
-
-	CYBOZU_BENCH("add", T::add, x, x, x);
-	CYBOZU_BENCH("sub", T::sub, x, x, y);
-	CYBOZU_BENCH("mul", T::mul, x, x, x);
-	CYBOZU_BENCH("square", T::square, x, x);
-	CYBOZU_BENCH("inv", x += y;T::inv, x, x); // avoid same jmp
-	CYBOZU_BENCH("div", x += y;T::div, x, y, x);
-	puts("");
-}
-
-// square 76clk@sandy
-CYBOZU_TEST_AUTO(bench3)
-{
-	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
-	const char *xStr = "0x148094810948190412345678901234567900342423332197";
-	const char *yStr = "0x7fffffffffffffffffffffe26f2fc170f69466a74defd8d";
-	benchSub<Fp3>(pStr, xStr, yStr);
-}
-
-CYBOZU_TEST_AUTO(bench4)
-{
-	const char *pStr = "0x2523648240000001ba344d80000000086121000000000013a700000000000013";
-	const char *xStr = "0x1480948109481904123456789234234242423424201234567900342423332197";
-	const char *yStr = "0x151342342342341517fffffffffffffffffffffe26f2fc170f69466a74defd8d";
-	benchSub<Fp4>(pStr, xStr, yStr);
-}
-
-CYBOZU_TEST_AUTO(bench6)
-{
-	const char *pStr = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff";
-	const char *xStr = "0x19481084109481094820948209482094820984290482212345678901234567900342308472047204720422423332197";
-	const char *yStr = "0x209348209481094820984209842094820948204204243123456789012345679003423084720472047204224233321972";
-	benchSub<Fp6>(pStr, xStr, yStr);
-}
-
-CYBOZU_TEST_AUTO(bench9)
-{
-	const char *pStr = "0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-	const char *xStr = "0x2908209582095820941098410948109482094820984209840294829049240294242498540975555312345678901234567900342308472047204720422423332197";
-	const char *yStr = "0x3948384209834029834092384204920349820948205872380573205782385729385729385723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d";
-	benchSub<Fp9>(pStr, xStr, yStr);
-}
 #endif
+

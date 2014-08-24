@@ -1,4 +1,7 @@
 #pragma once
+#include <vector>
+#include <cybozu/itoa.hpp>
+#include <cybozu/atoi.hpp>
 /**
 	@file
 	@brief utility of Fp
