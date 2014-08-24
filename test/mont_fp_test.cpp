@@ -136,6 +136,7 @@ struct Test {
 		setRaw();
 		set64bit();
 		getRaw();
+		binaryExp();
 		bench();
 	}
 	void cstr()
@@ -494,6 +495,40 @@ struct Test {
 		x.setRaw(b2, 2);
 		CYBOZU_TEST_EQUAL(x, Fp("0x3400000012"));
 #endif
+	}
+	void binaryExp()
+	{
+		puts("binaryExp");
+		for (int i = 2; i < 7; i++) {
+			mpz_class g = m / i;
+			Fp x, y;
+			Fp::toMont(x, g);
+			mie::fp::BinaryExpression<Fp> be(x);
+			uint64_t buf[N];
+			mie::Gmp::getRaw(buf, N, g);
+			CYBOZU_TEST_EQUAL(be.getBlockSize(), N);
+			CYBOZU_TEST_EQUAL(be.getBitLen(), mie::Gmp::getBitLen(m));
+			const uint64_t *p = be.getBlock();
+			for (size_t j = 0; j < N; j++) {
+				CYBOZU_TEST_EQUAL(p[j], buf[j]);
+			}
+		}
+		const mpz_class yy("0x1255556666777788881111222233334444");
+		if (yy > m) {
+			return;
+		}
+		Fp y;
+		Fp::toMont(y, yy);
+		uint64_t b1[N] = { uint64_t(0x1111222233334444ull), uint64_t(0x5555666677778888ull), 0x12 };
+		Fp x;
+		Fp::setBinaryExpression(x, b1, N);
+		CYBOZU_TEST_EQUAL(x, y);
+		mie::fp::BinaryExpression<Fp> be(x);
+		uint64_t b2[N];
+		Fp::getBinaryExpression(b2, x, N);
+		for (size_t i = 0; i < N; i++) {
+			CYBOZU_TEST_EQUAL(b1[i], b2[i]);
+		}
 	}
 
 	void set64bit()

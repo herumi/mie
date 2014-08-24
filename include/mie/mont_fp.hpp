@@ -334,6 +334,25 @@ public:
 		z.v = x.v >> n;
 	}
 #endif
+	/*
+		does not support compressed expression
+	*/
+	static inline size_t getBinaryExpressionBitLen(const MontFpT&, bool = false)
+	{
+		return modBitLen_;
+	}
+	static inline void getBinaryExpression(BlockType *buf, const MontFpT& x, size_t n, bool = false)
+	{
+		const size_t bs = fp::getRoundNum<BlockType>(modBitLen_);
+		if (bs != N) throw cybozu::Exception("MontFp:getBinaryExpression:bad n") << n;
+		mul(*(MontFpT*)buf, x, one_);
+	}
+	static inline void setBinaryExpression(MontFpT& x, const BlockType *buf, size_t n, bool = false)
+	{
+		const size_t bs = fp::getRoundNum<BlockType>(modBitLen_);
+		if (bs != N) throw cybozu::Exception("MontFp:getBinaryExpression:bad n") << n;
+		mul(x, *(const MontFpT*)buf, RR_);
+	}
 	static inline int compare(const MontFpT& x, const MontFpT& y)
 	{
 		return fp::compareArray(x.v_, y.v_, N);
