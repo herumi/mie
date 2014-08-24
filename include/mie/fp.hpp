@@ -198,14 +198,18 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 */
 template<class S>
 class BinaryExpressionT {
+	static const size_t maxN = 6;
 public:
 	typedef S BlockType;
 	typedef std::vector<BlockType> Vec;
 	size_t bitLen_;
-	Vec v_;
+	BlockType array_[maxN];
+	BlockType *v_;
+	Vec vec_;
 public:
 	BinaryExpressionT()
 		: bitLen_(0)
+		, v_(array_)
 	{
 	}
 	/*
@@ -218,24 +222,17 @@ public:
 	{
 		assert(sizeof(BlockType) == sizeof(T::BlockType));
 		const size_t n = getRoundNum<BlockType>(bitLen_);
-		v_.resize(n);
-		T::getBinaryExpression(v_.data(), x, n, compress);
-	}
-	/*
-		@param buf [in] buffer
-		@param bitLen [in] bit size of buffer(not number of elements)
-		@param compress [in] not used
-	*/
-	template<class B>
-	void set(const B* buf, size_t bitLen, bool = false)
-	{
-		const size_t n = getRoundNum<BlockType>(bitLen);
-		v_.assign(buf, buf + n);
-		bitLen_ = bitLen;
+		if (n <= maxN) {
+			v_ = &array_[0];
+		} else {
+			vec_.resize(n);
+			v_ = vec_.data();
+		}
+		T::getBinaryExpression(v_, x, n, compress);
 	}
 	size_t getBitLen() const { return bitLen_; }
-	size_t getBlockSize() const { return v_.size(); }
-	const BlockType *getBlock() const { return v_.data(); }
+	size_t getBlockSize() const { return getRoundNum<BlockType>(bitLen_); }
+	const BlockType *getBlock() const { return v_; }
 };
 
 typedef BinaryExpressionT<size_t> BinaryExpression;
