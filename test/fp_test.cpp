@@ -560,6 +560,9 @@ CYBOZU_TEST_AUTO(binaryRepl)
 				CYBOZU_TEST_EQUAL(block[j], v);
 			}
 		}
+		Fp y;
+		Fp::setBinaryExpression(y, be.getBlock(), be.getBlockSize());
+		CYBOZU_TEST_EQUAL(x, y);
 	}
 }
 #endif

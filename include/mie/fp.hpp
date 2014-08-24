@@ -422,6 +422,10 @@ public:
 		if (n != bs) throw cybozu::Exception("FpT:getBinaryExpression:bad n") << n << bs;
 		for (size_t i = 0; i < n; i++) buf[i] = block[i];
 	}
+	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n, bool = false)
+	{
+		T::setRaw(x.v, buf, n);
+	}
 	static inline void shr(FpT& z, const FpT& x, size_t n)
 	{
 		z.v = x.v >> n;
