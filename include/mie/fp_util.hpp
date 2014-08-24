@@ -176,7 +176,7 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 */
 template<class S>
 class BinaryExpressionT {
-	static const size_t maxN = 6;
+	static const size_t maxN = 32 / sizeof(S);
 public:
 	typedef S BlockType;
 	typedef std::vector<BlockType> Vec;
