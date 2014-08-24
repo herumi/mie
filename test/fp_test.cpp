@@ -543,7 +543,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].s);
-		mie::fp::BinaryExpression<Fp> be(x);
+		mie::fp::BinaryExpression be(x);
 		CYBOZU_TEST_EQUAL(be.getBitLen(), tbl[i].bitLen);
 		const Fp::BlockType *block = be.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {

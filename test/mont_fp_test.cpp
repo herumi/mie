@@ -503,7 +503,7 @@ struct Test {
 			mpz_class g = m / i;
 			Fp x, y;
 			Fp::toMont(x, g);
-			mie::fp::BinaryExpression<Fp> be(x);
+			mie::fp::BinaryExpression be(x);
 			uint64_t buf[N];
 			mie::Gmp::getRaw(buf, N, g);
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), N);
@@ -523,7 +523,7 @@ struct Test {
 		Fp x;
 		Fp::setBinaryExpression(x, b1, N);
 		CYBOZU_TEST_EQUAL(x, y);
-		mie::fp::BinaryExpression<Fp> be(x);
+		mie::fp::BinaryExpression be(x);
 		uint64_t b2[N];
 		Fp::getBinaryExpression(b2, x, N);
 		for (size_t i = 0; i < N; i++) {

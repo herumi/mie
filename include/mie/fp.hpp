@@ -196,15 +196,15 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 /*
 	binary expression of T
 */
-template<class T>
-class BinaryExpression {
+template<class S>
+class BinaryExpressionT {
 public:
-	typedef typename T::BlockType BlockType;
+	typedef S BlockType;
 	typedef std::vector<BlockType> Vec;
 	size_t bitLen_;
 	Vec v_;
 public:
-	BinaryExpression()
+	BinaryExpressionT()
 		: bitLen_(0)
 	{
 	}
@@ -212,9 +212,11 @@ public:
 		@param x [in]
 		@param compres [in] use compressed expression if possible
 	*/
-	explicit BinaryExpression(const T& x, bool compress = false)
+	template<class T>
+	explicit BinaryExpressionT(const T& x, bool compress = false)
 		: bitLen_(T::getBinaryExpressionBitLen(x, compress))
 	{
+		assert(sizeof(BlockType) == sizeof(T::BlockType));
 		const size_t n = getRoundNum<BlockType>(bitLen_);
 		v_.resize(n);
 		T::getBinaryExpression(v_.data(), x, n, compress);
@@ -224,7 +226,8 @@ public:
 		@param bitLen [in] bit size of buffer(not number of elements)
 		@param compress [in] not used
 	*/
-	void set(const BlockType* buf, size_t bitLen, bool = false)
+	template<class B>
+	void set(const B* buf, size_t bitLen, bool = false)
 	{
 		const size_t n = getRoundNum<BlockType>(bitLen);
 		v_.assign(buf, buf + n);
@@ -234,6 +237,8 @@ public:
 	size_t getBlockSize() const { return v_.size(); }
 	const BlockType *getBlock() const { return v_.data(); }
 };
+
+typedef BinaryExpressionT<size_t> BinaryExpression;
 
 } // fp
 
