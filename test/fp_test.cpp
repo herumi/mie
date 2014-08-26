@@ -398,9 +398,7 @@ CYBOZU_TEST_AUTO(getRaw)
 		uint32_t buf[bufN];
 		size_t n = mie::Gmp::getRaw(buf, bufN, x);
 		CYBOZU_TEST_EQUAL(n, tbl[i].vn);
-		for (size_t j = 0; j < n; j++) {
-			CYBOZU_TEST_EQUAL(buf[j], tbl[i].v[j]);
-		}
+		CYBOZU_TEST_EQUAL_ARRAY(buf, tbl[i].v, n);
 	}
 }
 
@@ -460,9 +458,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		if (sizeof(Fp::BlockType) == 4) {
 			const size_t n = tbl[i].vn;
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
-			for (size_t j = 0; j < n; j++) {
-				CYBOZU_TEST_EQUAL(block[j], tbl[i].v[j]);
-			}
+			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, n);
 		} else {
 			const size_t n = (tbl[i].vn + 1) / 2;
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
