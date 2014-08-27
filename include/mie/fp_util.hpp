@@ -12,6 +12,12 @@
 
 namespace mie { namespace fp {
 
+#if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
+	typedef uint32_t BaseBlockType;
+#else
+	typedef uint64_t BaseBlockType;
+#endif
+
 /*
 	convert x[0..n) to hex string
 	start "0x" if withPrefix
@@ -175,19 +181,12 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 }
 
 /*
-	binary expression of T
+	binary expression
 */
 template<class S>
 class BinaryExpressionT {
-	static const size_t maxN = 32 / sizeof(S);
 public:
 	typedef S BlockType;
-	typedef std::vector<BlockType> Vec;
-	size_t bitLen_;
-	BlockType array_[maxN];
-	BlockType *v_;
-	Vec vec_;
-public:
 	BinaryExpressionT()
 		: bitLen_(0)
 		, v_(array_)
@@ -201,8 +200,8 @@ public:
 	explicit BinaryExpressionT(const T& x, bool compress = false)
 		: bitLen_(T::getBinaryExpressionBitLen(x, compress))
 	{
-		assert(sizeof(BlockType) == sizeof(T::BlockType));
-		const size_t n = getRoundNum<BlockType>(bitLen_);
+		assert(sizeof(S) == sizeof(typename T::BlockType));
+		const size_t n = getRoundNum<S>(bitLen_);
 		if (n <= maxN) {
 			v_ = &array_[0];
 		} else {
@@ -212,11 +211,44 @@ public:
 		T::getBinaryExpression(v_, x, n, compress);
 	}
 	size_t getBitLen() const { return bitLen_; }
-	size_t getBlockSize() const { return getRoundNum<BlockType>(bitLen_); }
-	const BlockType *getBlock() const { return v_; }
+	size_t getBlockSize() const { return getRoundNum<S>(bitLen_); }
+	const S *getBlock() const { return v_; }
+private:
+	static const size_t maxN = 32 / sizeof(S);
+	typedef std::vector<S> Vec;
+	size_t bitLen_;
+	S array_[maxN];
+	S *v_;
+	Vec vec_;
 };
 
-typedef BinaryExpressionT<size_t> BinaryExpression;
+typedef BinaryExpressionT<BaseBlockType> BinaryExpression;
+
+/*
+	z[] = (x[] << shift) | y
+	@param z [out] z[0..n)
+	@param x [in] x[0..n)
+	@param n [in] length of x, z
+	@param shift [in] 0 < shift < sizeof(S) * 8
+	@param y [in]
+	@return (x[] << shift)[n]
+*/
+template<class S>
+S shiftLeftOr(S* z, const S* x, size_t n, size_t shift, S y = 0)
+{
+	if (shift == 0 || shift >= sizeof(S) * 8) {
+		throw cybozu::Exception("mie:fp:shiftLeftOr:bad shift") << shift;
+	}
+	if (n == 0) {
+		throw cybozu::Exception("mie:fp:shiftLeftOr:bad n");
+	}
+	const size_t rev = sizeof(S) * 8 - shift;
+	S ret = x[n - 1] >> rev;
+	for (size_t i = n - 1; i > 0; i--) {
+		z[i] = (x[i] << shift) | (x[i - 1] >> rev);
+	}
+	z[0] = (x[0] << shift) | y;
+	return ret;
+}
 
 } } // fp
-
