@@ -18,6 +18,26 @@ namespace mie { namespace fp {
 	typedef uint64_t BlockType;
 #endif
 
+template<class S>
+void setBlockBit(S *buf, size_t bitLen, bool b)
+{
+	const size_t unitSize = sizeof(S) * 8;
+	const size_t q = bitLen / unitSize;
+	const size_t r = bitLen % unitSize;
+	if (b) {
+		buf[q] |= S(1) << r;
+	} else {
+		buf[q] &= ~(S(1) << r);
+	}
+}
+template<class S>
+bool getBlockBit(const S *buf, size_t bitLen)
+{
+	const size_t unitSize = sizeof(S) * 8;
+	const size_t q = bitLen / unitSize;
+	const size_t r = bitLen % unitSize;
+	return (buf[q] & (S(1) << r)) != 0;
+}
 /*
 	convert x[0..n) to hex string
 	start "0x" if withPrefix
