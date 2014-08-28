@@ -224,20 +224,28 @@ typedef BinaryExpressionT<BlockType> BinaryExpression;
 	@param z [out] z[0..n)
 	@param x [in] x[0..n)
 	@param n [in] length of x, z
-	@param shift [in] 0 < shift < sizeof(S) * 8
+	@param shift [in] 0 <= shift < (sizeof(S) * 8)
 	@param y [in]
 	@return (x[] << shift)[n]
 */
 template<class S>
 S shiftLeftOr(S* z, const S* x, size_t n, size_t shift, S y = 0)
 {
-	if (shift == 0 || shift >= sizeof(S) * 8) {
-		throw cybozu::Exception("mie:fp:shiftLeftOr:bad shift") << shift;
-	}
 	if (n == 0) {
-		throw cybozu::Exception("mie:fp:shiftLeftOr:bad n");
+		throw cybozu::Exception("fp:shiftLeftOr:bad n");
 	}
-	const size_t rev = sizeof(S) * 8 - shift;
+	const size_t unitSize = sizeof(S) * 8;
+	if (shift >= unitSize) {
+		throw cybozu::Exception("fp:shiftLeftOr:large shift") << shift;
+	}
+	if (shift == 0) {
+		for (size_t i = n - 1; i > 0; i--) {
+			z[i] = x[i];
+		}
+		z[0] = x[0] | y;
+		return 0;
+	}
+	const size_t rev = unitSize - shift;
 	S ret = x[n - 1] >> rev;
 	for (size_t i = n - 1; i > 0; i--) {
 		z[i] = (x[i] << shift) | (x[i - 1] >> rev);
