@@ -367,7 +367,6 @@ public:
 	bool operator==(const MontFpT& rhs) const { return compare(*this, rhs) == 0; }
 	bool operator!=(const MontFpT& rhs) const { return compare(*this, rhs) != 0; }
 	static inline size_t getModBitLen() { return modBitLen_; }
-	static inline size_t getModBlockSize() { return N; }
 	static inline uint64_t cvtInt(const MontFpT& x, bool *err = 0)
 	{
 		MontFpT t;
