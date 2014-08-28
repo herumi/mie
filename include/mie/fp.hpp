@@ -212,7 +212,7 @@ public:
 	}
 	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n)
 	{
-		const size_t N = getModBlockSize();
+		const size_t N = fp::getRoundNum<BlockType>(modBitLen_);
 		if (n > N) throw cybozu::Exception("FpT:setBinaryExpression:large n") << n << N;
 		T::setRaw(x.v, buf, n);
 		if (x.v >= m_) throw cybozu::Exception("FpT:setBinaryExpression:large x") << x.v << m_;
@@ -230,7 +230,6 @@ public:
 	}
 	const ImplType& getInnerValue() const { return v; }
 	static inline size_t getModBitLen() { return modBitLen_; }
-	static inline size_t getModBlockSize() { return fp::getRoundNum<BlockType>(modBitLen_); }
 	static inline uint64_t cvtInt(const FpT& x, bool *err = 0)
 	{
 		if (x > uint64_t(0xffffffffffffffffull)) {
