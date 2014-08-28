@@ -403,6 +403,35 @@ public:
 			return os << self.x.toStr(16) << '_' << self.y.toStr(16);
 		}
 	}
+	static inline void getBinaryExpression(typename Fp::BlockType *buf, const EcT& x, size_t n)
+	{
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
+		#error "not implemented"
+#else
+		normalize();
+		/*
+			|x|y|z|
+			 n n 1
+		*/
+		const size_t bitLen = Fp::getModBitLen();
+		const size_t totalBitLen = bitLen * 2 + 1;
+		const size_t blockN = mie::fp::getRoundNum<Fp::BlockType>(bitLen);
+		const size_t totalBlockN = mie::fp::getRoundNum<Fp::BlockType>(totalBitLen);
+		if (totalBlockN != n) throw cybozu::Exception("EcT:getBinaryExpression:bad n") << n << totalBlockN;
+		if (x.isZero()) {
+			for (size_t i = 0; i < n; i++) buf[i] = 0;
+			return;
+		}
+		Fp::getBinaryExpression(buf, x.x, blockN);
+		fp::BinaryExpression be(x.y, blockN);
+		const size_t unitSize = sizeof(Fp::BlockType) * 8;
+		const size_t q = bitLen / unitSize;
+		const size_t r = bitLen % unitSize;
+		const size_t xLast = r ? buf[q] : 0;
+		fp::shiftLeftOr(&buf[q], be.getBlock(), blockN, r, xLast);
+		fp::setBlockBit(buf, totalBitLen, 1);
+#endif
+	}
 	friend inline std::istream& operator>>(std::istream& is, EcT& self)
 	{
 		std::string str;
