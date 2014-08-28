@@ -440,28 +440,24 @@ CYBOZU_TEST_AUTO(binaryRepl)
 	const struct {
 		const char *s;
 		uint32_t v[6];
-		size_t vn;
-		size_t bitLen;
 	} tbl[] = {
-		{ "0", { 0, 0, 0, 0, 0 }, 1, 1 },
-		{ "1234", { 1234, 0, 0, 0, 0 }, 1, 11 },
-		{ "0xaabbccdd12345678", { 0x12345678, 0xaabbccdd, 0, 0, 0 }, 2, 64 },
-		{ "0x11112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0 }, 4, 125 },
-		{ "0x9911112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0x99, 0 }, 5, 136 },
+		{ "0", { 0, 0, 0, 0, 0 } },
+		{ "1234", { 1234, 0, 0, 0, 0 } },
+		{ "0xaabbccdd12345678", { 0x12345678, 0xaabbccdd, 0, 0, 0 } },
+		{ "0x11112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0 } },
+		{ "0x9911112222333344445555666677778888", { 0x77778888, 0x55556666, 0x33334444, 0x11112222, 0x99, 0 } },
 	};
 	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
+	const size_t blockN = mie::fp::getRoundNum<Fp::BlockType>(Fp::getModBitLen());
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].s);
 		mie::fp::BinaryExpression be(x);
-		CYBOZU_TEST_EQUAL(be.getBitLen(), tbl[i].bitLen);
+		CYBOZU_TEST_EQUAL(be.getBlockSize(), blockN);
 		const Fp::BlockType *block = be.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
-			const size_t n = tbl[i].vn;
-			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
-			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, n);
+			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, blockN);
 		} else {
-			const size_t n = (tbl[i].vn + 1) / 2;
-			CYBOZU_TEST_EQUAL(be.getBlockSize(), n);
+			const size_t n = (blockN + 1) / 2;
 			for (size_t j = 0; j < n; j++) {
 				uint64_t v = (uint64_t(tbl[i].v[j * 2 + 1]) << 32) | tbl[i].v[j * 2];
 				CYBOZU_TEST_EQUAL(block[j], v);

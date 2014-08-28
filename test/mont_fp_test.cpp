@@ -507,11 +507,8 @@ struct Test {
 			uint64_t buf[N];
 			mie::Gmp::getRaw(buf, N, g);
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), N);
-			CYBOZU_TEST_EQUAL(be.getBitLen(), mie::Gmp::getBitLen(m));
 			const uint64_t *p = be.getBlock();
-			for (size_t j = 0; j < N; j++) {
-				CYBOZU_TEST_EQUAL(p[j], buf[j]);
-			}
+			CYBOZU_TEST_EQUAL_ARRAY(p, buf, N);
 		}
 		const mpz_class yy("0x1255556666777788881111222233334444");
 		if (yy > m) {
@@ -526,9 +523,7 @@ struct Test {
 		mie::fp::BinaryExpression be(x);
 		uint64_t b2[N];
 		Fp::getBinaryExpression(b2, x, N);
-		for (size_t i = 0; i < N; i++) {
-			CYBOZU_TEST_EQUAL(b1[i], b2[i]);
-		}
+		CYBOZU_TEST_EQUAL_ARRAY(b1, b2, N);
 	}
 
 	void set64bit()

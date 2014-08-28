@@ -13,9 +13,9 @@
 namespace mie { namespace fp {
 
 #if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
-	typedef uint32_t BaseBlockType;
+	typedef uint32_t BlockType;
 #else
-	typedef uint64_t BaseBlockType;
+	typedef uint64_t BlockType;
 #endif
 
 /*
@@ -187,42 +187,37 @@ template<class S>
 class BinaryExpressionT {
 public:
 	typedef S BlockType;
-	BinaryExpressionT()
-		: bitLen_(0)
-		, v_(array_)
-	{
-	}
 	/*
 		@param x [in]
-		@param compres [in] use compressed expression if possible
 	*/
 	template<class T>
-	explicit BinaryExpressionT(const T& x, bool compress = false)
-		: bitLen_(T::getBinaryExpressionBitLen(x, compress))
+	explicit BinaryExpressionT(const T& x)
+		: blockN_(getRoundNum<S>(T::getModBitLen()))
+		, v_(blockN_ > maxN ? new S[blockN_] : 0)
 	{
-		assert(sizeof(S) == sizeof(typename T::BlockType));
-		const size_t n = getRoundNum<S>(bitLen_);
-		if (n <= maxN) {
-			v_ = &array_[0];
-		} else {
-			vec_.resize(n);
-			v_ = vec_.data();
+		try {
+			T::getBinaryExpression(v_ ? v_ : &array_[0], x, blockN_);
+		} catch (...) {
+			delete[] v_;
+			throw;
 		}
-		T::getBinaryExpression(v_, x, n, compress);
 	}
-	size_t getBitLen() const { return bitLen_; }
-	size_t getBlockSize() const { return getRoundNum<S>(bitLen_); }
-	const S *getBlock() const { return v_; }
+	~BinaryExpressionT()
+	{
+		delete[] v_;
+	}
+	size_t getBlockSize() const { return blockN_; }
+	const S *getBlock() const { return v_ ? v_ : &array_[0]; }
 private:
+	BinaryExpressionT(const BinaryExpressionT&);
+	void operator=(const BinaryExpressionT&);
 	static const size_t maxN = 32 / sizeof(S);
-	typedef std::vector<S> Vec;
-	size_t bitLen_;
-	S array_[maxN];
+	size_t blockN_;
 	S *v_;
-	Vec vec_;
+	S array_[maxN];
 };
 
-typedef BinaryExpressionT<BaseBlockType> BinaryExpression;
+typedef BinaryExpressionT<BlockType> BinaryExpression;
 
 /*
 	z[] = (x[] << shift) | y

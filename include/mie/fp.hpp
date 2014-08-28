@@ -202,27 +202,20 @@ public:
 	{
 		return T::getBitLen(x.v);
 	}
-	/*
-		does not support compressed expression
-	*/
-	static inline size_t getBinaryExpressionBitLen(const FpT& x, bool = false)
-	{
-		return getBitLen(x);
-	}
-	static inline void getBinaryExpression(BlockType *buf, const FpT& x, size_t n, bool = false)
+	static inline void getBinaryExpression(BlockType *buf, const FpT& x, size_t n)
 	{
 		const size_t bs = getBlockSize(x);
+		if (bs > n) throw cybozu::Exception("FpT:getBinaryExpression:small n") << n << bs;
 		const BlockType *block = getBlock(x);
-		if (bs == 0 && n == 1) { // QQQ : for GMP(later move to gmp_util.hpp)
-			buf[0] = 0;
-			return;
-		}
-		if (n != bs) throw cybozu::Exception("FpT:getBinaryExpression:bad n") << n << bs;
-		for (size_t i = 0; i < n; i++) buf[i] = block[i];
+		for (size_t i = 0; i < bs; i++) buf[i] = block[i];
+		for (size_t i = bs; i < n; i++) buf[i] = 0;
 	}
-	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n, bool = false)
+	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n)
 	{
+		const size_t N = getModBlockSize();
+		if (n > N) throw cybozu::Exception("FpT:setBinaryExpression:large n") << n << N;
 		T::setRaw(x.v, buf, n);
+		if (x.v >= m_) throw cybozu::Exception("FpT:setBinaryExpression:large x") << x.v << m_;
 	}
 	static inline void shr(FpT& z, const FpT& x, size_t n)
 	{
@@ -237,6 +230,7 @@ public:
 	}
 	const ImplType& getInnerValue() const { return v; }
 	static inline size_t getModBitLen() { return modBitLen_; }
+	static inline size_t getModBlockSize() { return fp::getRoundNum<BlockType>(modBitLen_); }
 	static inline uint64_t cvtInt(const FpT& x, bool *err = 0)
 	{
 		if (x > uint64_t(0xffffffffffffffffull)) {
