@@ -30,6 +30,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	static MontFpT RR_; // (R * R) % p
 	static MontFpT invTbl_[N * 64 * 2];
 	static size_t modBitLen_;
+	friend class BinaryExpression<mie::MontFpT<N, tag> >;
 public:
 	static FpGenerator fg_;
 private:
@@ -334,11 +335,6 @@ public:
 		z.v = x.v >> n;
 	}
 #endif
-	static inline void getBinaryExpression(BlockType *buf, const MontFpT& x, size_t n)
-	{
-		if (n != N) throw cybozu::Exception("MontFp:getBinaryExpression:bad n") << n << N;
-		mul(*(MontFpT*)buf, x, one_);
-	}
 	static inline void setBinaryExpression(MontFpT& x, const BlockType *buf, size_t n)
 	{
 		if (n != N) throw cybozu::Exception("MontFp:setBinaryExpression:bad n") << n << N;
@@ -405,6 +401,19 @@ template<size_t N, class tag>typename MontFpT<N, tag>::void2op MontFpT<N, tag>::
 template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::addNc;
 template<size_t N, class tag>typename MontFpT<N, tag>::bool3op MontFpT<N, tag>::subNc;
 template<size_t N, class tag>typename MontFpT<N, tag>::int2op MontFpT<N, tag>::preInv;
+
+template<size_t N, class tag>
+class BinaryExpression<mie::MontFpT<N, tag> > {
+	typedef mie::MontFpT<N, tag> Fp;
+	Fp x_;
+public:
+	explicit BinaryExpression(const Fp& x)
+	{
+		Fp::mul(x_, x, Fp::one_);
+	}
+	size_t getBlockSize() const { return N; }
+	const uint64_t *getBlock() const { return &x_.v_[0]; }
+};
 
 } // mie
 

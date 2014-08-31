@@ -202,14 +202,6 @@ public:
 	{
 		return T::getBitLen(x.v);
 	}
-	static inline void getBinaryExpression(BlockType *buf, const FpT& x, size_t n)
-	{
-		const size_t bs = getBlockSize(x);
-		if (bs > n) throw cybozu::Exception("FpT:getBinaryExpression:small n") << n << bs;
-		const BlockType *block = getBlock(x);
-		for (size_t i = 0; i < bs; i++) buf[i] = block[i];
-		for (size_t i = bs; i < n; i++) buf[i] = 0;
-	}
 	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n)
 	{
 		const size_t N = fp::getRoundNum<BlockType>(modBitLen_);
@@ -288,6 +280,22 @@ size_t FpT<T, tag>::modBitLen_;
 
 template<class T, class tag>
 mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
+
+template<class T, class tag>
+class BinaryExpression<mie::FpT<T, tag> > {
+	typedef mie::FpT<T, tag> Fp;
+	const Fp& x_;
+public:
+	explicit BinaryExpression(const mie::FpT<T, tag>& x) : x_(x) {}
+	size_t getBlockSize() const
+	{
+		return Fp::getBlockSize(x_);
+	}
+	const typename Fp::BlockType *getBlock() const
+	{
+		return Fp::getBlock(x_);
+	}
+};
 
 } // mie
 

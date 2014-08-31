@@ -201,45 +201,6 @@ inline void getRandVal(S *out, RG& rg, const S *in, size_t bitLen)
 }
 
 /*
-	binary expression
-*/
-template<class S>
-class BinaryExpressionT {
-public:
-	typedef S BlockType;
-	/*
-		@param x [in]
-	*/
-	template<class T>
-	explicit BinaryExpressionT(const T& x)
-		: blockN_(getRoundNum<S>(T::getModBitLen()))
-		, v_(blockN_ > maxN ? new S[blockN_] : 0)
-	{
-		try {
-			T::getBinaryExpression(v_ ? v_ : &array_[0], x, blockN_);
-		} catch (...) {
-			delete[] v_;
-			throw;
-		}
-	}
-	~BinaryExpressionT()
-	{
-		delete[] v_;
-	}
-	size_t getBlockSize() const { return blockN_; }
-	const S *getBlock() const { return v_ ? v_ : &array_[0]; }
-private:
-	BinaryExpressionT(const BinaryExpressionT&);
-	void operator=(const BinaryExpressionT&);
-	static const size_t maxN = 32 / sizeof(S);
-	size_t blockN_;
-	S *v_;
-	S array_[maxN];
-};
-
-typedef BinaryExpressionT<BlockType> BinaryExpression;
-
-/*
 	z[] = (x[] << shift) | y
 	@param z [out] z[0..n)
 	@param x [in] x[0..n)
@@ -274,4 +235,17 @@ S shiftLeftOr(S* z, const S* x, size_t n, size_t shift, S y = 0)
 	return ret;
 }
 
-} } // fp
+} // mie::fp
+
+/*
+	binary expression
+*/
+template<class T>
+class BinaryExpression {
+public:
+	explicit BinaryExpression(const T& x);
+	size_t getBlockSize() const;
+	const typename T::BlockType *getBlock() const;
+};
+
+} // fp
