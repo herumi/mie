@@ -403,35 +403,6 @@ public:
 			return os << self.x.toStr(16) << '_' << self.y.toStr(16);
 		}
 	}
-	static inline void getBinaryExpression(typename Fp::BlockType *buf, const EcT& x, size_t n)
-	{
-#if MIE_EC_COORD == MIE_EC_USE_AFFINE
-		#error "not implemented"
-#else
-		normalize();
-		/*
-			|x|y|z|
-			 n n 1
-		*/
-		const size_t bitLen = Fp::getModBitLen();
-		const size_t totalBitLen = bitLen * 2 + 1;
-		const size_t blockN = mie::fp::getRoundNum<Fp::BlockType>(bitLen);
-		const size_t totalBlockN = mie::fp::getRoundNum<Fp::BlockType>(totalBitLen);
-		if (totalBlockN != n) throw cybozu::Exception("EcT:getBinaryExpression:bad n") << n << totalBlockN;
-		if (x.isZero()) {
-			for (size_t i = 0; i < n; i++) buf[i] = 0;
-			return;
-		}
-		Fp::getBinaryExpression(buf, x.x, blockN);
-		fp::BinaryExpression be(x.y, blockN);
-		const size_t unitSize = sizeof(Fp::BlockType) * 8;
-		const size_t q = bitLen / unitSize;
-		const size_t r = bitLen % unitSize;
-		const size_t xLast = r ? buf[q] : 0;
-		fp::shiftLeftOr(&buf[q], be.getBlock(), blockN, r, xLast);
-		fp::setBlockBit(buf, totalBitLen, 1);
-#endif
-	}
 	friend inline std::istream& operator>>(std::istream& is, EcT& self)
 	{
 		std::string str;
@@ -491,6 +462,48 @@ struct EcParam {
 	const char *gy;
 	const char *n;
 	size_t bitLen; // bit length of p
+};
+
+template<class _Fp>
+class BinaryExpression<mie::EcT<_Fp> > {
+	typedef mie::EcT<_Fp> Ec;
+	typedef typename _Fp::BlockType BlockType;
+	typedef std::vector<BlockType> BlockVec;
+	size_t maxBitLen_;
+	BlockVec v_;
+	explicit BinaryExpression(const Ec& x, bool compress = false)
+	{
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
+		#error "not implemented"
+#else
+		x.normalize();
+		/*
+			elem |x|y|z|
+			size  n n 1
+		*/
+		const size_t bitLen = _Fp::getModBitLen();
+		maxBitLen_ = bitLen * 2 + 1;
+		const size_t blockN = mie::fp::getRoundNum<BlockType>(bitLen);
+		const size_t totalBlockN = mie::fp::getRoundNum<BlockType>(maxBitLen_);
+		v_.resize(totalBlockN);
+		if (x.isZero()) {
+			for (size_t i = 0; i < blockN; i++) v_[i] = 0;
+			return;
+		}
+		mie::BinaryExpression<_Fp> xe(x.x);
+		mie::BinaryExpression<_Fp> ye(x.y);
+		for (size_t i = 0; i < blockN; i++) v_[i] = xe.getBlock()[i];
+		const size_t unitSize = sizeof(BlockType) * 8;
+		const size_t q = bitLen / unitSize;
+		const size_t r = bitLen % unitSize;
+		const size_t xLast = r ? v_[q] : 0;
+		fp::shiftLeftOr(&v_[q], be.getBlock(), blockN, r, xLast);
+		fp::setBlockBit(buf, maxBitLen_, 1);
+#endif
+	}
+	const BlockType *getBlock() const { return v_.data(); }
+	size_t getBlockSize() const { return v_.size(); }
+	size_t getMaxBitLen() const { return maxBitLen_; }
 };
 
 } // mie
