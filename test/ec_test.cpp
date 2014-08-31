@@ -166,6 +166,12 @@ struct Test {
 			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
+		{
+			P = -P;
+			mie::BinaryExpression<Ec> be(P);
+			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
 		P.clear();
 		{
 			mie::BinaryExpression<Ec> be(P);

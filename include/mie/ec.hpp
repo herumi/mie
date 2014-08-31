@@ -450,12 +450,9 @@ public:
 		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
 		Fp::setBinaryExpression(x.x, v_.data(), v_.size());
 		const size_t unitSize = sizeof(BlockType) * 8;
+		const size_t q = bitLen / unitSize;
 		const size_t r = bitLen % unitSize;
-		if (r == 0) {
-			for (size_t i = 0; i < blockN; i++) v_[i] = buf[blockN + i];
-		} else {
-			fp::shiftLeftOr(v_.data(), buf + blockN, n - blockN, unitSize - r, buf[blockN]);
-		}
+		fp::shiftRight(v_.data(), buf + q, blockN, r);
 		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
 		Fp::setBinaryExpression(x.y, v_.data(), v_.size());
 		x.z = 1;
@@ -534,12 +531,12 @@ public:
 		}
 		mie::BinaryExpression<_Fp> xe(x.x);
 		mie::BinaryExpression<_Fp> ye(x.y);
-		for (size_t i = 0; i < blockN; i++) v_[i] = xe.getBlock()[i];
+		for (size_t i = 0, n = xe.getBlockSize(); i < n; i++) v_[i] = xe.getBlock()[i];
 		const size_t unitSize = sizeof(BlockType) * 8;
 		const size_t q = bitLen / unitSize;
 		const size_t r = bitLen % unitSize;
 		const size_t xLast = r ? v_[q] : 0;
-		fp::shiftLeftOr(&v_[q], ye.getBlock(), blockN, r, xLast);
+		fp::shiftLeftOr(&v_[q], ye.getBlock(), ye.getBlockSize(), r, xLast);
 		fp::setBlockBit(v_.data(), maxBitLen_ - 1, 1);
 #endif
 	}
