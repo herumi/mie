@@ -38,6 +38,7 @@ class EcT : public ope::addsub<EcT<_Fp>,
 	};
 public:
 	typedef _Fp Fp;
+	typedef typename Fp::BlockType BlockType;
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 	Fp x, y;
 	bool inf_;
@@ -423,6 +424,43 @@ public:
 		}
 		return is;
 	}
+	static inline void setBinaryExpression(EcT& x, const BlockType *buf, size_t n, bool compress = false)
+	{
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
+		#error "not implemented"
+#else
+		if (compress) {
+			throw cybozu::Exception("EcT:setBinaryExpression:not support");
+		}
+		const size_t bitLen = _Fp::getModBitLen();
+		const size_t maxBitLen = bitLen * 2 + 1;
+		const size_t blockN = mie::fp::getRoundNum<BlockType>(bitLen);
+		const size_t totalBlockN = mie::fp::getRoundNum<BlockType>(maxBitLen);
+		if (totalBlockN != n) {
+			throw cybozu::Exception("EcT:setBinaryExpression:bad n") << n << totalBlockN;
+		}
+		if (!fp::getBlockBit(buf, maxBitLen - 1)) {
+			x.clear();
+			return;
+		}
+		typedef std::vector<BlockType> BlockVec;
+		BlockVec v_;
+		v_.resize(blockN);
+		for (size_t i = 0; i < blockN; i++) v_[i] = buf[i];
+		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
+		Fp::setBinaryExpression(x.x, v_.data(), v_.size());
+		const size_t unitSize = sizeof(BlockType) * 8;
+		const size_t r = bitLen % unitSize;
+		if (r == 0) {
+			for (size_t i = 0; i < blockN; i++) v_[i] = buf[blockN + i];
+		} else {
+			fp::shiftLeftOr(v_.data(), buf + blockN, n - blockN, unitSize - r, buf[blockN]);
+		}
+		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
+		Fp::setBinaryExpression(x.y, v_.data(), v_.size());
+		x.z = 1;
+#endif
+	}
 };
 
 template<class T>
@@ -467,15 +505,19 @@ struct EcParam {
 template<class _Fp>
 class BinaryExpression<mie::EcT<_Fp> > {
 	typedef mie::EcT<_Fp> Ec;
-	typedef typename _Fp::BlockType BlockType;
+	typedef typename Ec::BlockType BlockType;
 	typedef std::vector<BlockType> BlockVec;
 	size_t maxBitLen_;
 	BlockVec v_;
+public:
 	explicit BinaryExpression(const Ec& x, bool compress = false)
 	{
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
+		if (compress) {
+			throw cybozu::Exception("BinaryExpression:not support compress");
+		}
 		x.normalize();
 		/*
 			elem |x|y|z|
@@ -497,8 +539,8 @@ class BinaryExpression<mie::EcT<_Fp> > {
 		const size_t q = bitLen / unitSize;
 		const size_t r = bitLen % unitSize;
 		const size_t xLast = r ? v_[q] : 0;
-		fp::shiftLeftOr(&v_[q], be.getBlock(), blockN, r, xLast);
-		fp::setBlockBit(buf, maxBitLen_, 1);
+		fp::shiftLeftOr(&v_[q], ye.getBlock(), blockN, r, xLast);
+		fp::setBlockBit(v_.data(), maxBitLen_ - 1, 1);
 #endif
 	}
 	const BlockType *getBlock() const { return v_.data(); }

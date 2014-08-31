@@ -143,3 +143,22 @@ CYBOZU_TEST_AUTO(shiftLeftOr)
 		CYBOZU_TEST_EQUAL(ret, tbl[i].ret);
 	}
 }
+
+CYBOZU_TEST_AUTO(shiftRight)
+{
+	const struct {
+		uint32_t x[4];
+		size_t n;
+		size_t shift;
+		uint32_t z[4];
+	} tbl[] = {
+		{ { 0x12345678, 0, 0, 0 }, 4, 0, { 0x12345678, 0, 0, 0 } },
+		{ { 0x12345678, 0xaaaabbbb, 0xffeebbcc, 0xfeba9874 }, 4, 1, { 0x891a2b3c, 0x55555ddd, 0x7ff75de6, 0x7f5d4c3a } },
+		{ { 0x12345678, 0xaaaabbbb, 0xffeebbcc, 0xfeba9874 }, 4, 18, { 0xaeeec48d, 0xaef32aaa, 0xa61d3ffb, 0x3fae } },
+	};
+	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+		uint32_t z[4];
+		mie::fp::shiftRight(z, tbl[i].x, tbl[i].n, tbl[i].shift);
+		CYBOZU_TEST_EQUAL_ARRAY(z, tbl[i].z, tbl[i].n);
+	}
+}

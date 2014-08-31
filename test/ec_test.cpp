@@ -155,6 +155,24 @@ struct Test {
 			R += P;
 		}
 	}
+	void binaryExpression() const
+	{
+		Fp x(para.gx);
+		Fp y(para.gy);
+		Ec P(x, y);
+		Ec Q;
+		{
+			mie::BinaryExpression<Ec> be(P);
+			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		P.clear();
+		{
+			mie::BinaryExpression<Ec> be(P);
+			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+	}
 
 	template<class F>
 	void test(F f, const char *msg) const
@@ -208,6 +226,7 @@ pow 499.00usec
 		power();
 		neg_power();
 		power_fp();
+		binaryExpression();
 #ifdef NDEBUG
 		bench();
 #endif

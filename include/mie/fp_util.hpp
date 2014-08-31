@@ -215,16 +215,16 @@ S shiftLeftOr(S* z, const S* x, size_t n, size_t shift, S y = 0)
 	if (n == 0) {
 		throw cybozu::Exception("fp:shiftLeftOr:bad n");
 	}
-	const size_t unitSize = sizeof(S) * 8;
-	if (shift >= unitSize) {
-		throw cybozu::Exception("fp:shiftLeftOr:large shift") << shift;
-	}
 	if (shift == 0) {
 		for (size_t i = n - 1; i > 0; i--) {
 			z[i] = x[i];
 		}
 		z[0] = x[0] | y;
 		return 0;
+	}
+	const size_t unitSize = sizeof(S) * 8;
+	if (shift >= unitSize) {
+		throw cybozu::Exception("fp:shiftLeftOr:large shift") << shift;
 	}
 	const size_t rev = unitSize - shift;
 	S ret = x[n - 1] >> rev;
@@ -233,6 +233,29 @@ S shiftLeftOr(S* z, const S* x, size_t n, size_t shift, S y = 0)
 	}
 	z[0] = (x[0] << shift) | y;
 	return ret;
+}
+template<class S>
+void shiftRight(S* z, const S* x, size_t n, size_t shift)
+{
+	if (n == 0) return;
+	if (shift == 0) {
+		for (size_t i = 0; i < n; i++) {
+			z[i] = x[i];
+		}
+		return;
+	}
+	const size_t unitSize = sizeof(S) * 8;
+	if (shift >= unitSize) {
+		throw cybozu::Exception("fp:shiftRight:large shift") << shift;
+	}
+	const size_t rev = unitSize - shift;
+	S prev = x[0];
+	for (size_t i = 0; i < n - 1; i++) {
+		S t = x[i + 1];
+		z[i] = (prev >> shift) | (t << rev);
+		prev = t;
+	}
+	z[n - 1] = prev >> shift;
 }
 
 } // mie::fp
