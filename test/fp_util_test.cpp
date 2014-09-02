@@ -167,7 +167,7 @@ CYBOZU_TEST_AUTO(splitBitVec)
 {
 	uint32_t tbl[] = { 0x12345678, 0xaaaabbbb, 0xffeebbcc };
 	typedef cybozu::BitVectorT<uint32_t> BitVec;
-	typedef std::vector<uint32_t> IntVec;
+	typedef std::vector<int> IntVec;
 	BitVec bv;
 	bv.append(tbl, sizeof(tbl) * 8);
 	for (size_t len = bv.size(); len > 0; len--) {

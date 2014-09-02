@@ -284,9 +284,9 @@ void concatBitVec(cybozu::BitVectorT<T>& bv, const Vec& v, size_t width, size_t 
 	}
 	bv.clear();
 	for (size_t i = 0; i < v.size() - 1; i++) {
-		bv.append(&v[i], width);
+		bv.append(v[i], width);
 	}
-	bv.append(&v[v.size() - 1], lastWidth);
+	bv.append(v[v.size() - 1], lastWidth);
 }
 
 } // mie::fp
