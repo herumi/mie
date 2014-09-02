@@ -352,6 +352,7 @@ public:
 			throw cybozu::Exception("MontFpT:fromBitVec:large x") << *this << p_;
 		}
 	}
+	static inline size_t getBitVecSize() { return modBitLen_; }
 	static inline int compare(const MontFpT& x, const MontFpT& y)
 	{
 		return fp::compareArray(x.v_, y.v_, N);

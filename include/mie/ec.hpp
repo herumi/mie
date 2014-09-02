@@ -49,6 +49,7 @@ public:
 	static Fp a_;
 	static Fp b_;
 	static int specialA_;
+	static bool compressedBitVec_;
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 	EcT() : inf_(true) {}
 #else
@@ -425,15 +426,19 @@ public:
 		}
 		return is;
 	}
+	static inline void setCompressedBitVec(bool compressedBitVec)
+	{
+		compressedBitVec_ = compressedBitVec;
+	}
 	/*
 		append to bv(not clear bv)
 	*/
-	void appendToBitVec(cybozu::BitVector& bv, bool compress = false) const
+	void appendToBitVec(cybozu::BitVector& bv) const
 	{
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
-		if (compress) {
+		if (compressedBitVec_) {
 			throw cybozu::Exception("MontFpT:appendToBitVe:not support compress");
 		}
 		normalize();
@@ -453,12 +458,12 @@ public:
 		bv.append(&z, 1); // z = 1
 #endif
 	}
-	void fromBitVec(const cybozu::BitVector& bv, bool compress = false)
+	void fromBitVec(const cybozu::BitVector& bv)
 	{
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
-		if (compress) {
+		if (compressedBitVec_) {
 			throw cybozu::Exception("EcT:fromBitVec:not support");
 		}
 		const size_t bitLen = _Fp::getModBitLen();
@@ -477,6 +482,15 @@ public:
 		y.fromBitVec(t);
 		z = 1;
 #endif
+	}
+	static inline size_t getBitVecSize()
+	{
+		const size_t bitLen = _Fp::getModBitLen();
+		if (compressedBitVec_) {
+			return bitLen + 2;
+		} else {
+			return bitLen * 2 + 1;;
+		}
 	}
 };
 
@@ -507,6 +521,7 @@ struct TagMultiGr<EcT<T> > {
 template<class _Fp> _Fp EcT<_Fp>::a_;
 template<class _Fp> _Fp EcT<_Fp>::b_;
 template<class _Fp> int EcT<_Fp>::specialA_;
+template<class _Fp> bool EcT<_Fp>::compressedBitVec_;
 
 struct EcParam {
 	const char *name;

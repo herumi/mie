@@ -258,6 +258,7 @@ public:
 		T::setRaw(v, bv.getBlock(), n);
 		if (v >= m_) throw cybozu::Exception("FpT:fromBitVec:large x") << v << m_;
 	}
+	static inline size_t getBitVecSize() { return modBitLen_; }
 private:
 	static ImplType m_;
 	static size_t modBitLen_;

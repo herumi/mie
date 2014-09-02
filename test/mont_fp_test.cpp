@@ -509,6 +509,7 @@ struct Test {
 			mie::Gmp::getRaw(buf, N, g);
 			CYBOZU_TEST_EQUAL(bv.getBlockSize(), N);
 			CYBOZU_TEST_EQUAL(bv.size(), Fp::getModBitLen());
+			CYBOZU_TEST_EQUAL(bv.size(), Fp::getBitVecSize());
 			const uint64_t *p = bv.getBlock();
 			CYBOZU_TEST_EQUAL_ARRAY(p, buf, N);
 		}

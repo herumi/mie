@@ -454,6 +454,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		cybozu::BitVector bv;
 		x.appendToBitVec(bv);
 		CYBOZU_TEST_EQUAL(bv.size(), Fp::getModBitLen());
+		CYBOZU_TEST_EQUAL(bv.size(), Fp::getBitVecSize());
 		const Fp::BlockType *block = bv.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
 			CYBOZU_TEST_EQUAL(bv.getBlockSize(), tbl[i].n);
