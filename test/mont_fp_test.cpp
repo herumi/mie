@@ -507,6 +507,7 @@ struct Test {
 			uint64_t buf[N];
 			mie::Gmp::getRaw(buf, N, g);
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), N);
+			CYBOZU_TEST_EQUAL(be.getMaxBitLen(), N * 64);
 			const uint64_t *p = be.getBlock();
 			CYBOZU_TEST_EQUAL_ARRAY(p, buf, N);
 		}

@@ -295,6 +295,7 @@ public:
 	{
 		return Fp::getBlock(x_);
 	}
+	size_t getMaxBitLen() const { return Fp::getModBitLen(); }
 };
 
 } // mie

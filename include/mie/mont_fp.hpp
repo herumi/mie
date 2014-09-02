@@ -413,6 +413,7 @@ public:
 	}
 	size_t getBlockSize() const { return N; }
 	const uint64_t *getBlock() const { return &x_.v_[0]; }
+	size_t getMaxBitLen() const { return N * sizeof(uint64_t) * 8; }
 };
 
 } // mie

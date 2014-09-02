@@ -452,6 +452,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].s);
 		mie::BinaryExpression<Fp> be(x);
+		CYBOZU_TEST_EQUAL(be.getMaxBitLen(), Fp::getModBitLen());
 		const Fp::BlockType *block = be.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
 			CYBOZU_TEST_EQUAL(be.getBlockSize(), tbl[i].n);
