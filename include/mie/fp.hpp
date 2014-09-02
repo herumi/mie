@@ -252,10 +252,8 @@ public:
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
-		const size_t N = fp::getRoundNum<BlockType>(modBitLen_);
-		const size_t n = bv.getBlockSize();
-		if (n > N) throw cybozu::Exception("FpT:fromBitVec:large n") << n << N;
-		T::setRaw(v, bv.getBlock(), n);
+		if (bv.size() != modBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << modBitLen_;
+		T::setRaw(v, bv.getBlock(), bv.getBlockSize());
 		if (v >= m_) throw cybozu::Exception("FpT:fromBitVec:large x") << v << m_;
 	}
 	static inline size_t getBitVecSize() { return modBitLen_; }
