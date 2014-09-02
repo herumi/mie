@@ -347,7 +347,17 @@ public:
 	{
 		const size_t bitLen = bv.size();
 		if (bitLen != modBitLen_) throw cybozu::Exception("MontFp:fromBitVec:bad size") << bitLen << modBitLen_;
-		mul(*this, *(const MontFpT*)bv.getBlock(), RR_);
+		const size_t blockN = cybozu::RoundupBit<BlockType>(bitLen);
+		const MontFpT* src;
+		MontFpT t;
+		if (blockN == N) {
+			src = (const MontFpT*)bv.getBlock();
+		} else {
+			cybozu::CopyBit(t.v_, bv.getBlock(), bitLen);
+			for (size_t i = blockN; i < N; i++) t.v_[i] = 0;
+			src = &t;
+		}
+		mul(*this, *src, RR_);
 		if (compare(*this, p_) >= 0) {
 			throw cybozu::Exception("MontFpT:fromBitVec:large x") << *this << p_;
 		}
