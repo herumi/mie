@@ -162,20 +162,23 @@ struct Test {
 		Ec P(x, y);
 		Ec Q;
 		{
-			mie::BinaryExpression<Ec> be(P);
-			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 		{
 			P = -P;
-			mie::BinaryExpression<Ec> be(P);
-			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 		P.clear();
 		{
-			mie::BinaryExpression<Ec> be(P);
-			Ec::setBinaryExpression(Q, be.getBlock(), be.getBlockSize());
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 	}

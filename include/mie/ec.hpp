@@ -8,6 +8,7 @@
 */
 #include <sstream>
 #include <cybozu/exception.hpp>
+#include <cybozu/bitvector.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 
@@ -424,38 +425,57 @@ public:
 		}
 		return is;
 	}
-	static inline void setBinaryExpression(EcT& x, const BlockType *buf, size_t n, bool compress = false)
+	/*
+		append to bv(not clear bv)
+	*/
+	void appendToBitVec(cybozu::BitVector& bv, bool compress = false) const
 	{
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
 		if (compress) {
-			throw cybozu::Exception("EcT:setBinaryExpression:not support");
+			throw cybozu::Exception("MontFpT:appendToBitVe:not support compress");
+		}
+		normalize();
+		/*
+			elem |x|y|z|
+			size  n n 1
+		*/
+		const size_t bitLen = _Fp::getModBitLen();
+		const size_t totalBitLen = bitLen * 2 + 1;
+		if (isZero()) {
+			bv.resize(bv.size() + totalBitLen);
+			return;
+		}
+		x.appendToBitVec(bv);
+		y.appendToBitVec(bv);
+		uint64_t z = 1;
+		bv.append(&z, 1); // z = 1
+#endif
+	}
+	void fromBitVec(const cybozu::BitVector& bv, bool compress = false)
+	{
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
+		#error "not implemented"
+#else
+		if (compress) {
+			throw cybozu::Exception("EcT:fromBitVec:not support");
 		}
 		const size_t bitLen = _Fp::getModBitLen();
 		const size_t maxBitLen = bitLen * 2 + 1;
-		const size_t blockN = mie::fp::getRoundNum<BlockType>(bitLen);
-		const size_t totalBlockN = mie::fp::getRoundNum<BlockType>(maxBitLen);
-		if (totalBlockN != n) {
-			throw cybozu::Exception("EcT:setBinaryExpression:bad n") << n << totalBlockN;
+		if (bv.size() != maxBitLen) {
+			throw cybozu::Exception("EcT:fromBitVec:bad size") << bv.size() << maxBitLen;
 		}
-		if (!fp::getBlockBit(buf, maxBitLen - 1)) {
-			x.clear();
+		if (!bv.get(maxBitLen - 1)) {
+			clear();
 			return;
 		}
-		typedef std::vector<BlockType> BlockVec;
-		BlockVec v_;
-		v_.resize(blockN);
-		for (size_t i = 0; i < blockN; i++) v_[i] = buf[i];
-		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
-		Fp::setBinaryExpression(x.x, v_.data(), v_.size());
-		const size_t unitSize = sizeof(BlockType) * 8;
-		const size_t q = bitLen / unitSize;
-		const size_t r = bitLen % unitSize;
-		fp::shiftRight(v_.data(), buf + q, blockN, r);
-		mie::fp::maskBuffer<BlockType>(v_.data(), v_.size(), bitLen);
-		Fp::setBinaryExpression(x.y, v_.data(), v_.size());
-		x.z = 1;
+		cybozu::BitVector t;
+		bv.extract(t, 0, bitLen);
+		x.fromBitVec(t);
+		bv.extract(t, bitLen, bitLen);
+		y.fromBitVec(t);
+		z = 1;
 #endif
 	}
 };
@@ -497,52 +517,6 @@ struct EcParam {
 	const char *gy;
 	const char *n;
 	size_t bitLen; // bit length of p
-};
-
-template<class _Fp>
-class BinaryExpression<mie::EcT<_Fp> > {
-	typedef mie::EcT<_Fp> Ec;
-	typedef typename Ec::BlockType BlockType;
-	typedef std::vector<BlockType> BlockVec;
-	size_t maxBitLen_;
-	BlockVec v_;
-public:
-	explicit BinaryExpression(const Ec& x, bool compress = false)
-	{
-#if MIE_EC_COORD == MIE_EC_USE_AFFINE
-		#error "not implemented"
-#else
-		if (compress) {
-			throw cybozu::Exception("BinaryExpression:not support compress");
-		}
-		x.normalize();
-		/*
-			elem |x|y|z|
-			size  n n 1
-		*/
-		const size_t bitLen = _Fp::getModBitLen();
-		maxBitLen_ = bitLen * 2 + 1;
-		const size_t blockN = mie::fp::getRoundNum<BlockType>(bitLen);
-		const size_t totalBlockN = mie::fp::getRoundNum<BlockType>(maxBitLen_);
-		v_.resize(totalBlockN);
-		if (x.isZero()) {
-			for (size_t i = 0; i < blockN; i++) v_[i] = 0;
-			return;
-		}
-		mie::BinaryExpression<_Fp> xe(x.x);
-		mie::BinaryExpression<_Fp> ye(x.y);
-		for (size_t i = 0, n = xe.getBlockSize(); i < n; i++) v_[i] = xe.getBlock()[i];
-		const size_t unitSize = sizeof(BlockType) * 8;
-		const size_t q = bitLen / unitSize;
-		const size_t r = bitLen % unitSize;
-		const size_t xLast = r ? v_[q] : 0;
-		fp::shiftLeftOr(&v_[q], ye.getBlock(), ye.getBlockSize(), r, xLast);
-		fp::setBlockBit(v_.data(), maxBitLen_ - 1, 1);
-#endif
-	}
-	const BlockType *getBlock() const { return v_.data(); }
-	size_t getBlockSize() const { return v_.size(); }
-	size_t getMaxBitLen() const { return maxBitLen_; }
 };
 
 } // mie

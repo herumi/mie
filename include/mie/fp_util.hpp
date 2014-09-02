@@ -260,15 +260,4 @@ void shiftRight(S* z, const S* x, size_t n, size_t shift)
 
 } // mie::fp
 
-/*
-	binary expression
-*/
-template<class T>
-class BinaryExpression {
-public:
-	explicit BinaryExpression(const T& x);
-	size_t getBlockSize() const;
-	const typename T::BlockType *getBlock() const;
-};
-
 } // fp

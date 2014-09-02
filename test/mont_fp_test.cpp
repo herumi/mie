@@ -503,12 +503,13 @@ struct Test {
 			mpz_class g = m / i;
 			Fp x, y;
 			Fp::toMont(x, g);
-			mie::BinaryExpression<Fp> be(x);
+			cybozu::BitVector bv;
+			x.appendToBitVec(bv);
 			uint64_t buf[N];
 			mie::Gmp::getRaw(buf, N, g);
-			CYBOZU_TEST_EQUAL(be.getBlockSize(), N);
-			CYBOZU_TEST_EQUAL(be.getMaxBitLen(), N * 64);
-			const uint64_t *p = be.getBlock();
+			CYBOZU_TEST_EQUAL(bv.getBlockSize(), N);
+			CYBOZU_TEST_EQUAL(bv.size(), Fp::getModBitLen());
+			const uint64_t *p = bv.getBlock();
 			CYBOZU_TEST_EQUAL_ARRAY(p, buf, N);
 		}
 		const mpz_class yy("0x1255556666777788881111222233334444");
@@ -519,10 +520,13 @@ struct Test {
 		Fp::toMont(y, yy);
 		uint64_t b1[N] = { uint64_t(0x1111222233334444ull), uint64_t(0x5555666677778888ull), 0x12 };
 		Fp x;
-		Fp::setBinaryExpression(x, b1, N);
+		cybozu::BitVector bv;
+		bv.append(b1, Fp::getModBitLen());
+		x.fromBitVec(bv);
 		CYBOZU_TEST_EQUAL(x, y);
-		mie::BinaryExpression<Fp> be(x);
-		const uint64_t *b2 = be.getBlock();
+		bv.clear();
+		x.appendToBitVec(bv);
+		const uint64_t *b2 = bv.getBlock();
 		CYBOZU_TEST_EQUAL_ARRAY(b1, b2, N);
 	}
 

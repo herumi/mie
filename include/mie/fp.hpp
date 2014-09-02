@@ -11,6 +11,7 @@
 #include <cybozu/hash.hpp>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
+#include <cybozu/bitvector.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 #include <mie/fp_util.hpp>
@@ -202,13 +203,6 @@ public:
 	{
 		return T::getBitLen(x.v);
 	}
-	static inline void setBinaryExpression(FpT& x, const BlockType *buf, size_t n)
-	{
-		const size_t N = fp::getRoundNum<BlockType>(modBitLen_);
-		if (n > N) throw cybozu::Exception("FpT:setBinaryExpression:large n") << n << N;
-		T::setRaw(x.v, buf, n);
-		if (x.v >= m_) throw cybozu::Exception("FpT:setBinaryExpression:large x") << x.v << m_;
-	}
 	static inline void shr(FpT& z, const FpT& x, size_t n)
 	{
 		z.v = x.v >> n;
@@ -247,6 +241,23 @@ public:
 		}
 	}
 	uint64_t cvtInt(bool *err = 0) const { return cvtInt(*this, err); }
+	/*
+		append to bv(not clear bv)
+	*/
+	void appendToBitVec(cybozu::BitVector& bv) const
+	{
+		const size_t len = bv.size();
+		bv.append(getBlock(*this), getBlockSize(*this) * sizeof(BlockType) * 8);
+		bv.resize(len + getModBitLen()); // zero extend if necessary
+	}
+	void fromBitVec(const cybozu::BitVector& bv)
+	{
+		const size_t N = fp::getRoundNum<BlockType>(modBitLen_);
+		const size_t n = bv.getBlockSize();
+		if (n > N) throw cybozu::Exception("FpT:fromBitVec:large n") << n << N;
+		T::setRaw(v, bv.getBlock(), n);
+		if (v >= m_) throw cybozu::Exception("FpT:fromBitVec:large x") << v << m_;
+	}
 private:
 	static ImplType m_;
 	static size_t modBitLen_;
@@ -280,23 +291,6 @@ size_t FpT<T, tag>::modBitLen_;
 
 template<class T, class tag>
 mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
-
-template<class T, class tag>
-class BinaryExpression<mie::FpT<T, tag> > {
-	typedef mie::FpT<T, tag> Fp;
-	const Fp& x_;
-public:
-	explicit BinaryExpression(const mie::FpT<T, tag>& x) : x_(x) {}
-	size_t getBlockSize() const
-	{
-		return Fp::getBlockSize(x_);
-	}
-	const typename Fp::BlockType *getBlock() const
-	{
-		return Fp::getBlock(x_);
-	}
-	size_t getMaxBitLen() const { return Fp::getModBitLen(); }
-};
 
 } // mie
 

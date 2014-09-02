@@ -451,11 +451,12 @@ CYBOZU_TEST_AUTO(binaryRepl)
 	Fp::setModulo("0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d");
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].s);
-		mie::BinaryExpression<Fp> be(x);
-		CYBOZU_TEST_EQUAL(be.getMaxBitLen(), Fp::getModBitLen());
-		const Fp::BlockType *block = be.getBlock();
+		cybozu::BitVector bv;
+		x.appendToBitVec(bv);
+		CYBOZU_TEST_EQUAL(bv.size(), Fp::getModBitLen());
+		const Fp::BlockType *block = bv.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
-			CYBOZU_TEST_EQUAL(be.getBlockSize(), tbl[i].n);
+			CYBOZU_TEST_EQUAL(bv.getBlockSize(), tbl[i].n);
 			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, tbl[i].n);
 		} else {
 			const size_t n = (tbl[i].n + 1) / 2;
@@ -465,7 +466,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 			}
 		}
 		Fp y;
-		Fp::setBinaryExpression(y, be.getBlock(), be.getBlockSize());
+		y.fromBitVec(bv);
 		CYBOZU_TEST_EQUAL(x, y);
 	}
 }
