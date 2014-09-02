@@ -162,3 +162,30 @@ CYBOZU_TEST_AUTO(shiftRight)
 		CYBOZU_TEST_EQUAL_ARRAY(z, tbl[i].z, tbl[i].n);
 	}
 }
+
+CYBOZU_TEST_AUTO(splitBitVec)
+{
+	uint32_t tbl[] = { 0x12345678, 0xaaaabbbb, 0xffeebbcc };
+	typedef cybozu::BitVectorT<uint32_t> BitVec;
+	typedef std::vector<uint32_t> IntVec;
+	BitVec bv;
+	bv.append(tbl, sizeof(tbl) * 8);
+	for (size_t len = bv.size(); len > 0; len--) {
+		bv.resize(len);
+		for (size_t w = 1; w < 18; w++) {
+			IntVec iv;
+			size_t last = mie::fp::splitBitVec(iv, bv, w);
+			size_t q = len / w;
+			size_t r = len % w;
+			if (r == 0) {
+				r = w;
+			} else {
+				q++;
+			}
+			CYBOZU_TEST_EQUAL(iv.size(), q);
+			BitVec bv2;
+			mie::fp::concatBitVec(bv2, iv, w, last);
+			CYBOZU_TEST_ASSERT(bv == bv2);
+		}
+	}
+}

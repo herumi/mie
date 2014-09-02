@@ -2,6 +2,7 @@
 #include <vector>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
+#include <cybozu/bitvector.hpp>
 /**
 	@file
 	@brief utility of Fp
@@ -256,6 +257,36 @@ void shiftRight(S* z, const S* x, size_t n, size_t shift)
 		prev = t;
 	}
 	z[n - 1] = prev >> shift;
+}
+
+template<class Vec, class T>
+size_t splitBitVec(Vec& v, const cybozu::BitVectorT<T>& bv, size_t width)
+{
+	if (width > sizeof(typename Vec::value_type) * 8) {
+		throw cybozu::Exception("fp:splitBitVec:bad width") << width;
+	}
+	const size_t q = bv.size() / width;
+	const size_t r = bv.size() % width;
+	for (size_t i = 0; i < q; i++) {
+		v.push_back(bv.extract(i * width, width));
+	}
+	if (r > 0) {
+		v.push_back(bv.extract(q * width, r));
+	}
+	return r ? r : width;
+}
+
+template<class Vec, class T>
+void concatBitVec(cybozu::BitVectorT<T>& bv, const Vec& v, size_t width, size_t lastWidth)
+{
+	if (width > sizeof(typename Vec::value_type) * 8) {
+		throw cybozu::Exception("fp:splitBitVec:bad width") << width;
+	}
+	bv.clear();
+	for (size_t i = 0; i < v.size() - 1; i++) {
+		bv.append(&v[i], width);
+	}
+	bv.append(&v[v.size() - 1], lastWidth);
 }
 
 } // mie::fp
