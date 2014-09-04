@@ -229,46 +229,19 @@ struct Gmp {
 
 namespace ope {
 
-#if 0
 template<>
 struct Optimized<mpz_class> {
-	Optimized()
-		: hasMulMod_(false)
+	bool hasMulMod() const { return false; }
+	void init(const mpz_class&) {}
+	static void mulMod(mpz_class&, const mpz_class&, const mpz_class&) {}
+	static void mulMod(mpz_class&, const mpz_class&, unsigned int) {}
+	bool hasPowMod() const { return true; }
+	static void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
 	{
-	}
-	bool hasMulMod() const { return hasMulMod_; }
-	void init(const mpz_class& m)
-	{
-		hasMulMod_ = m == getM521();
-	}
-	static void mulMod(mpz_class& z, const mpz_class& x, const mpz_class& y)
-	{
-		z = x * y;
-		modByM521(z, z);
-	}
-	static void mulMod(mpz_class& z, const mpz_class& x, unsigned int y)
-	{
-		z = x * y;
-		modByM521(z, z);
-	}
-private:
-	bool hasMulMod_;
-	static const mpz_class& getM521()
-	{
-		static mpz_class M521("0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-		return M521;
-	}
-	static void modByM521(mpz_class& z, const mpz_class& x)
-	{
-		const mpz_class& m = getM521();
-		assert(x < 2 * m);
-		z = (x & m) + (x >> 521);
-		if (z >= m) z -= m;
+		mpz_powm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t(), m.get_mpz_t());
 	}
 };
-#endif
 
 } // mie::ope
 
 } // mie
-

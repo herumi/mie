@@ -212,7 +212,16 @@ public:
 	template<class N>
 	static void power(FpT& z, const FpT& x, const N& y)
 	{
-		power_impl::power(z, x, y);
+		if (opt_.hasPowMod()) {
+			const bool negative = y < 0;
+			const FpT yy(negative ? -y : y);
+			opt_.powMod(z.v, x.v, yy.v, m_);
+			if (negative) {
+				inv(z, z);
+			}
+		} else {
+			power_impl::power(z, x, y);
+		}
 	}
 	const ImplType& getInnerValue() const { return v; }
 	static inline size_t getModBitLen() { return modBitLen_; }
@@ -257,10 +266,10 @@ public:
 		if (v >= m_) throw cybozu::Exception("FpT:fromBitVec:large x") << v << m_;
 	}
 	static inline size_t getBitVecSize() { return modBitLen_; }
+	static mie::ope::Optimized<ImplType> opt_;
 private:
 	static ImplType m_;
 	static size_t modBitLen_;
-	static mie::ope::Optimized<ImplType> opt_;
 	ImplType v;
 	static inline void inFromStr(ImplType& t, bool *isMinus, const std::string& str, int base)
 	{

@@ -107,6 +107,8 @@ struct Optimized {
 	void init(const T&) {}
 	static void mulMod(T&, const T&, const T&) {}
 	static void mulMod(T&, const T&, unsigned int) {}
+	bool hasPowMod() const { return false; }
+	static void powMod(T&, const T&, const T&, const T&) {}
 };
 
 } } // mie::ope
