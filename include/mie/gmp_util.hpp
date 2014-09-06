@@ -207,7 +207,7 @@ struct Gmp {
 	}
 	static inline bool isPrime(const mpz_class& x)
 	{
-		return mpz_probab_prime_p(x.get_mpz_t(), 10) != 0;
+		return mpz_probab_prime_p(x.get_mpz_t(), 25) != 0;
 	}
 	static inline size_t getBitLen(const mpz_class& x)
 	{
