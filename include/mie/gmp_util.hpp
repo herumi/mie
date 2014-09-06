@@ -231,10 +231,7 @@ namespace ope {
 
 template<>
 struct Optimized<mpz_class> {
-	bool hasMulMod() const { return false; }
 	void init(const mpz_class&) {}
-	static void mulMod(mpz_class&, const mpz_class&, const mpz_class&) {}
-	static void mulMod(mpz_class&, const mpz_class&, unsigned int) {}
 	bool hasPowMod() const { return true; }
 	static void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
 	{
