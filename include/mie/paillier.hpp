@@ -19,9 +19,7 @@ void getRandomInt(mpz_class& z, size_t bitLen, RG& rg)
 	const size_t rem = bitLen & 31;
 	const size_t n = (bitLen + 31) / 32;
 	std::vector<unsigned int> buf(n);
-	for (size_t i = 0; i < n; i++) {
-		buf[i] = rg();
-	}
+	rg.read(buf.data(), n);
 	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
 	buf[n - 1] |= 1U << rem;
 	Gmp::setRaw(z, &buf[0], n);
@@ -110,6 +108,11 @@ public:
 		cybozu::RandomGenerator rg;
 		enc(encMsg, msg, rg);
 	}
+	bool operator==(const PublicKey& rhs) const
+	{
+		return n == rhs.n && nLen == rhs.nLen && nn == rhs.nn && g == rhs.g;
+	}
+	bool operator!=(const PublicKey& rhs) const { return !operator==(rhs); }
 };
 
 class PrivateKey : public LoadSave<PrivateKey> {
@@ -157,7 +160,7 @@ public:
 	}
 	friend inline std::ostream& operator<<(std::ostream& os, const PrivateKey& self)
 	{
-		os << std::hex << self.p << " " << self.q;
+		os << std::hex << self.p << ' ' << self.q;
 		return os;
 	}
 	/*
@@ -170,6 +173,11 @@ public:
 		decMsg *= x;
 		decMsg %= pub.n;
 	}
+	bool operator==(const PrivateKey& rhs) const
+	{
+		return p == rhs.p && q == rhs.q && lambda == rhs.lambda && pub == rhs.pub && x == rhs.x;
+	}
+	bool operator!=(const PrivateKey& rhs) const { return !operator==(rhs); }
 };
 
 } } // mie::paillier
