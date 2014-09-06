@@ -8,6 +8,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 #include <assert.h>
 #ifdef _WIN32
 	#pragma warning(push)
@@ -189,7 +190,7 @@ struct Gmp {
 		square(z, x);
 		mod(z, z, m);
 	}
-	// z = x^y mod m
+	// z = x^y mod m (y >=0)
 	static inline void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
 	{
 		mpz_powm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t(), m.get_mpz_t());
@@ -224,6 +225,25 @@ struct Gmp {
 	{
 		assert(x.get_mpz_t()->_mp_size >= 0);
 		return x.get_mpz_t()->_mp_size;
+	}
+	template<class RG>
+	static inline void getRand(mpz_class& z, size_t bitLen, RG& rg)
+	{
+		assert(bitLen > 2);
+		const size_t rem = bitLen & 31;
+		const size_t n = (bitLen + 31) / 32;
+		std::vector<unsigned int> buf(n);
+		rg.read(buf.data(), n);
+		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
+		buf[n - 1] |= 1U << rem;
+		Gmp::setRaw(z, &buf[0], n);
+	}
+	template<class RG>
+	static void getRandPrime(mpz_class& z, size_t bitLen, RG& rg)
+	{
+		do {
+			getRand(z, bitLen, rg);
+		} while (!(isPrime(z)));
 	}
 };
 

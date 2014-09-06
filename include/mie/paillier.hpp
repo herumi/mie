@@ -13,26 +13,6 @@
 
 namespace mie { namespace paillier {
 
-template<class RG>
-void getRandomInt(mpz_class& z, size_t bitLen, RG& rg)
-{
-	const size_t rem = bitLen & 31;
-	const size_t n = (bitLen + 31) / 32;
-	std::vector<unsigned int> buf(n);
-	rg.read(buf.data(), n);
-	if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
-	buf[n - 1] |= 1U << rem;
-	Gmp::setRaw(z, &buf[0], n);
-}
-
-template<class RG>
-void getRandomPrime(mpz_class& z, size_t bitLen, RG& rg)
-{
-	do {
-		getRandomInt(z, bitLen, rg);
-	} while (!Gmp::isPrime(z));
-}
-
 template<class T>
 struct LoadSave {
 	void load(const std::string& fileName)
@@ -97,7 +77,7 @@ public:
 	{
 		if (msg >= n) throw cybozu::Exception("too large msg");
 		mpz_class r;
-		getRandomInt(r, nLen * 2 - 2, rg);
+		Gmp::getRand(r, nLen * 2 - 2, rg);
 		Gmp::powMod(r, r, n, nn);
 
 		Gmp::powMod(encMsg, g, msg, nn);
@@ -139,8 +119,8 @@ public:
 	void init(size_t keyLen, RG& rg)
 	{
 		do {
-			getRandomPrime(p, (keyLen + 1) / 2, rg);
-			getRandomPrime(q, (keyLen + 1) / 2, rg);
+			Gmp::getRandPrime(p, (keyLen + 1) / 2, rg);
+			Gmp::getRandPrime(q, (keyLen + 1) / 2, rg);
 			pub.n = p * q;
 		} while (Gmp::getBitLen(pub.n) < keyLen);
 		finish();
