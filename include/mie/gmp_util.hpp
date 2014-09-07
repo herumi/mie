@@ -229,20 +229,30 @@ struct Gmp {
 	template<class RG>
 	static inline void getRand(mpz_class& z, size_t bitLen, RG& rg)
 	{
-		assert(bitLen > 2);
+		assert(bitLen > 1);
 		const size_t rem = bitLen & 31;
 		const size_t n = (bitLen + 31) / 32;
-		std::vector<unsigned int> buf(n);
+		std::vector<uint32_t> buf(n);
 		rg.read(buf.data(), n);
-		if (rem > 0) buf[n - 1] &= (1U << rem) - 1;
-		buf[n - 1] |= 1U << rem;
+		uint32_t v = buf[n - 1];
+		if (rem == 0) {
+			v |= 1U << 31;
+		} else {
+			v &= (1U << rem) - 1;
+			v |= 1U << (rem - 1);
+		}
+		buf[n - 1] = v;
 		Gmp::setRaw(z, &buf[0], n);
 	}
 	template<class RG>
-	static void getRandPrime(mpz_class& z, size_t bitLen, RG& rg)
+	static void getRandPrime(mpz_class& z, size_t bitLen, RG& rg, bool setSecondBit = false)
 	{
+		assert(bitLen > 2);
 		do {
 			getRand(z, bitLen, rg);
+			if (setSecondBit) {
+				z |= mpz_class(1) << (bitLen - 2);
+			}
 		} while (!(isPrime(z)));
 	}
 };

@@ -118,11 +118,9 @@ public:
 	template<class RG>
 	void init(size_t keyLen, RG& rg)
 	{
-		do {
-			Gmp::getRandPrime(p, (keyLen + 1) / 2, rg);
-			Gmp::getRandPrime(q, (keyLen + 1) / 2, rg);
-			pub.n = p * q;
-		} while (Gmp::getBitLen(pub.n) < keyLen);
+		Gmp::getRandPrime(p, (keyLen + 1) / 2, rg, true);
+		Gmp::getRandPrime(q, (keyLen + 1) / 2, rg, true);
+		pub.n = p * q;
 		finish();
 		pub.finish();
 	}

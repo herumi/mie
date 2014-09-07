@@ -3,6 +3,35 @@
 #include <cybozu/test.hpp>
 #include <sstream>
 
+CYBOZU_TEST_AUTO(getRand)
+{
+	cybozu::RandomGenerator rg;
+	for (size_t bitLen = 62; bitLen < 66; bitLen++) {
+		for (int i = 0; i < 100; i++) {
+			mpz_class x;
+			mie::Gmp::getRandPrime(x, bitLen, rg);
+			CYBOZU_TEST_EQUAL(bitLen, mie::Gmp::getBitLen(x));
+		}
+	}
+}
+
+CYBOZU_TEST_AUTO(getRandPrime)
+{
+	cybozu::RandomGenerator rg;
+
+	for (size_t bitLen = 126; bitLen < 130; bitLen++) {
+		for (int i = 0; i < 100; i++) {
+			mpz_class x, y, z;
+			mie::Gmp::getRandPrime(x, bitLen, rg, true);
+			mie::Gmp::getRandPrime(y, bitLen, rg, true);
+			CYBOZU_TEST_EQUAL(bitLen, mie::Gmp::getBitLen(x));
+			CYBOZU_TEST_EQUAL(bitLen, mie::Gmp::getBitLen(y));
+			z = x * y;
+			CYBOZU_TEST_EQUAL(mie::Gmp::getBitLen(z), bitLen * 2);
+		}
+	}
+}
+
 CYBOZU_TEST_AUTO(paillier)
 {
 	mpz_class m2("234567890123456789011223344554");
