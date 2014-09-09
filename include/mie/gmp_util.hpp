@@ -190,6 +190,11 @@ struct Gmp {
 		square(z, x);
 		mod(z, z, m);
 	}
+	// z = x^y (y >= 0)
+	static inline void pow(mpz_class& z, const mpz_class& x, unsigned int y)
+	{
+		mpz_pow_ui(z.get_mpz_t(), x.get_mpz_t(), y);
+	}
 	// z = x^y mod m (y >=0)
 	static inline void powMod(mpz_class& z, const mpz_class& x, const mpz_class& y, const mpz_class& m)
 	{
