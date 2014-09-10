@@ -210,6 +210,11 @@ struct Gmp {
 	{
 		mpz_lcm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
+	// z = gcd(x, y)
+	static inline void gcd(mpz_class& z, const mpz_class& x, const mpz_class& y)
+	{
+		mpz_gcd(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
+	}
 	static inline bool isPrime(const mpz_class& x)
 	{
 		return mpz_probab_prime_p(x.get_mpz_t(), 25) != 0;
