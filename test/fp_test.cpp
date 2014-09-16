@@ -283,6 +283,8 @@ CYBOZU_TEST_AUTO(ope)
 	}
 }
 
+struct tag2;
+
 CYBOZU_TEST_AUTO(power)
 {
 	Fp x, y, z;
@@ -293,6 +295,16 @@ CYBOZU_TEST_AUTO(power)
 		CYBOZU_TEST_EQUAL(y, z);
 		z *= x;
 	}
+	typedef mie::FpT<mie::Gmp, tag2> Fp2;
+	Fp2::setModulo("1000");
+	x = 5;
+	Fp2 n = 3;
+	z = 3;
+	Fp::power(x, x, z);
+	CYBOZU_TEST_EQUAL(x, 125);
+	x = 5;
+	Fp::power(x, x, n);
+	CYBOZU_TEST_EQUAL(x, 125);
 }
 
 CYBOZU_TEST_AUTO(neg_power)

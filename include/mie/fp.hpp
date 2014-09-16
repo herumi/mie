@@ -47,6 +47,7 @@ class FpT : public ope::comparable<FpT<T, tag>,
 	ope::invertible<FpT<T, tag>,
 	ope::hasNegative<FpT<T, tag>,
 	ope::hasIO<FpT<T, tag> > > > > > > {
+	template<class T2, class tag2> friend class FpT;
 public:
 	typedef typename T::BlockType BlockType;
 	typedef typename T::ImplType ImplType;
@@ -195,12 +196,14 @@ public:
 	}
 	bool isZero() const { return isZero(*this); }
 	size_t getBitLen() const { return getBitLen(*this); }
-	template<class N>
-	static void power(FpT& z, const FpT& x, const N& y)
+
+	template<class T2, class tag2>
+	static void power(FpT& z, const FpT& x, const FpT<T2, tag2>& y)
 	{
+		// QQQ : fix bad detection of class
 		if (opt_.hasPowMod()) {
 			const bool negative = y < 0;
-			const FpT yy(negative ? -y : y);
+			const FpT<T2, tag2> yy(negative ? -y : y);
 			opt_.powMod(z.v, x.v, yy.v, m_);
 			if (negative) {
 				inv(z, z);
@@ -208,6 +211,11 @@ public:
 		} else {
 			power_impl::power(z, x, y);
 		}
+	}
+	template<class Int>
+	static void power(FpT& z, const FpT& x, const Int& y)
+	{
+		power_impl::power(z, x, y);
 	}
 	const ImplType& getInnerValue() const { return v; }
 	static inline size_t getModBitLen() { return modBitLen_; }
