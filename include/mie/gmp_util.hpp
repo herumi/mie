@@ -261,13 +261,16 @@ struct Gmp {
 		Gmp::setRaw(z, &buf[0], n);
 	}
 	template<class RG>
-	static void getRandPrime(mpz_class& z, size_t bitLen, RG& rg, bool setSecondBit = false)
+	static void getRandPrime(mpz_class& z, size_t bitLen, RG& rg, bool setSecondBit = false, bool mustBe3mod4 = false)
 	{
 		assert(bitLen > 2);
 		do {
 			getRand(z, bitLen, rg);
 			if (setSecondBit) {
 				z |= mpz_class(1) << (bitLen - 2);
+			}
+			if (mustBe3mod4) {
+				z |= 3;
 			}
 		} while (!(isPrime(z)));
 	}
