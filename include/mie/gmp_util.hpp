@@ -210,6 +210,12 @@ struct Gmp {
 	{
 		mpz_lcm(z.get_mpz_t(), x.get_mpz_t(), y.get_mpz_t());
 	}
+	static inline mpz_class lcm(const mpz_class& x, const mpz_class& y)
+	{
+		mpz_class z;
+		lcm(z, x, y);
+		return z;
+	}
 	// z = gcd(x, y)
 	static inline void gcd(mpz_class& z, const mpz_class& x, const mpz_class& y)
 	{
