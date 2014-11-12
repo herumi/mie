@@ -43,7 +43,7 @@ struct TagDefault;
 
 template<size_t maxN, class tag = fp_local::TagDefault>
 class FpT {
-	void fillZeroo(uint64_t *p, size_t fromPos) const
+	void fillZero(uint64_t *p, size_t fromPos) const
 	{
 		for (size_t i = fromPos; i < N_; i++) p[i] = 0;
 	}
