@@ -248,15 +248,13 @@ private:
 	}
 };
 
-#if 0
-template<size_t maxBiLen, class tag> fp::void3op FpT<maxBitLen, tag>::add_;
-template<size_t maxBiLen, class tag> fp::void3op FpT<maxBitLen, tag>::sub_;
-template<size_t maxBiLen, class tag> fp::void3op FpT<maxBitLen, tag>::mul_;
-template<size_t maxBiLen, class tag> fp::void3op FpT<maxBitLen, tag>::div_;
+template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::add_;
+template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::sub_;
+template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::mul_;
+template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::div_;
 
-template<size_t maxBiLen, class tag> fp::void2op FpT<maxBitLen, tag>::neg_;
-template<size_t maxBiLen, class tag> fp::void2op FpT<maxBitLen, tag>::inv_;
-#endif
+template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::neg_;
+template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::inv_;
 
 template<size_t maxBitLen, class tag> mpz_class FpT<maxBitLen, tag>::pOrg_;
 template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::pBitLen_;

@@ -14,7 +14,6 @@ CYBOZU_TEST_AUTO(cstr)
 {
 	const int m = 65535;
 	Fp::setModulo("65535");
-#if 0
 	const struct {
 		const char *str;
 		int val;
@@ -30,6 +29,7 @@ CYBOZU_TEST_AUTO(cstr)
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		// string cstr
+#if 0
 		Fp x(tbl[i].str);
 		CYBOZU_TEST_EQUAL(x, tbl[i].val);
 
@@ -58,8 +58,8 @@ CYBOZU_TEST_AUTO(cstr)
 		std::string str;
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
-	}
 #endif
+	}
 }
 
 #if 0
