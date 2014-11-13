@@ -102,7 +102,6 @@ public:
 		N_ = Gmp::getRaw(p_, maxN, pOrg_);
 		if (N_ == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 	}
-#if 0
 	FpT() {}
 	FpT(const FpT& x)
 	{
@@ -150,13 +149,17 @@ public:
 	{
 		switch (base) {
 		case 10:
-			T::toStr(str, v_, base);
+			{
+				mpz_class x;
+				Gmp::setRaw(x, v_, N_);
+				Gmp::toStr(str, x, 10);
+			}
 			return;
 		case 16:
-			mie::fp::toStr16(str, getBlock(*this), getBlockSize(*this), withPrefix);
+			mie::fp::toStr16(str, v_, N_, withPrefix);
 			return;
 		case 2:
-			mie::fp::toStr2(str, getBlock(*this), getBlockSize(*this), withPrefix);
+			mie::fp::toStr2(str, v_, N_, withPrefix);
 			return;
 		default:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
@@ -207,11 +210,11 @@ public:
 		return true;
 	}
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
-	static inline bool greaterArray(const Block *x, const Block *y)
+	static inline bool greaterArray(const Unit *x, const Unit *y)
 	{
 		for (size_t i = N_ - 1; i != size_t(-1); i--) {
-			if (v_[i] > rhs.v_[i]) return true;
-			if (v_[i] < rhs.v_[i]) return false;
+			if (x[i] > y[i]) return true;
+			if (x[i] < y[i]) return false;
 		}
 		return false;
 	}
@@ -230,7 +233,6 @@ public:
 		if (greaterArray(v_, p_)) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getBitVecSize() { return pBitLen_; }
-#endif
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
