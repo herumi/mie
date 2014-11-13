@@ -74,9 +74,9 @@ private:
 	static fp::void3op add_;
 	static fp::void3op sub_;
 	static fp::void3op mul_;
-	static fp::void3op div_;
 	static fp::void2op inv_;
 	static fp::void2op neg_;
+	static fp::void2op square_;
 	static mpz_class pOrg_;
 	static size_t pBitLen_;
 	static size_t N_;
@@ -84,11 +84,11 @@ private:
 
 	Unit v_[maxN];
 
-	void fillZero(Unit *x, size_t fromPos) const
+	static inline void fillZero(Unit *x, size_t fromPos)
 	{
 		for (size_t i = fromPos; i < N_; i++) x[i] = 0;
 	}
-	void copy(Unit *y, const Unit *x) const
+	static inline void copy(Unit *y, const Unit *x)
 	{
 		for (size_t i = 0; i < N_; i++) y[i] = x[i];
 	}
@@ -101,6 +101,12 @@ public:
 		pBitLen_ = Gmp::getBitLen(pOrg_);
 		N_ = Gmp::getRaw(p_, maxN, pOrg_);
 		if (N_ == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+		add_ = &addC;
+		sub_ = &subC;
+		mul_ = &mulC;
+		inv_ = &invC;
+		neg_ = &negC;
+		square_ = &squareC;
 	}
 	FpT() {}
 	FpT(const FpT& x)
@@ -179,22 +185,15 @@ public:
 	static inline void add(FpT& z, const FpT& x, const FpT& y) { add_(z.v_, x.v_, y.v_); }
 	static inline void sub(FpT& z, const FpT& x, const FpT& y) { sub_(z.v_, x.v_, y.v_); }
 	static inline void mul(FpT& z, const FpT& x, const FpT& y) { mul_(z.v_, x.v_, y.v_); }
+	static inline void inv(FpT& y, const FpT& x) { inv_(y.v_, x.v_); }
+	static inline void neg(FpT& y, const FpT& x) { neg_(y.v_, x.v_); }
+	static inline void square(FpT& y, const FpT& x) { square_(y.v_, x.v_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
 		FpT rev;
 		inv(rev, y);
 		mul(z, x, rev);
 	}
-	static inline void neg(FpT& z, const FpT& x)
-	{
-		if (x.isZero()) {
-			z.clear();
-		} else {
-			sub_(z.v_, p_, x.v_);
-		}
-	}
-	static inline void inv(FpT& z, const FpT& x) { inv_(z.v_, x.v_); }
-
 	bool isZero() const
 	{
 		for (size_t i = 0; i < N_; i++) {
@@ -233,6 +232,75 @@ public:
 		if (greaterArray(v_, p_)) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getBitVecSize() { return pBitLen_; }
+	static inline void addC(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_class tx, ty;
+		Gmp::setRaw(tx, x, N_);
+		Gmp::setRaw(ty, y, N_);
+		tx += ty;
+		mpz_class tz = tx - pOrg_;
+		if (tz < 0) {
+			toArray(z, tx);
+		} else {
+			toArray(z, tz);
+		}
+	}
+	static inline void subC(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_class tx, ty;
+		Gmp::setRaw(tx, x, N_);
+		Gmp::setRaw(ty, y, N_);
+		tx -= ty;
+		if (tx < 0) {
+			tx += pOrg_;
+		}
+		toArray(z, tx);
+	}
+	static inline void mulC(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_class tx, ty;
+		Gmp::setRaw(tx, x, N_);
+		Gmp::setRaw(ty, y, N_);
+		tx *= ty;
+		tx %= pOrg_;
+		toArray(z, tx);
+	}
+	static inline void invC(Unit *y, const Unit *x)
+	{
+		mpz_class t;
+		Gmp::setRaw(t, x, N_);
+		Gmp::invMod(t, t, pOrg_);
+		toArray(y, t);
+	}
+	static inline void negC(Unit *y, const Unit *x)
+	{
+		mpz_class t;
+		Gmp::setRaw(t, x, N_);
+		if (t == 0) {
+			fillZero(y, 0);
+			return;
+		}
+		t = pOrg_ - t;
+		toArray(y, t);
+	}
+	static inline void squareC(Unit *y, const Unit *x)
+	{
+		mpz_class t;
+		Gmp::setRaw(t, x, N_);
+		t *= t;
+		t %= pOrg_;
+		toArray(y, t);
+	}
+	/*
+		x[2 * N_] mod p -> y[N_]
+	*/
+	static inline void modC(Unit *y, const Unit *x)
+	{
+		mpz_class t;
+		Gmp::setRaw(t, x, N_ * 2);
+		t %= pOrg_;
+		toArray(y, t);
+	}
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
@@ -253,10 +321,10 @@ private:
 template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::add_;
 template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::sub_;
 template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::mul_;
-template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::div_;
 
-template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::neg_;
 template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::inv_;
+template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::neg_;
+template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::square_;
 
 template<size_t maxBitLen, class tag> mpz_class FpT<maxBitLen, tag>::pOrg_;
 template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::pBitLen_;
