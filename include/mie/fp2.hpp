@@ -35,36 +35,107 @@ void maskBuffer(S* buf, size_t bufN, size_t bitLen)
 	if (rem > 0) buf[n - 1] &= (S(1) << rem) - 1;
 }
 
+#if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
+typedef uint32_t Unit;
+#else
+typedef uint64_t Unit;
+#endif
+
+// add/sub without carry. return true if overflow
+typedef bool (*bool3op)(Unit*, const Unit*, const Unit*);
+
+// add/sub with mod
+typedef void (*void3op)(Unit*, const Unit*, const Unit*);
+
+// mul without carry. return top of z
+typedef Unit (*uint3opI)(Unit*, const Unit*, Unit);
+
+// neg
+typedef void (*void2op)(Unit*, const Unit*);
+
+// preInv
+typedef int (*int2op)(Unit*, const Unit*);
+
 } // fp
 
 namespace fp_local {
+
 struct TagDefault;
+
 } // fp_local
 
-template<size_t maxN, class tag = fp_local::TagDefault>
+template<size_t maxBitLen, class tag = fp_local::TagDefault>
 class FpT {
-	void fillZero(uint64_t *p, size_t fromPos) const
+public:
+	typedef fp::Unit Unit;
+	static const size_t UnitSize = sizeof(Unit);
+	static const size_t maxN = (maxBitLen + UnitSize * 8 - 1) / (UnitSize * 8);
+private:
+	static fp::void3op add_;
+	static fp::void3op sub_;
+	static fp::void3op mul_;
+	static fp::void3op div_;
+	static fp::void2op inv_;
+	static fp::void2op neg_;
+	static mpz_class pOrg_;
+	static size_t pBitLen_;
+	static size_t N_;
+	static Unit p_[maxN];
+
+	Unit v_[maxN];
+
+	void fillZero(Unit *x, size_t fromPos) const
 	{
-		for (size_t i = fromPos; i < N_; i++) p[i] = 0;
+		for (size_t i = fromPos; i < N_; i++) x[i] = 0;
+	}
+	void copy(Unit *y, const Unit *x) const
+	{
+		for (size_t i = 0; i < N_; i++) y[i] = x[i];
 	}
 public:
 	FpT() {}
+	FpT(const FpT& x)
+	{
+		copy(v_, x.v_);
+	}
+	FpT& operator=(const FpT& x)
+	{
+		copy(v_, x.v_);
+		return *this;
+	}
+	void clear()
+	{
+		fillZero(v_, 0);
+	}
 	FpT(int x) { operator=(x); }
-
+	explicit FpT(const std::string& str, int base = 0)
+	{
+		fromStr(str, base);
+	}
 	FpT& operator=(int x)
 	{
-		if (x >= 0) {
-			v_[0] = x;
-			fillZero(v_, 1);
+		if (x == 0) {
+			clear();
 		} else {
-			assert(pOrg_ >= -x);
-			v_[0] = -x;
+			v_[0] = abs(x);
 			fillZero(v_, 1);
-			neg();
+			if (x < 0) sub_(v_, p_, v_);
 		}
 		return *this;
 	}
-
+	void fromStr(const std::string& str, int base = 0)
+	{
+		bool isMinus;
+		mpz_class x;
+		inFromStr(x, &isMinus, str, base);
+		if (x >= pOrg_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
+		toArray(v_, x);
+		if (isMinus) {
+			neg(*this, *this);
+		}
+	}
+	// alias of fromStr
+	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		bool isMinus;
@@ -74,21 +145,6 @@ public:
 		N_ = Gmp::getRaw(p_, maxN, pOrg_);
 		if (N_ == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 	}
-#if 0
-	explicit FpT(const std::string& str, int base = 0)
-	{
-		fromStr(str, base);
-	}
-	void fromStr(const std::string& str, int base = 0)
-	{
-		bool isMinus;
-		inFromStr(v_, &isMinus, str, base);
-		if (v_ >= p_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
-		if (isMinus) {
-			neg(*this, *this);
-		}
-	}
-	void set(const std::string& str, int base = 0) { fromStr(str, base); }
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
 		switch (base) {
@@ -111,91 +167,80 @@ public:
 		toStr(str, base, withPrefix);
 		return str;
 	}
-	void clear()
-	{
-		T::clear(v_);
-	}
 	template<class RG>
 	void setRand(RG& rg)
 	{
-		std::vector<uint64_t> buf(fp::getRoundNum<uint64_t>(pBitLen_));
-		fp::getRandVal(buf.data(), rg, T::getBlock(p_), pBitLen_);
-		T::setRaw(v_, buf.data(), buf.size());
+		fp::getRandVal(v_, rg, p_, pBitLen_);
 	}
-	/*
-		ignore the value of inBuf over modulo
-	*/
-	template<class S>
-	void setRaw(const S *inBuf, size_t n)
-	{
-		n = std::min(n, fp::getRoundNum<S>(pBitLen_));
-		if (n == 0) {
-			clear();
-			return;
-		}
-		std::vector<S> buf(inBuf, inBuf + n);
-		setMaskMod(buf);
-	}
-	static inline void getModulo(std::string& mstr)
-	{
-		T::toStr(mstr, p_);
-	}
-	static inline void add(FpT& z, const FpT& x, const FpT& y) { T::addMod(z.v_, x.v_, y.v_, p_); }
-	static inline void sub(FpT& z, const FpT& x, const FpT& y) { T::subMod(z.v_, x.v_, y.v_, p_); }
-	static inline void mul(FpT& z, const FpT& x, const FpT& y) { T::mulMod(z.v_, x.v_, y.v_, p_); }
-	static inline void square(FpT& z, const FpT& x) { T::squareMod(z.v_, x.v_, p_); }
-
-	static inline void add(FpT& z, const FpT& x, unsigned int y) { T::addMod(z.v_, x.v_, y, p_); }
-	static inline void sub(FpT& z, const FpT& x, unsigned int y) { T::subMod(z.v_, x.v_, y, p_); }
-	static inline void mul(FpT& z, const FpT& x, unsigned int y) { T::mulMod(z.v_, x.v_, y, p_); }
-#endif
-
-#if 0
-	static inline void inv(FpT& z, const FpT& x) { T::invMod(z.v_, x.v_, p_); }
+	static inline void add(FpT& z, const FpT& x, const FpT& y) { add_(z.v_, x.v_, y.v_); }
+	static inline void sub(FpT& z, const FpT& x, const FpT& y) { sub_(z.v_, x.v_, y.v_); }
+	static inline void mul(FpT& z, const FpT& x, const FpT& y) { mul_(z.v_, x.v_, y.v_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
-		ImplType rev;
-		T::invMod(rev, y.v_, p_);
-		T::mulMod(z.v_, x.v_, rev, p_);
+		FpT rev;
+		inv(rev, y);
+		mul(z, x, rev);
 	}
 	static inline void neg(FpT& z, const FpT& x)
 	{
 		if (x.isZero()) {
 			z.clear();
 		} else {
-			T::sub(z.v_, p_, x.v_);
+			sub_(z.v_, p_, x.v_);
 		}
 	}
-	static inline uint64_t getBlock(const FpT& x, size_t i)
+	static inline void inv(FpT& z, const FpT& x) { inv_(z.v_, x.v_); }
+
+	bool isZero() const
 	{
-		return T::getBlock(x.v_, i);
+		for (size_t i = 0; i < N_; i++) {
+			if (v_[i]) return false;
+		}
+		return true;
 	}
-	static inline const uint64_t *getBlock(const FpT& x)
+	bool operator==(const FpT& rhs) const
 	{
-		return T::getBlock(x.v_);
+		for (size_t i = 0; i < N_; i++) {
+			if (v_[i] != rhs.v_[i]) return false;
+		}
+		return true;
 	}
-	static inline size_t getBlockSize(const FpT& x)
+	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
+
+	static inline size_t getModBitLen() { return pBitLen_; }
+	/*
+		append to bv(not clear bv)
+	*/
+	void appendToBitVec(cybozu::BitVector& bv) const
 	{
-		return T::getBlockSize(x.v_);
+		const size_t len = bv.size();
+		bv.append(v_, N * UnitSize * 8);
+		bv.resize(len + pBitLen_); // zero extend if necessary
 	}
-	static inline int compare(const FpT& x, const FpT& y)
+	void fromBitVec(const cybozu::BitVector& bv)
 	{
-		return T::compare(x.v_, y.v_);
+		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
+		T::setRaw(v_, bv.getBlock(), bv.getBlockSize());
+		if (v_ >= p_) throw cybozu::Exception("FpT:fromBitVec:large x") << v_ << p_;
 	}
-	static inline bool isZero(const FpT& x)
+	static inline size_t getBitVecSize() { return pBitLen_; }
+private:
+	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
-		return T::isZero(x.v_);
+		const char *p = fp::verifyStr(isMinus, &base, str);
+		if (!Gmp::fromStr(x, p, base)) {
+			throw cybozu::Exception("fp:FpT:inFromStr") << str;
+		}
 	}
-	static inline size_t getBitLen(const FpT& x)
+	static inline void toArray(Unit *y, const mpz_class& x)
 	{
-		return T::getBitLen(x.v_);
+		const size_t n = Gmp::getBlockTypeSize(x);
+		assert(n <= N_);
+		Gmp::GetRaw(y, N_, x);
+		fillZero(y, n);
 	}
-	static inline void shr(FpT& z, const FpT& x, size_t n)
-	{
-		z.v_ = x.v_ >> n;
-	}
-	bool isZero() const { return isZero(*this); }
-	size_t getBitLen() const { return getBitLen(*this); }
+
+#if 0
 
 	template<class T2, class tag2>
 	static void power(FpT& z, const FpT& x, const FpT<T2, tag2>& y)
@@ -217,83 +262,21 @@ public:
 	{
 		power_impl::power(z, x, y);
 	}
-	static inline size_t getModBitLen() { return pBitLen_; }
-	const ImplType& getInnerValue() const { return v_; }
-	static inline uint64_t cvtInt(const FpT& x, bool *err = 0)
-	{
-		if (x > uint64_t(0xffffffffffffffffull)) {
-			if (err) {
-				*err = true;
-				return 0;
-			} else {
-				throw cybozu::Exception("fp:FpT:cvtInt:too large") << x;
-			}
-		}
-		if (err) *err = false;
-		if (sizeof(uint64_t) == 8) {
-			return isZero(x) ? 0 : getBlock(x, 0);
-		} else if (sizeof(uint64_t) == 4) {
-			uint64_t ret = getBlock(x, 0);
-			if (getBlockSize(x) == 2) {
-				ret += uint64_t(getBlock(x, 1)) << 32;
-			}
-			return ret;
-		} else {
-			fprintf(stderr, "fp:FpT:cvtInt:not implemented\n");
-			exit(1);
-		}
-	}
-	uint64_t cvtInt(bool *err = 0) const { return cvtInt(*this, err); }
-	/*
-		append to bv(not clear bv)
-	*/
-	void appendToBitVec(cybozu::BitVector& bv) const
-	{
-		const size_t len = bv.size();
-		bv.append(getBlock(*this), getBlockSize(*this) * sizeof(uint64_t) * 8);
-		bv.resize(len + getModBitLen()); // zero extend if necessary
-	}
-	void fromBitVec(const cybozu::BitVector& bv)
-	{
-		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
-		T::setRaw(v_, bv.getBlock(), bv.getBlockSize());
-		if (v_ >= p_) throw cybozu::Exception("FpT:fromBitVec:large x") << v_ << p_;
-	}
-	static inline size_t getBitVecSize() { return pBitLen_; }
-#endif
-private:
-	static mpz_class pOrg_;
-	static uint64_t p_[maxN];
-	static size_t pBitLen_;
-	static size_t N_;
-	uint64_t v_[maxN];
-	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
-	{
-		const char *p = fp::verifyStr(isMinus, &base, str);
-		if (!Gmp::fromStr(x, p, base)) {
-			throw cybozu::Exception("fp:FpT:inFromStr") << str;
-		}
-	}
-#if 0
-	template<class S>
-	void setMaskMod(std::vector<S>& buf)
-	{
-		assert(buf.size() <= fp::getRoundNum<S>(pBitLen_));
-		assert(!buf.empty());
-		fp::maskBuffer(&buf[0], buf.size(), pBitLen_);
-		T::setRaw(v_, &buf[0], buf.size());
-		if (v_ >= p_) {
-			T::sub(v_, v_, p_);
-		}
-		assert(v_ < p_);
-	}
 #endif
 };
 
-template<size_t maxN, class tag> mpz_class FpT<maxN, tag>::pOrg_;
-template<size_t maxN, class tag> uint64_t FpT<maxN, tag>::p_[maxN];
-template<size_t maxN, class tag> size_t FpT<maxN, tag>::pBitLen_;
-template<size_t maxN, class tag> size_t FpT<maxN, tag>::N_;
+template<size_t maxBiLen, class tag> void fp::void3op FpT<MaxBitLen, tag>::add_;
+template<size_t maxBiLen, class tag> void fp::void3op FpT<MaxBitLen, tag>::sub_;
+template<size_t maxBiLen, class tag> void fp::void3op FpT<MaxBitLen, tag>::mul_;
+template<size_t maxBiLen, class tag> void fp::void3op FpT<MaxBitLen, tag>::div_;
+
+template<size_t maxBiLen, class tag> void fp::void2op FpT<MaxBitLen, tag>::neg_;
+template<size_t maxBiLen, class tag> void fp::void2op FpT<MaxBitLen, tag>::inv_;
+
+template<size_t maxBitLen, class tag> mpz_class FpT<maxBitLen, tag>::pOrg_;
+template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::pBitLen_;
+template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::N_;
+template<size_t maxBitLen, class tag> uint64_t FpT<maxBitLen, tag>::p_[FpT<maxBitLen, tag>::maxN];
 
 } // mie
 

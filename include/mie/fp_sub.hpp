@@ -12,11 +12,10 @@
 
 namespace mie { namespace fp {
 
-template<class Tag>
+template<size_t N>
 struct Operation {
-	static mpz_class p;
-	static size_t N;
-	static inline void clear(BlockType *x)
+	mpz_class p;
+	void clear(BlockType *x)
 	{
 		for (size_t i = 0; i < N; i++) x[i] = 0;
 	}
