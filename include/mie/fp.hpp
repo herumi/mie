@@ -15,6 +15,7 @@
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
 #include <mie/fp_util.hpp>
+#include <mie/gmp_util.hpp>
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable : 4127)
@@ -137,6 +138,28 @@ public:
 		if (isMinus) throw cybozu::Exception("fp:FpT:setModulo:mstr is not minus") << mstr;
 		modBitLen_ = T::getBitLen(m_);
 		opt_.init(m_);
+		mpz_class p;
+		mie::Gmp::fromStr(p, mstr, base);
+		if ((p & 3) == 3) {
+			is_p3mod4_ = true;
+			pp1d4_ = (p + 1) / 4;
+		} else {
+			is_p3mod4_ = false;
+		}
+	}
+	static inline bool isYodd(const FpT& y)
+	{
+		if (y.isZero()) return false;
+		return (getBlock(y)[0] & 1) == 1;
+	}
+	static inline bool canSquareRoot()
+	{
+		return is_p3mod4_;
+	}
+	static inline void squareRoot(FpT& y, const FpT& x)
+	{
+		assert(opt_.hasPowMod());
+		opt_.powMod(y.v, x.v, pp1d4_, m_);
 	}
 	static inline void getModulo(std::string& mstr)
 	{
@@ -264,6 +287,8 @@ public:
 private:
 	static ImplType m_;
 	static size_t modBitLen_;
+	static bool is_p3mod4_; // p mod 4 == 3
+	static mpz_class pp1d4_; // (p + 1) / 4
 	ImplType v;
 	static inline void inFromStr(ImplType& t, bool *isMinus, const std::string& str, int base)
 	{
@@ -290,6 +315,10 @@ template<class T, class tag>
 typename T::ImplType FpT<T, tag>::m_;
 template<class T, class tag>
 size_t FpT<T, tag>::modBitLen_;
+template<class T, class tag>
+bool FpT<T, tag>::is_p3mod4_;
+template<class T, class tag>
+mpz_class FpT<T, tag>::pp1d4_;
 
 template<class T, class tag>
 mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
