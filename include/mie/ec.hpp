@@ -11,6 +11,7 @@
 #include <cybozu/bitvector.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
+#include <mie/gmp_util.hpp>
 
 namespace mie {
 
@@ -490,6 +491,18 @@ public:
 			return bitLen + 2;
 		} else {
 			return bitLen * 2 + 1;;
+		}
+	}
+	static inline void getYfromX(Fp& y, const Fp& x, bool isYodd)
+	{
+		Fp t;
+		Fp::square(t, x);
+		t += a_;
+		t *= x;
+		t += b_;
+		Fp::squareRoot(y, t);
+		if (Fp::isYodd(y) ^ isYodd) {
+			Fp::neg(y, y);
 		}
 	}
 };

@@ -141,7 +141,26 @@ struct Test {
 			R -= P;
 		}
 	}
-
+	void squareRoot() const
+	{
+		Fp x(para.gx);
+		Fp y(para.gy);
+		if (!Fp::canSquareRoot()) {
+			puts("not support canSquareRoot");
+			return;
+		}
+		bool odd = Fp::isYodd(y);
+		printf("isYodd=%d\n", odd);
+		Fp yy;
+		Ec::getYfromX(yy, x, odd);
+		CYBOZU_TEST_EQUAL(yy, y);
+		Fp::neg(y, y);
+		odd = Fp::isYodd(y);
+		printf("isYodd=%d\n", odd);
+		yy.clear();
+		Ec::getYfromX(yy, x, odd);
+		CYBOZU_TEST_EQUAL(yy, y);
+	}
 	void power_fp() const
 	{
 		Fp x(para.gx);
@@ -236,6 +255,7 @@ pow 499.00usec
 		neg_power();
 		power_fp();
 		binaryExpression();
+		squareRoot();
 #ifdef NDEBUG
 		bench();
 #endif
