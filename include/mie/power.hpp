@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <cybozu/bit_operation.hpp>
 #include <mie/tagmultigr.hpp>
+#include <gmpxx.h>
 
 namespace mie {
 
@@ -76,6 +77,27 @@ struct TagInt<size_t> {
 		return x == 0 ? 1 : cybozu::bsr<size_t>(x);
 	}
 	static void shr(size_t& x, size_t n)
+	{
+		x >>= n;
+	}
+};
+
+template<>
+struct TagInt<mpz_class> {
+	typedef mp_limb_t BlockType;
+	static size_t getBlockSize(const mpz_class& x)
+	{
+		return x.get_mpz_t()->_mp_size;
+	}
+	static BlockType getBlock(const mpz_class& x, size_t i)
+	{
+		return x.get_mpz_t()->_mp_d[i];
+	}
+	static size_t getBitLen(const mpz_class& x)
+	{
+		return mpz_sizeinbase(x.get_mpz_t(), 2);
+	}
+	static void shr(mpz_class& x, size_t n)
 	{
 		x >>= n;
 	}
