@@ -146,7 +146,7 @@ struct Test {
 		Fp x(para.gx);
 		Fp y(para.gy);
 		if (!Fp::canSquareRoot()) {
-			puts("not support canSquareRoot");
+			puts("not support squareRoot");
 			return;
 		}
 		bool odd = Fp::isYodd(y);
@@ -180,6 +180,33 @@ struct Test {
 		Fp y(para.gy);
 		Ec P(x, y);
 		Ec Q;
+		Ec::setCompressedBitVec(false);
+		{
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		{
+			P = -P;
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		P.clear();
+		{
+			cybozu::BitVector bv;
+			P.appendToBitVec(bv);
+			Q.fromBitVec(bv);
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		if (!Ec::setCompressedBitVec(true)) {
+			puts("compressedBitVec is not supported");
+			return;
+		}
+		puts("compressedBitVec test");
+		P.set(x, y);
 		{
 			cybozu::BitVector bv;
 			P.appendToBitVec(bv);

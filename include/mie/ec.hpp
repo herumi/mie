@@ -427,9 +427,14 @@ public:
 		}
 		return is;
 	}
-	static inline void setCompressedBitVec(bool compressedBitVec)
+	/*
+		return false if not supported
+	*/
+	static inline bool setCompressedBitVec(bool compressedBitVec)
 	{
+		if (compressedBitVec && !Fp::canSquareRoot()) return false;
 		compressedBitVec_ = compressedBitVec;
+		return compressedBitVec_;
 	}
 	/*
 		append to bv(not clear bv)
@@ -439,24 +444,25 @@ public:
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
-		if (compressedBitVec_) {
-			throw cybozu::Exception("MontFpT:appendToBitVe:not support compress");
-		}
 		normalize();
-		/*
-			elem |x|y|z|
-			size  n n 1
-		*/
 		const size_t bitLen = _Fp::getModBitLen();
-		const size_t totalBitLen = bitLen * 2 + 1;
+		/*
+				elem |x|y|z|
+				size  n n 1 if not compressed
+				size  n 1 1 if compressed
+		*/
+		const size_t maxBitLen = compressedBitVec_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
 		if (isZero()) {
-			bv.resize(bv.size() + totalBitLen);
+			bv.resize(bv.size() + maxBitLen);
 			return;
 		}
 		x.appendToBitVec(bv);
-		y.appendToBitVec(bv);
-		uint64_t z = 1;
-		bv.append(&z, 1); // z = 1
+		if (compressedBitVec_) {
+			bv.append(Fp::isYodd(y), 1);
+		} else {
+			y.appendToBitVec(bv);
+		}
+		bv.append(1, 1); // z = 1
 #endif
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
@@ -464,23 +470,25 @@ public:
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		#error "not implemented"
 #else
-		if (compressedBitVec_) {
-			throw cybozu::Exception("EcT:fromBitVec:not support");
-		}
 		const size_t bitLen = _Fp::getModBitLen();
-		const size_t maxBitLen = bitLen * 2 + 1;
+		const size_t maxBitLen = compressedBitVec_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
 		if (bv.size() != maxBitLen) {
 			throw cybozu::Exception("EcT:fromBitVec:bad size") << bv.size() << maxBitLen;
 		}
-		if (!bv.get(maxBitLen - 1)) {
+		if (!bv.get(maxBitLen - 1)) { // if z = 0
 			clear();
 			return;
 		}
 		cybozu::BitVector t;
 		bv.extract(t, 0, bitLen);
 		x.fromBitVec(t);
-		bv.extract(t, bitLen, bitLen);
-		y.fromBitVec(t);
+		if (compressedBitVec_) {
+			bool odd = bv.get(bitLen); // y
+			getYfromX(y, x, odd);
+		} else {
+			bv.extract(t, bitLen, bitLen);
+			y.fromBitVec(t);
+		}
 		z = 1;
 #endif
 	}
