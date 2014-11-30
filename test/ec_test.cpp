@@ -180,7 +180,7 @@ struct Test {
 		Fp y(para.gy);
 		Ec P(x, y);
 		Ec Q;
-		Ec::setCompressedBitVec(false);
+		Ec::setCompressedExpression(false);
 		{
 			cybozu::BitVector bv;
 			P.appendToBitVec(bv);
@@ -201,11 +201,11 @@ struct Test {
 			Q.fromBitVec(bv);
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
-		if (!Ec::setCompressedBitVec(true)) {
-			puts("compressedBitVec is not supported");
+		if (!Ec::setCompressedExpression(true)) {
+			puts("compressedExpression is not supported");
 			return;
 		}
-		puts("compressedBitVec test");
+		puts("compressedExpression test");
 		P.set(x, y);
 		{
 			cybozu::BitVector bv;

@@ -50,7 +50,7 @@ public:
 	static Fp a_;
 	static Fp b_;
 	static int specialA_;
-	static bool compressedBitVec_;
+	static bool compressedExpression_;
 #if MIE_EC_COORD == MIE_EC_USE_AFFINE
 	EcT() : inf_(true) {}
 #else
@@ -430,11 +430,11 @@ public:
 	/*
 		return false if not supported
 	*/
-	static inline bool setCompressedBitVec(bool compressedBitVec)
+	static inline bool setCompressedExpression(bool compressedExpression)
 	{
-		if (compressedBitVec && !Fp::canSquareRoot()) return false;
-		compressedBitVec_ = compressedBitVec;
-		return compressedBitVec_;
+		if (compressedExpression && !Fp::canSquareRoot()) return false;
+		compressedExpression_ = compressedExpression;
+		return compressedExpression_;
 	}
 	/*
 		append to bv(not clear bv)
@@ -451,13 +451,13 @@ public:
 				size  n n 1 if not compressed
 				size  n 1 1 if compressed
 		*/
-		const size_t maxBitLen = compressedBitVec_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
+		const size_t maxBitLen = compressedExpression_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
 		if (isZero()) {
 			bv.resize(bv.size() + maxBitLen);
 			return;
 		}
 		x.appendToBitVec(bv);
-		if (compressedBitVec_) {
+		if (compressedExpression_) {
 			bv.append(Fp::isYodd(y), 1);
 		} else {
 			y.appendToBitVec(bv);
@@ -471,7 +471,7 @@ public:
 		#error "not implemented"
 #else
 		const size_t bitLen = _Fp::getModBitLen();
-		const size_t maxBitLen = compressedBitVec_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
+		const size_t maxBitLen = compressedExpression_ ? (bitLen + 1 + 1) : (bitLen * 2 + 1);
 		if (bv.size() != maxBitLen) {
 			throw cybozu::Exception("EcT:fromBitVec:bad size") << bv.size() << maxBitLen;
 		}
@@ -482,7 +482,7 @@ public:
 		cybozu::BitVector t;
 		bv.extract(t, 0, bitLen);
 		x.fromBitVec(t);
-		if (compressedBitVec_) {
+		if (compressedExpression_) {
 			bool odd = bv.get(bitLen); // y
 			getYfromX(y, x, odd);
 		} else {
@@ -495,7 +495,7 @@ public:
 	static inline size_t getBitVecSize()
 	{
 		const size_t bitLen = _Fp::getModBitLen();
-		if (compressedBitVec_) {
+		if (compressedExpression_) {
 			return bitLen + 2;
 		} else {
 			return bitLen * 2 + 1;;
@@ -542,7 +542,7 @@ struct TagMultiGr<EcT<T> > {
 template<class _Fp> _Fp EcT<_Fp>::a_;
 template<class _Fp> _Fp EcT<_Fp>::b_;
 template<class _Fp> int EcT<_Fp>::specialA_;
-template<class _Fp> bool EcT<_Fp>::compressedBitVec_;
+template<class _Fp> bool EcT<_Fp>::compressedExpression_;
 
 struct EcParam {
 	const char *name;
