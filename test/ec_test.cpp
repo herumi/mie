@@ -150,13 +150,11 @@ struct Test {
 			return;
 		}
 		bool odd = Fp::isYodd(y);
-		printf("isYodd=%d\n", odd);
 		Fp yy;
 		Ec::getYfromX(yy, x, odd);
 		CYBOZU_TEST_EQUAL(yy, y);
 		Fp::neg(y, y);
 		odd = Fp::isYodd(y);
-		printf("isYodd=%d\n", odd);
 		yy.clear();
 		Ec::getYfromX(yy, x, odd);
 		CYBOZU_TEST_EQUAL(yy, y);
@@ -176,10 +174,12 @@ struct Test {
 	}
 	void binaryExpression() const
 	{
-		Fp x(para.gx);
-		Fp y(para.gy);
+		puts("test binaryExpression");
+		const Fp x(para.gx);
+		const Fp y(para.gy);
 		Ec P(x, y);
 		Ec Q;
+		// not compressed
 		Ec::setCompressedExpression(false);
 		{
 			cybozu::BitVector bv;
@@ -201,11 +201,11 @@ struct Test {
 			Q.fromBitVec(bv);
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
+		// compressed
 		if (!Ec::setCompressedExpression(true)) {
 			puts("compressedExpression is not supported");
 			return;
 		}
-		puts("compressedExpression test");
 		P.set(x, y);
 		{
 			cybozu::BitVector bv;
@@ -225,6 +225,61 @@ struct Test {
 			cybozu::BitVector bv;
 			P.appendToBitVec(bv);
 			Q.fromBitVec(bv);
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+	}
+	void str() const
+	{
+		puts("test str");
+		const Fp x(para.gx);
+		const Fp y(para.gy);
+		Ec P(x, y);
+		Ec Q;
+		// not compressed
+		Ec::setCompressedExpression(false);
+		{
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		{
+			P = -P;
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		P.clear();
+		{
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		// compressed
+		if (!Ec::setCompressedExpression(true)) {
+			return;
+		}
+		P.set(x, y);
+		{
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		{
+			P = -P;
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
+			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		P.clear();
+		{
+			std::stringstream ss;
+			ss << P;
+			ss >> Q;
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 	}
@@ -283,6 +338,7 @@ pow 499.00usec
 		power_fp();
 		binaryExpression();
 		squareRoot();
+		str();
 #ifdef NDEBUG
 		bench();
 #endif

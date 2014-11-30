@@ -404,7 +404,12 @@ public:
 			return os << '0';
 		} else {
 			self.normalize();
-			return os << self.x.toStr(16) << '_' << self.y.toStr(16);
+			os << self.x.toStr(16) << '_';
+			if (compressedExpression_) {
+				return os << Fp::isYodd(self.y);
+			} else {
+				return os << self.y.toStr(16);
+			}
 		}
 	}
 	friend inline std::istream& operator>>(std::istream& is, EcT& self)
@@ -420,10 +425,20 @@ public:
 			self.z = 1;
 #endif
 			size_t pos = str.find('_');
-			if (pos == std::string::npos) throw cybozu::Exception("EcT:bad format") << str;
+			if (pos == std::string::npos) throw cybozu::Exception("EcT:operator>>:bad format") << str;
 			str[pos] = '\0';
 			self.x.fromStr(&str[0], 16);
-			self.y.fromStr(&str[pos + 1], 16);
+			if (compressedExpression_) {
+				const char c = str[pos + 1];
+				if ((c == '0' || c == '1') && str.size() == pos + 2) {
+					getYfromX(self.y, self.x, c == '1');
+				} else {
+					str[pos] = '_';
+					throw cybozu::Exception("EcT:operator>>:bad y") << str;
+				}
+			} else {
+				self.y.fromStr(&str[pos + 1], 16);
+			}
 		}
 		return is;
 	}
