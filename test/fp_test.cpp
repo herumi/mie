@@ -468,7 +468,6 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		CYBOZU_TEST_EQUAL(bv.size(), Fp::getBitVecSize());
 		const Fp::BlockType *block = bv.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
-			CYBOZU_TEST_EQUAL(bv.getBlockSize(), tbl[i].n);
 			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, tbl[i].n);
 		} else {
 			const size_t n = (tbl[i].n + 1) / 2;

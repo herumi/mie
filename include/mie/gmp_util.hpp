@@ -57,7 +57,11 @@ namespace mie {
 
 struct Gmp {
 	typedef mpz_class ImplType;
-	typedef mp_limb_t BlockType;
+#if CYBOZU_OS_BIT == 64
+	typedef uint64_t BlockType;
+#else
+	typedef uint32_t BlockType;
+#endif
 	// z = [buf[n-1]:..:buf[1]:buf[0]]
 	// eg. buf[] = {0x12345678, 0xaabbccdd}; => z = 0xaabbccdd12345678;
 	template<class T>
@@ -241,7 +245,7 @@ struct Gmp {
 	}
 	static inline const BlockType *getBlock(const mpz_class& x)
 	{
-		return x.get_mpz_t()->_mp_d;
+		return reinterpret_cast<const BlockType*>(x.get_mpz_t()->_mp_d);
 	}
 	static inline size_t getBlockSize(const mpz_class& x)
 	{
