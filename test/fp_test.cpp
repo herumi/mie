@@ -1,7 +1,6 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
 #include <cybozu/test.hpp>
 #include <mie/fp.hpp>
-#include <mie/gmp_util.hpp>
 #include <cybozu/benchmark.hpp>
 #include <time.h>
 

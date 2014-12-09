@@ -13,9 +13,9 @@
 #include <cybozu/atoi.hpp>
 #include <cybozu/bitvector.hpp>
 #include <mie/operator.hpp>
-#include <mie/power.hpp>
-#include <mie/fp_util.hpp>
 #include <mie/gmp_util.hpp>
+#include <mie/fp_util.hpp>
+#include <mie/power.hpp>
 #ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable : 4127)
@@ -341,6 +341,6 @@ struct hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, si
 
 CYBOZU_NAMESPACE_TR1_END } // std::tr1
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 	#pragma warning(pop)
 #endif

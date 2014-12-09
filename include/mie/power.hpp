@@ -9,7 +9,19 @@
 #include <assert.h>
 #include <cybozu/bit_operation.hpp>
 #include <mie/tagmultigr.hpp>
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable : 4616)
+	#pragma warning(disable : 4800)
+	#pragma warning(disable : 4244)
+	#pragma warning(disable : 4127)
+	#pragma warning(disable : 4512)
+	#pragma warning(disable : 4146)
+#endif
 #include <gmpxx.h>
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif
 
 namespace mie {
 
@@ -145,4 +157,3 @@ void power(G& z, const G& x, const F& _y)
 }
 
 } } // mie::power_impl
-

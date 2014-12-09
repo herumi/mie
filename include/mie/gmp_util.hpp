@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <assert.h>
-#ifdef _WIN32
+#ifdef _MSC_VER
 	#pragma warning(push)
 	#pragma warning(disable : 4616)
 	#pragma warning(disable : 4800)
@@ -21,10 +21,10 @@
 #endif
 #include <gmpxx.h>
 #include <stdint.h>
-#ifdef _WIN32
+#ifdef _MSC_VER
 	#pragma warning(pop)
 #endif
-#ifdef _WIN32
+#ifdef _MSC_VER
 #if _MSC_VER == 1900
 #ifdef _DEBUG
 #pragma comment(lib, "14/mpird.lib")
