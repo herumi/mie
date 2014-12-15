@@ -24,6 +24,13 @@ CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -W
 CFLAGS+= -g -D_FILE_OFFSET_BITS=64
 CFLAGS+=$(CFLAGS_WARN)
 BIT?=64
+ifeq ($(BIT),32)
+  CPU?=x86
+else
+  ifeq ($(BIT),64)
+    CPU?=x64
+  endif
+endif
 ifeq ($(BIT),0)
 	BIT_OPT=
 else
@@ -56,14 +63,14 @@ endif
 
 ####################################################
 
-LDFLAGS += -lpthread -lssl -m$(BIT) -lgmp -lgmpxx
+LDFLAGS += -lpthread -m$(BIT) -lgmp -lgmpxx
 
 ####################################################
 
 TOPDIR:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))/
 EXTDIR:=$(TOPDIR)../cybozulib_ext/
-CFLAGS+= -I$(TOPDIR)include -I$(TOPDIR)../cybozulib/include/ -I$(TOPDIR)../xbyak/ $(BIT_OPT)
-LDFLAGS+= -L$(TOPDIR)lib $(BIT_OPT) -Wl,-rpath,'$$ORIGIN/../lib'
+CFLAGS+= -I$(TOPDIR)include -I$(TOPDIR)../cybozulib/include/ -I$(TOPDIR)../xbyak/ $(BIT_OPT) $(INC_DIR)
+LDFLAGS+= -L$(TOPDIR)lib $(BIT_OPT) -Wl,-rpath,'$$ORIGIN/../lib' $(LD_DIR)
 
 MKDEP = sh -ec '$(PRE)$(CC) -MM $(CFLAGS) $< | sed "s@\($*\)\.o[ :]*@$(OBJDIR)/\1.o $@ : @g" > $@; [ -s $@ ] || rm -f $@; touch $@'
 

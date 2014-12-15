@@ -7,7 +7,10 @@ endif
 TARGET=$(TEST_FILE)
 LIBS=
 
-SRC=$(wildcard *.cpp)
+SRC=fp_test.cpp ec_test.cpp fp_util_test.cpp math_test.cpp paillier_test.cpp
+ifeq ($(CPU),x64)
+  SRC+=fp_generator_test.cpp mont_fp_test.cpp
+endif
 
 all: $(TARGET)
 
