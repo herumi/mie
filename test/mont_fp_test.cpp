@@ -57,7 +57,7 @@ struct Montgomery {
 		z = x * y;
 		for (size_t i = 0; i < pn_; i++) {
 			BlockType q = mie::Gmp::getBlock(z, 0) * pp_;
-			z += p_ * q;
+			z += p_ * (mp_limb_t)q;
 			z >>= sizeof(BlockType) * 8;
 		}
 		if (z >= p_) {
@@ -438,7 +438,7 @@ struct Test {
 		Fp x;
 		x = 12345;
 		uint64_t y = x.cvtInt();
-		CYBOZU_TEST_EQUAL(y, 12345);
+		CYBOZU_TEST_EQUAL(y, 12345u);
 		x.fromStr("123456789012342342342342342");
 		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
 		bool err = false;

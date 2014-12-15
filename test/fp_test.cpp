@@ -437,7 +437,7 @@ CYBOZU_TEST_AUTO(toStr)
 		Fp x;
 		x = 12345;
 		uint64_t y = x.cvtInt();
-		CYBOZU_TEST_EQUAL(y, 12345);
+		CYBOZU_TEST_EQUAL(y, 12345u);
 		x.fromStr("123456789012342342342342342");
 		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
 		bool err = false;
