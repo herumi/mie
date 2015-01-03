@@ -460,7 +460,7 @@ namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
 template<size_t N, class tag>
-struct hash<mie::MontFpT<N, tag> > : public std::unary_function<mie::MontFpT<N, tag>, size_t> {
+struct hash<mie::MontFpT<N, tag> > {
 	size_t operator()(const mie::MontFpT<N, tag>& x, uint64_t v = 0) const
 	{
 		return static_cast<size_t>(cybozu::hash64(x.getInnerValue(), N, v));

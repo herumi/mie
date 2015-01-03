@@ -573,11 +573,10 @@ struct EcParam {
 } // mie
 
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
-
 template<class T> struct hash;
 
 template<class _Fp>
-struct hash<mie::EcT<_Fp> > : public std::unary_function<mie::EcT<_Fp>, size_t> {
+struct hash<mie::EcT<_Fp> > {
 	size_t operator()(const mie::EcT<_Fp>& P) const
 	{
 		if (P.isZero()) return 0;

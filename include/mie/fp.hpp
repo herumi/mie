@@ -329,7 +329,7 @@ namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
 template<class T, class tag>
-struct hash<mie::FpT<T, tag> > : public std::unary_function<mie::FpT<T, tag>, size_t> {
+struct hash<mie::FpT<T, tag> > {
 	size_t operator()(const mie::FpT<T, tag>& x, uint64_t v = 0) const
 	{
 		typedef mie::FpT<T, tag> Fp;
