@@ -266,7 +266,7 @@ CYBOZU_TEST_AUTO(power)
 		z *= x;
 	}
 	typedef mie::FpT<mie::Gmp, tag2> Fp2;
-	Fp2::setModulo("1000");
+	Fp2::setModulo("1009");
 	x = 5;
 	Fp2 n = 3;
 	z = 3;

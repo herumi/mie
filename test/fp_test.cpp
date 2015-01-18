@@ -295,7 +295,7 @@ CYBOZU_TEST_AUTO(power)
 		z *= x;
 	}
 	typedef mie::FpT<mie::Gmp, tag2> Fp2;
-	Fp2::setModulo("1000");
+	Fp2::setModulo("1009");
 	x = 5;
 	Fp2 n = 3;
 	z = 3;
@@ -345,7 +345,7 @@ CYBOZU_TEST_AUTO(another)
 
 CYBOZU_TEST_AUTO(setRaw)
 {
-	Fp::setModulo("1000000000000000000000");
+	Fp::setModulo("1000000000000000000117");
 	char b1[] = { 0x56, 0x34, 0x12 };
 	Fp x;
 	x.setRaw(b1, 3);
@@ -356,17 +356,17 @@ CYBOZU_TEST_AUTO(setRaw)
 	x.fromStr("0xffffffffffff");
 	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 
-	Fp::setModulo("0x1000000000000123456789");
+	Fp::setModulo("0x10000000000001234567a5");
 	const struct {
 		uint32_t buf[3];
 		size_t bufN;
 		const char *expected;
 	} tbl[] = {
-		{ { 0x23456788, 0x00000001, 0x00100000}, 1, "0x23456788" },
-		{ { 0x23456788, 0x00000001, 0x00100000}, 2, "0x123456788" },
-		{ { 0x23456788, 0x00000001, 0x00100000}, 3, "0x1000000000000123456788" },
-		{ { 0x23456789, 0x00000001, 0x34100000}, 3, "0" },
-		{ { 0x2345678a, 0x00000001, 0x99100000}, 3, "1" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 1, "0x234567a4" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 2, "0x1234567a4" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 3, "0x10000000000001234567a4" },
+		{ { 0x234567a5, 0x00000001, 0x34100000}, 3, "0" },
+		{ { 0x234567a6, 0x00000001, 0x99100000}, 3, "1" },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		x.setRaw(tbl[i].buf, tbl[i].bufN);
@@ -376,7 +376,7 @@ CYBOZU_TEST_AUTO(setRaw)
 
 CYBOZU_TEST_AUTO(set64bit)
 {
-	Fp::setModulo("0x10000000000000000000");
+	Fp::setModulo("0x1000000000000000000f");
 	const struct {
 		const char *p;
 		uint64_t i;

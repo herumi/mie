@@ -140,12 +140,7 @@ public:
 		opt_.init(m_);
 		mpz_class p;
 		mie::Gmp::fromStr(p, mstr, base);
-		if ((p & 3) == 3) {
-			is_p3mod4_ = true;
-			pp1d4_ = (p + 1) / 4;
-		} else {
-			is_p3mod4_ = false;
-		}
+		sq_.set(p);
 	}
 	static inline bool isYodd(const FpT& y)
 	{
@@ -154,12 +149,11 @@ public:
 	}
 	static inline bool canSquareRoot()
 	{
-		return is_p3mod4_;
+		return true;
 	}
-	static inline void squareRoot(FpT& y, const FpT& x)
+	static inline bool squareRoot(FpT& y, const FpT& x)
 	{
-		assert(opt_.hasPowMod());
-		opt_.powMod(y.v, x.v, pp1d4_, m_);
+		return sq_.get(y.v, x.v);
 	}
 	static inline void getModulo(std::string& mstr)
 	{
@@ -287,8 +281,7 @@ public:
 private:
 	static ImplType m_;
 	static size_t modBitLen_;
-	static bool is_p3mod4_; // p mod 4 == 3
-	static mpz_class pp1d4_; // (p + 1) / 4
+	static mie::SquareRoot sq_;
 	ImplType v;
 	static inline void inFromStr(ImplType& t, bool *isMinus, const std::string& str, int base)
 	{
@@ -316,9 +309,7 @@ typename T::ImplType FpT<T, tag>::m_;
 template<class T, class tag>
 size_t FpT<T, tag>::modBitLen_;
 template<class T, class tag>
-bool FpT<T, tag>::is_p3mod4_;
-template<class T, class tag>
-mpz_class FpT<T, tag>::pp1d4_;
+mie::SquareRoot FpT<T, tag>::sq_;
 
 template<class T, class tag>
 mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;

@@ -24,8 +24,7 @@ class MontFpT : public ope::addsub<MontFpT<N, tag>,
 	ope::hasIO<MontFpT<N, tag> > > > > > {
 
 	static mpz_class pOrg_;
-	static bool is_p3mod4_; // p mod 4 == 3
-	static mpz_class pp1d4_; // (p + 1) / 4
+	static mie::SquareRoot sq_;
 	static MontFpT p_;
 	static MontFpT one_;
 	static MontFpT R_; // (1 << (N * 64)) % p
@@ -188,12 +187,7 @@ public:
 			throw cybozu::Exception("MontFp:setModulo:bad prime length") << pstr;
 		}
 		p_.fromRawGmp(pOrg_);
-		if ((pOrg_ & 3) == 3) {
-			is_p3mod4_ = true;
-			pp1d4_ = (pOrg_ + 1) / 4;
-		} else {
-			is_p3mod4_ = false;
-		}
+		sq_.set(pOrg_);
 
 		mpz_class t = 1;
 		one_.fromRawGmp(t);
@@ -230,11 +224,15 @@ public:
 	}
 	static inline bool canSquareRoot()
 	{
-		return is_p3mod4_;
+		return true;
 	}
-	static inline void squareRoot(MontFpT& y, const MontFpT& x)
+	static inline bool squareRoot(MontFpT& y, const MontFpT& x)
 	{
-		power_impl::power(y, x, pp1d4_);
+		mpz_class t;
+		fromMont(t, x);
+		if (!sq_.get(t, t)) return false;
+		toMont(y, t);
+		return true;
 	}
 	static inline void fromMont(mpz_class& z, const MontFpT& x)
 	{
@@ -434,8 +432,7 @@ public:
 };
 
 template<size_t N, class tag>mpz_class MontFpT<N, tag>::pOrg_;
-template<size_t N, class tag>bool MontFpT<N, tag>::is_p3mod4_;
-template<size_t N, class tag>mpz_class MontFpT<N, tag>::pp1d4_;
+template<size_t N, class tag>mie::SquareRoot MontFpT<N, tag>::sq_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::p_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::one_;
 template<size_t N, class tag>MontFpT<N, tag> MontFpT<N, tag>::R_;
