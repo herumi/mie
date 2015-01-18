@@ -303,7 +303,7 @@ class SquareRoot {
 	mpz_class g;
 	int r;
 	mpz_class q; // p - 1 = 2^r q
-	mpz_class h; // h = g^q
+	mpz_class s; // s = g^q
 public:
 	void set(const mpz_class& p)
 	{
@@ -321,7 +321,7 @@ public:
 			r++;
 			q /= 2;
 		}
-		Gmp::powMod(h, g, q, p);
+		Gmp::powMod(s, g, q, p);
 	}
 	/*
 		solve x^2 = a mod p
@@ -333,24 +333,24 @@ public:
 			Gmp::powMod(R, a, (p + 1) / 4, p);
 			return true;
 		}
-		mpz_class t, c = h;
-		int M = r;
+		mpz_class c = s, d;
+		int e = r;
 		Gmp::powMod(R, a, (q + 1) / 2, p);
-		Gmp::powMod(t, a, q, p);
-		while (t != 1) {
+		Gmp::powMod(d, a, q, p);
+		while (d != 1) {
 			int i = 1;
-			mpz_class tt = (t * t) % p;
-			while (tt != 1) {
-				tt = (tt * tt) % p;
+			mpz_class dd = (d * d) % p;
+			while (dd != 1) {
+				dd = (dd * dd) % p;
 				i++;
 			}
 			mpz_class b = 1;
-			b <<= M - i - 1;
+			b <<= e - i - 1;
 			Gmp::powMod(b, c, b, p);
 			R = (R * b) % p;
 			c = (b * b) % p;
-			t = (t * c) % p;
-			M = i;
+			d = (d * c) % p;
+			e = i;
 		}
 		return true;
 	}
