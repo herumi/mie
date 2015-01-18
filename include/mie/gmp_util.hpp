@@ -231,6 +231,15 @@ struct Gmp {
 		gcd(z, x, y);
 		return z;
 	}
+	/*
+		assume p : odd prime
+		return  1 if x^2 = a mod p for some x
+		return -1 if x^2 != a mod p for any x
+	*/
+	static inline int legendre(const mpz_class& a, const mpz_class& p)
+	{
+		return mpz_legendre(a.get_mpz_t(), p.get_mpz_t());
+	}
 	static inline bool isPrime(const mpz_class& x)
 	{
 		return mpz_probab_prime_p(x.get_mpz_t(), 25) != 0;
@@ -283,6 +292,67 @@ struct Gmp {
 				z |= 3;
 			}
 		} while (!(isPrime(z)));
+	}
+};
+
+/*
+	Tonelli-Shanks
+*/
+class SquareRoot {
+	mpz_class p;
+	mpz_class g;
+	int r;
+	mpz_class q; // p - 1 = 2^r q
+	mpz_class h; // h = g^q
+public:
+	void set(const mpz_class& p)
+	{
+		if (p <= 2 || !Gmp::isPrime(p)) throw cybozu::Exception("SquareRoot:set:not prime") << p;
+		this->p = p;
+		// g is quadratic nonresidue
+		g = 2;
+		while (Gmp::legendre(g, p) > 0) {
+			g++;
+		}
+		// p - 1 = 2^r q, q is odd
+		r = 0;
+		q = p - 1;
+		while ((q & 1) == 0) {
+			r++;
+			q /= 2;
+		}
+		Gmp::powMod(h, g, q, p);
+	}
+	/*
+		solve x^2 = a mod p
+	*/
+	bool get(mpz_class& R, const mpz_class& a) const
+	{
+		if (Gmp::legendre(a, p) < 0) return false;
+		if (r == 1) {
+			Gmp::powMod(R, a, (p + 1) / 4, p);
+			return true;
+		}
+		mpz_class t, c = h;
+		int M = r;
+		Gmp::powMod(R, a, (q + 1) / 2, p);
+		Gmp::powMod(t, a, q, p);
+		while (t != 1) {
+			int i = 1;
+			mpz_class tt = (t * t) % p;
+			while (tt != 1) {
+				tt = (tt * tt) % p;
+				i++;
+			}
+			mpz_class b = 1;
+			b <<= M - i - 1;
+			Gmp::powMod(b, c, b, p);
+			R = (R * b) % p;
+			c = (b * b) % p;
+			t = (t * c) % p;
+			M = i;
+		}
+		return true;
 	}
 };
 
