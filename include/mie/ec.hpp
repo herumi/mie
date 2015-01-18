@@ -442,14 +442,9 @@ public:
 		}
 		return is;
 	}
-	/*
-		return false if not supported
-	*/
-	static inline bool setCompressedExpression(bool compressedExpression)
+	static inline void setCompressedExpression(bool compressedExpression)
 	{
-		if (compressedExpression && !Fp::canSquareRoot()) return false;
 		compressedExpression_ = compressedExpression;
-		return compressedExpression_;
 	}
 	/*
 		append to bv(not clear bv)

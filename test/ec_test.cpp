@@ -145,10 +145,6 @@ struct Test {
 	{
 		Fp x(para.gx);
 		Fp y(para.gy);
-		if (!Fp::canSquareRoot()) {
-			puts("not support squareRoot");
-			return;
-		}
 		bool odd = Fp::isYodd(y);
 		Fp yy;
 		Ec::getYfromX(yy, x, odd);
@@ -202,10 +198,7 @@ struct Test {
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 		// compressed
-		if (!Ec::setCompressedExpression(true)) {
-			puts("compressedExpression is not supported");
-			return;
-		}
+		Ec::setCompressedExpression(true);
 		P.set(x, y);
 		{
 			cybozu::BitVector bv;
@@ -258,9 +251,7 @@ struct Test {
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
 		// compressed
-		if (!Ec::setCompressedExpression(true)) {
-			return;
-		}
+		Ec::setCompressedExpression(true);
 		P.set(x, y);
 		{
 			std::stringstream ss;

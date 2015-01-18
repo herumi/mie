@@ -147,10 +147,6 @@ public:
 		if (y.isZero()) return false;
 		return (getBlock(y)[0] & 1) == 1;
 	}
-	static inline bool canSquareRoot()
-	{
-		return true;
-	}
 	static inline bool squareRoot(FpT& y, const FpT& x)
 	{
 		return sq_.get(y.v, x.v);

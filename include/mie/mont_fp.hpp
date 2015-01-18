@@ -222,10 +222,6 @@ public:
 		return (t.v_[0] & 1) == 1;
 #endif
 	}
-	static inline bool canSquareRoot()
-	{
-		return true;
-	}
 	static inline bool squareRoot(MontFpT& y, const MontFpT& x)
 	{
 		mpz_class t;
