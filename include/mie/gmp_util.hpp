@@ -326,17 +326,17 @@ public:
 	/*
 		solve x^2 = a mod p
 	*/
-	bool get(mpz_class& R, const mpz_class& a) const
+	bool get(mpz_class& x, const mpz_class& a) const
 	{
 		if (Gmp::legendre(a, p) < 0) return false;
 		if (r == 1) {
-			Gmp::powMod(R, a, (p + 1) / 4, p);
+			Gmp::powMod(x, a, (p + 1) / 4, p);
 			return true;
 		}
 		mpz_class c = s, d;
 		int e = r;
-		Gmp::powMod(R, a, (q + 1) / 2, p);
 		Gmp::powMod(d, a, q, p);
+		Gmp::powMod(x, a, (q + 1) / 2, p); // destroy a if &x == &a
 		while (d != 1) {
 			int i = 1;
 			mpz_class dd = (d * d) % p;
@@ -347,7 +347,7 @@ public:
 			mpz_class b = 1;
 			b <<= e - i - 1;
 			Gmp::powMod(b, c, b, p);
-			R = (R * b) % p;
+			x = (x * b) % p;
 			c = (b * b) % p;
 			d = (d * c) % p;
 			e = i;
