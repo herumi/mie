@@ -299,15 +299,19 @@ struct Gmp {
 	Tonelli-Shanks
 */
 class SquareRoot {
+	bool isPrime;
 	mpz_class p;
 	mpz_class g;
 	int r;
 	mpz_class q; // p - 1 = 2^r q
 	mpz_class s; // s = g^q
 public:
+	SquareRoot() : isPrime(false) {}
 	void set(const mpz_class& p)
 	{
-		if (p <= 2 || !Gmp::isPrime(p)) throw cybozu::Exception("SquareRoot:set:not prime") << p;
+		if (p <= 2) throw cybozu::Exception("SquareRoot:bad p") << p;
+		isPrime = Gmp::isPrime(p);
+		if (!isPrime) return; // don't throw until get() is called
 		this->p = p;
 		// g is quadratic nonresidue
 		g = 2;
@@ -328,6 +332,7 @@ public:
 	*/
 	bool get(mpz_class& x, const mpz_class& a) const
 	{
+		if (!isPrime) throw cybozu::Exception("SquareRoot:get:not prime") << p;
 		if (Gmp::legendre(a, p) < 0) return false;
 		if (r == 1) {
 			Gmp::powMod(x, a, (p + 1) / 4, p);
