@@ -8,18 +8,22 @@
 */
 #include <sstream>
 #include <vector>
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable : 4127)
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+#endif
 #include <cybozu/hash.hpp>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
 #include <cybozu/bitvector.hpp>
 #include <mie/operator.hpp>
 #include <mie/power.hpp>
+#include <mie/fp_base.hpp>
 #include <mie/fp_util.hpp>
 #include <mie/gmp_util.hpp>
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable : 4127)
-#endif
 
 namespace mie {
 
@@ -35,92 +39,53 @@ void maskBuffer(S* buf, size_t bufN, size_t bitLen)
 	if (rem > 0) buf[n - 1] &= (S(1) << rem) - 1;
 }
 
-#if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
-typedef uint32_t Unit;
-#else
-typedef uint64_t Unit;
-#endif
-
-// add/sub without carry. return true if overflow
-typedef bool (*bool3op)(Unit*, const Unit*, const Unit*);
-
-// add/sub with mod
-typedef void (*void3op)(Unit*, const Unit*, const Unit*);
-
-// mul without carry. return top of z
-typedef Unit (*uint3opI)(Unit*, const Unit*, Unit);
-
-// neg
-typedef void (*void2op)(Unit*, const Unit*);
-
-// preInv
-typedef int (*int2op)(Unit*, const Unit*);
-
 } // fp
 
-namespace fp_local {
-
-struct TagDefault;
-
-} // fp_local
-
-template<size_t maxBitLen, class tag = fp_local::TagDefault>
+template<size_t maxBitN, class tag = fp::TagDefault>
 class FpT {
 public:
 	typedef fp::Unit Unit;
-	static const size_t UnitSize = sizeof(Unit);
-	static const size_t maxN = (maxBitLen + UnitSize * 8 - 1) / (UnitSize * 8);
+	static const size_t UnitByteN = sizeof(Unit);
+	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
 private:
-	static fp::void3op add_;
-	static fp::void3op sub_;
-	static fp::void3op mul_;
-	static fp::void2op inv_;
-	static fp::void2op neg_;
-	static fp::void2op square_;
-	static mpz_class pOrg_;
+	static fp::Op op_;
+	static mpz_class mp_;
 	static size_t pBitLen_;
 	static size_t N_;
-	static Unit p_[maxN];
 
-	Unit v_[maxN];
-
-	static inline void fillZero(Unit *x, size_t fromPos)
-	{
-		for (size_t i = fromPos; i < N_; i++) x[i] = 0;
-	}
-	static inline void copy(Unit *y, const Unit *x)
-	{
-		for (size_t i = 0; i < N_; i++) y[i] = x[i];
-	}
 public:
+	Unit v_[maxUnitN];
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		bool isMinus;
-		inFromStr(pOrg_, &isMinus, mstr, base);
+		inFromStr(mp_, &isMinus, mstr, base);
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
-		pBitLen_ = Gmp::getBitLen(pOrg_);
-		N_ = Gmp::getRaw(p_, maxN, pOrg_);
+		pBitLen_ = Gmp::getBitLen(mp_);
+		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
+		Unit p[maxUnitN];
+		N_ = Gmp::getRaw(p, maxUnitN, mp_);
 		if (N_ == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
-		add_ = &addC;
-		sub_ = &subC;
-		mul_ = &mulC;
-		inv_ = &invC;
-		neg_ = &negC;
-		square_ = &squareC;
+		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
+		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> fixed; op_ = fixed.init(p); }
+		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> fixed; op_ = fixed.init(p); }
+		else if (pBitLen_ <= 384) { static fp::FixedFp<384, tag> fixed; op_ = fixed.init(p); }
+		else if (pBitLen_ <= 448) { static fp::FixedFp<448, tag> fixed; op_ = fixed.init(p); }
+		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> fixed; op_ = fixed.init(p); }
+		else { static fp::FixedFp<maxBitN, tag> fixed; op_ = fixed.init(p); }
 	}
 	FpT() {}
 	FpT(const FpT& x)
 	{
-		copy(v_, x.v_);
+		op_.copy(v_, x.v_);
 	}
 	FpT& operator=(const FpT& x)
 	{
-		copy(v_, x.v_);
+		op_.copy(v_, x.v_);
 		return *this;
 	}
 	void clear()
 	{
-		fillZero(v_, 0);
+		op_.clear(v_);
 	}
 	FpT(int x) { operator=(x); }
 	explicit FpT(const std::string& str, int base = 0)
@@ -132,9 +97,9 @@ public:
 		if (x == 0) {
 			clear();
 		} else {
+			op_.clear(v_);
 			v_[0] = abs(x);
-			fillZero(v_, 1);
-			if (x < 0) sub_(v_, p_, v_);
+			if (x < 0) neg(*this, *this);
 		}
 		return *this;
 	}
@@ -143,7 +108,7 @@ public:
 		bool isMinus;
 		mpz_class x;
 		inFromStr(x, &isMinus, str, base);
-		if (x >= pOrg_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
+		if (x >= mp_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
 		toArray(v_, x);
 		if (isMinus) {
 			neg(*this, *this);
@@ -180,43 +145,23 @@ public:
 	template<class RG>
 	void setRand(RG& rg)
 	{
-		fp::getRandVal(v_, rg, p_, pBitLen_);
+		fp::getRandVal(v_, rg, op_.p, pBitLen_);
 	}
-	static inline void add(FpT& z, const FpT& x, const FpT& y) { add_(z.v_, x.v_, y.v_); }
-	static inline void sub(FpT& z, const FpT& x, const FpT& y) { sub_(z.v_, x.v_, y.v_); }
-	static inline void mul(FpT& z, const FpT& x, const FpT& y) { mul_(z.v_, x.v_, y.v_); }
-	static inline void inv(FpT& y, const FpT& x) { inv_(y.v_, x.v_); }
-	static inline void neg(FpT& y, const FpT& x) { neg_(y.v_, x.v_); }
-	static inline void square(FpT& y, const FpT& x) { square_(y.v_, x.v_); }
+	static inline void add(FpT& z, const FpT& x, const FpT& y) { op_.add(z.v_, x.v_, y.v_); }
+	static inline void sub(FpT& z, const FpT& x, const FpT& y) { op_.sub(z.v_, x.v_, y.v_); }
+	static inline void mul(FpT& z, const FpT& x, const FpT& y) { op_.mul(z.v_, x.v_, y.v_); }
+	static inline void inv(FpT& y, const FpT& x) { op_.inv(y.v_, x.v_); }
+	static inline void neg(FpT& y, const FpT& x) { op_.neg(y.v_, x.v_); }
+	static inline void square(FpT& y, const FpT& x) { op_.mul(y.v_, x.v_, x.v_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
 		FpT rev;
 		inv(rev, y);
 		mul(z, x, rev);
 	}
-	bool isZero() const
-	{
-		for (size_t i = 0; i < N_; i++) {
-			if (v_[i]) return false;
-		}
-		return true;
-	}
-	bool operator==(const FpT& rhs) const
-	{
-		for (size_t i = 0; i < N_; i++) {
-			if (v_[i] != rhs.v_[i]) return false;
-		}
-		return true;
-	}
+	bool isZero() const { return op_.isZero(v_); }
+	bool operator==(const FpT& rhs) const { return op_.isEqual(v_); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
-	static inline bool greaterArray(const Unit *x, const Unit *y)
-	{
-		for (size_t i = N_ - 1; i != size_t(-1); i--) {
-			if (x[i] > y[i]) return true;
-			if (x[i] < y[i]) return false;
-		}
-		return false;
-	}
 	static inline size_t getModBitLen() { return pBitLen_; }
 	/*
 		append to bv(not clear bv)
@@ -229,78 +174,11 @@ public:
 	{
 		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
 		memcpy(v_, bv.getBlock(), bv.getBlockSize() *  sizeof(Unit));
-		if (greaterArray(v_, p_)) throw cybozu::Exception("FpT:fromBitVec:large x");
+		if (op_.compare(v_, op_.p) >= 0) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getBitVecSize() { return pBitLen_; }
-	static inline void addC(Unit *z, const Unit *x, const Unit *y)
-	{
-		mpz_class tx, ty;
-		Gmp::setRaw(tx, x, N_);
-		Gmp::setRaw(ty, y, N_);
-		tx += ty;
-		mpz_class tz = tx - pOrg_;
-		if (tz < 0) {
-			toArray(z, tx);
-		} else {
-			toArray(z, tz);
-		}
-	}
-	static inline void subC(Unit *z, const Unit *x, const Unit *y)
-	{
-		mpz_class tx, ty;
-		Gmp::setRaw(tx, x, N_);
-		Gmp::setRaw(ty, y, N_);
-		tx -= ty;
-		if (tx < 0) {
-			tx += pOrg_;
-		}
-		toArray(z, tx);
-	}
-	static inline void mulC(Unit *z, const Unit *x, const Unit *y)
-	{
-		mpz_class tx, ty;
-		Gmp::setRaw(tx, x, N_);
-		Gmp::setRaw(ty, y, N_);
-		tx *= ty;
-		tx %= pOrg_;
-		toArray(z, tx);
-	}
-	static inline void invC(Unit *y, const Unit *x)
-	{
-		mpz_class t;
-		Gmp::setRaw(t, x, N_);
-		Gmp::invMod(t, t, pOrg_);
-		toArray(y, t);
-	}
-	static inline void negC(Unit *y, const Unit *x)
-	{
-		mpz_class t;
-		Gmp::setRaw(t, x, N_);
-		if (t == 0) {
-			fillZero(y, 0);
-			return;
-		}
-		t = pOrg_ - t;
-		toArray(y, t);
-	}
-	static inline void squareC(Unit *y, const Unit *x)
-	{
-		mpz_class t;
-		Gmp::setRaw(t, x, N_);
-		t *= t;
-		t %= pOrg_;
-		toArray(y, t);
-	}
-	/*
-		x[2 * N_] mod p -> y[N_]
-	*/
-	static inline void modC(Unit *y, const Unit *x)
-	{
-		mpz_class t;
-		Gmp::setRaw(t, x, N_ * 2);
-		t %= pOrg_;
-		toArray(y, t);
-	}
+	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; FpT::add(z, x, y); return z; }
+	FpT& operator+=(const FpT& x) { add(*this, *this, x); return *this; }
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
@@ -314,22 +192,15 @@ private:
 		const size_t n = Gmp::getBlockSize(x);
 		assert(n <= N_);
 		Gmp::getRaw(y, N_, x);
-		fillZero(y, n);
+		for (size_t i = n; i < N_; i++) y[i] = 0;
 	}
 };
 
-template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::add_;
-template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::sub_;
-template<size_t maxBitLen, class tag> fp::void3op FpT<maxBitLen, tag>::mul_;
+template<size_t maxBitN, class tag> fp::Op FpT<maxBitN, tag>::op_;
+template<size_t maxBitN, class tag> mpz_class FpT<maxBitN, tag>::mp_;
 
-template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::inv_;
-template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::neg_;
-template<size_t maxBitLen, class tag> fp::void2op FpT<maxBitLen, tag>::square_;
-
-template<size_t maxBitLen, class tag> mpz_class FpT<maxBitLen, tag>::pOrg_;
-template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::pBitLen_;
-template<size_t maxBitLen, class tag> size_t FpT<maxBitLen, tag>::N_;
-template<size_t maxBitLen, class tag> uint64_t FpT<maxBitLen, tag>::p_[FpT<maxBitLen, tag>::maxN];
+template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
+template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::N_;
 
 } // mie
 
@@ -337,11 +208,11 @@ namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
 #if 0
-template<size_t maxN, class tag>
-struct hash<mie::FpT<maxN, tag> > : public std::unary_function<mie::FpT<maxN, tag>, size_t> {
-	size_t operator()(const mie::FpT<maxN, tag>& x, uint64_t v_ = 0) const
+template<size_t maxUnitN, class tag>
+struct hash<mie::FpT<maxUnitN, tag> > : public std::unary_function<mie::FpT<maxUnitN, tag>, size_t> {
+	size_t operator()(const mie::FpT<maxUnitN, tag>& x, uint64_t v_ = 0) const
 	{
-		typedef mie::FpT<maxN, tag> Fp;
+		typedef mie::FpT<maxUnitN, tag> Fp;
 		size_t n = Fp::getBlockSize(x);
 		const typename Fp::uint64_t *p = Fp::getBlock(x);
 		return static_cast<size_t>(cybozu::hash64(p, n, v_));

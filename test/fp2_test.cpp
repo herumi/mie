@@ -8,12 +8,23 @@
 	#pragma warning(disable: 4127) // const condition
 #endif
 
-typedef mie::FpT<9> Fp;
+typedef mie::FpT<521> Fp;
 
+const int m = 65537;
+struct Init {
+	Init()
+	{
+		std::ostringstream ms;
+		ms << m;
+		Fp::setModulo(ms.str());
+	}
+};
+
+CYBOZU_TEST_SETUP_FIXTURE(Init);
+
+#if 0 //#ifndef MIE_ONLY_BENCH
 CYBOZU_TEST_AUTO(cstr)
 {
-	const int m = 65535;
-	Fp::setModulo("65535");
 	const struct {
 		const char *str;
 		int val;
@@ -29,7 +40,6 @@ CYBOZU_TEST_AUTO(cstr)
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		// string cstr
-#if 0
 		Fp x(tbl[i].str);
 		CYBOZU_TEST_EQUAL(x, tbl[i].val);
 
@@ -58,11 +68,9 @@ CYBOZU_TEST_AUTO(cstr)
 		std::string str;
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
-#endif
 	}
 }
 
-#if 0
 CYBOZU_TEST_AUTO(bitLen)
 {
 	const struct {
@@ -265,7 +273,7 @@ CYBOZU_TEST_AUTO(power)
 		CYBOZU_TEST_EQUAL(y, z);
 		z *= x;
 	}
-	typedef mie::FpT<mie::Gmp, tag2> Fp2;
+	typedef mie::FpT<128, tag2> Fp2;
 	Fp2::setModulo("1009");
 	x = 5;
 	Fp2 n = 3;
@@ -306,7 +314,7 @@ struct TagAnother;
 
 CYBOZU_TEST_AUTO(another)
 {
-	typedef mie::FpT<mie::Gmp, TagAnother> G;
+	typedef mie::FpT<128, TagAnother> G;
 	G::setModulo("13");
 	G a = 3;
 	G b = 9;
@@ -316,7 +324,7 @@ CYBOZU_TEST_AUTO(another)
 
 CYBOZU_TEST_AUTO(setRaw)
 {
-	Fp::setModulo("1000000000000000000000");
+	Fp::setModulo("1000000000000000000117");
 	char b1[] = { 0x56, 0x34, 0x12 };
 	Fp x;
 	x.setRaw(b1, 3);
@@ -327,17 +335,17 @@ CYBOZU_TEST_AUTO(setRaw)
 	x.fromStr("0xffffffffffff");
 	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 
-	Fp::setModulo("0x1000000000000123456789");
+	Fp::setModulo("0x10000000000001234567a5");
 	const struct {
 		uint32_t buf[3];
 		size_t bufN;
 		const char *expected;
 	} tbl[] = {
-		{ { 0x23456788, 0x00000001, 0x00100000}, 1, "0x23456788" },
-		{ { 0x23456788, 0x00000001, 0x00100000}, 2, "0x123456788" },
-		{ { 0x23456788, 0x00000001, 0x00100000}, 3, "0x1000000000000123456788" },
-		{ { 0x23456789, 0x00000001, 0x34100000}, 3, "0" },
-		{ { 0x2345678a, 0x00000001, 0x99100000}, 3, "1" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 1, "0x234567a4" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 2, "0x1234567a4" },
+		{ { 0x234567a4, 0x00000001, 0x00100000}, 3, "0x10000000000001234567a4" },
+		{ { 0x234567a5, 0x00000001, 0x34100000}, 3, "0" },
+		{ { 0x234567a6, 0x00000001, 0x99100000}, 3, "1" },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		x.setRaw(tbl[i].buf, tbl[i].bufN);
@@ -347,7 +355,7 @@ CYBOZU_TEST_AUTO(setRaw)
 
 CYBOZU_TEST_AUTO(set64bit)
 {
-	Fp::setModulo("0x10000000000000000000");
+	Fp::setModulo("0x1000000000000000000f");
 	const struct {
 		const char *p;
 		uint64_t i;
@@ -408,7 +416,7 @@ CYBOZU_TEST_AUTO(toStr)
 		Fp x;
 		x = 12345;
 		uint64_t y = x.cvtInt();
-		CYBOZU_TEST_EQUAL(y, 12345);
+		CYBOZU_TEST_EQUAL(y, 12345u);
 		x.fromStr("123456789012342342342342342");
 		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
 		bool err = false;
@@ -439,7 +447,6 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		CYBOZU_TEST_EQUAL(bv.size(), Fp::getBitVecSize());
 		const Fp::BlockType *block = bv.getBlock();
 		if (sizeof(Fp::BlockType) == 4) {
-			CYBOZU_TEST_EQUAL(bv.getBlockSize(), tbl[i].n);
 			CYBOZU_TEST_EQUAL_ARRAY(block, tbl[i].v, tbl[i].n);
 		} else {
 			const size_t n = (tbl[i].n + 1) / 2;
@@ -455,3 +462,55 @@ CYBOZU_TEST_AUTO(binaryRepl)
 }
 #endif
 
+#ifdef NDEBUG
+void benchSub(const char *pStr, const char *xStr, const char *yStr)
+	try
+{
+	Fp::setModulo(pStr);
+	Fp x(xStr);
+	Fp y(yStr);
+
+	CYBOZU_BENCH("add", Fp::add, x, x, x);
+	CYBOZU_BENCH("sub", Fp::sub, x, x, y);
+	CYBOZU_BENCH("mul", Fp::mul, x, x, x);
+	CYBOZU_BENCH("square", Fp::square, x, x);
+	CYBOZU_BENCH("inv", x += y;Fp::inv, x, x); // avoid same jmp
+	CYBOZU_BENCH("div", x += y;Fp::div, x, y, x);
+	puts("");
+} catch (std::exception& e) {
+	printf("ERR %s\n", e.what());
+}
+
+// square 76clk@sandy
+CYBOZU_TEST_AUTO(bench3)
+{
+	const char *pStr = "0xfffffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	const char *xStr = "0x148094810948190412345678901234567900342423332197";
+	const char *yStr = "0x7fffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub(pStr, xStr, yStr);
+}
+
+CYBOZU_TEST_AUTO(bench4)
+{
+	const char *pStr = "0x2523648240000001ba344d80000000086121000000000013a700000000000013";
+	const char *xStr = "0x1480948109481904123456789234234242423424201234567900342423332197";
+	const char *yStr = "0x151342342342341517fffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub(pStr, xStr, yStr);
+}
+
+CYBOZU_TEST_AUTO(bench6)
+{
+	const char *pStr = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff";
+	const char *xStr = "0x19481084109481094820948209482094820984290482212345678901234567900342308472047204720422423332197";
+	const char *yStr = "0x209348209481094820984209842094820948204204243123456789012345679003423084720472047204224233321972";
+	benchSub(pStr, xStr, yStr);
+}
+
+CYBOZU_TEST_AUTO(bench9)
+{
+	const char *pStr = "0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+	const char *xStr = "0x2908209582095820941098410948109482094820984209840294829049240294242498540975555312345678901234567900342308472047204720422423332197";
+	const char *yStr = "0x3948384209834029834092384204920349820948205872380573205782385729385729385723985837ffffffffffffffffffffffe26f2fc170f69466a74defd8d";
+	benchSub(pStr, xStr, yStr);
+}
+#endif
