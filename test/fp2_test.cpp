@@ -197,7 +197,7 @@ CYBOZU_TEST_AUTO(ope)
 		int mul; // x * y
 		int sqr; // x^2
 	} tbl[] = {
-//		{ 0, 1, 1, m - 1, 0, 0 },
+		{ 0, 1, 1, m - 1, 0, 0 },
 		{ 9, 5, 14, 4, 45, 81 },
 		{ 10, 13, 23, m - 3, 130, 100 },
 		{ 2000, 1000, 3000, 1000, (2000 * 1000) % m, (2000 * 2000) % m },
@@ -218,7 +218,6 @@ CYBOZU_TEST_AUTO(ope)
 		Fp::inv(r, y);
 		Fp::mul(z, z, r);
 		CYBOZU_TEST_EQUAL(z, tbl[i].x);
-#if 0
 		z = x + y;
 		CYBOZU_TEST_EQUAL(z, tbl[i].add);
 		z = x - y;
@@ -232,7 +231,6 @@ CYBOZU_TEST_AUTO(ope)
 		z = x / y;
 		z *= y;
 		CYBOZU_TEST_EQUAL(z, tbl[i].x);
-#endif
 	}
 }
 #if 0

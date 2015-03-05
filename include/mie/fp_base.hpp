@@ -112,9 +112,9 @@ struct FixedFp {
 	}
 	static inline void add(Unit *z, const Unit *x, const Unit *y)
 	{
-		Unit ret[N + 1];
+		Unit ret[N + 2]; // not N + 1
 		mpz_t mz, mx, my;
-		set_zero(mz, ret, N + 1);
+		set_zero(mz, ret, N + 2);
 		set_mpz_t(mx, x);
 		set_mpz_t(my, y);
 		mpz_add(mz, mx, my);
@@ -138,12 +138,22 @@ struct FixedFp {
 	}
 	static inline void mul(Unit *z, const Unit *x, const Unit *y)
 	{
-		mpz_class mx, my;
-		Gmp::setRaw(mx, x, N);
-		Gmp::setRaw(my, y, N);
-		mx *= my;
-		mpz_mod(mx.get_mpz_t(), mx.get_mpz_t(), mp_.get_mpz_t());
-		Gmp::getRaw(z, N, mx);
+		Unit ret[N * 2];
+		mpz_t mx, my, mz;
+		set_zero(mz, ret, N * 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_mul(mz, mx, my);
+		mpz_mod(mz, mz, mp_.get_mpz_t());
+		copy(z, mz);
+	}
+	static inline void inv(Unit *y, const Unit *x)
+	{
+		mpz_class my;
+		mpz_t mx;
+		set_mpz_t(mx, x);
+		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
+		Gmp::getRaw(y, N, my);
 	}
 	static inline bool isZero(const Unit *x)
 	{
@@ -174,13 +184,6 @@ struct FixedFp {
 			return;
 		}
 		sub(y, p_, x);
-	}
-	static inline void inv(Unit *y, const Unit *x)
-	{
-		mpz_class my, mx;
-		Gmp::setRaw(mx, x, N);
-		mpz_invert(my.get_mpz_t(), mx.get_mpz_t(), mp_.get_mpz_t());
-		Gmp::getRaw(y, N, my);
 	}
 	static inline Op init(const Unit *p)
 	{
