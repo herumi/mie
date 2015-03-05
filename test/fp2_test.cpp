@@ -312,7 +312,6 @@ CYBOZU_TEST_AUTO(setRaw)
 	CYBOZU_TEST_EXCEPTION(x.setRaw(large, 3), cybozu::Exception);
 }
 
-#if 0
 
 CYBOZU_TEST_AUTO(set64bit)
 {
@@ -330,6 +329,8 @@ CYBOZU_TEST_AUTO(set64bit)
 		CYBOZU_TEST_EQUAL(x, y);
 	}
 }
+
+#if 0
 
 CYBOZU_TEST_AUTO(getRaw)
 {

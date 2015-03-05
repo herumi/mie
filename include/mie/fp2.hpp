@@ -98,6 +98,7 @@ public:
 		op_.clear(v_);
 	}
 	FpT(int x) { operator=(x); }
+	FpT(uint64_t x) { operator=(x); }
 	explicit FpT(const std::string& str, int base = 0)
 	{
 		fromStr(str, base);
@@ -109,6 +110,11 @@ public:
 			v_[0] = abs(x);
 			if (x < 0) neg(*this, *this);
 		}
+		return *this;
+	}
+	FpT& operator=(uint64_t x)
+	{
+		setRaw(&x, 1);
 		return *this;
 	}
 	void fromStr(const std::string& str, int base = 0)
@@ -131,6 +137,11 @@ public:
 		const size_t byteN = std::min(sizeof(S) * n, sizeof(Unit) * op_.N);
 		memcpy(v_, inBuf, byteN);
 		if (!isValid()) throw cybozu::Exception("setRaw:large value");
+	}
+	template<class RG>
+	void setRand(RG& rg)
+	{
+		fp::getRandVal(v_, rg, op_.p, pBitLen_);
 	}
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
@@ -157,11 +168,6 @@ public:
 		std::string str;
 		toStr(str, base, withPrefix);
 		return str;
-	}
-	template<class RG>
-	void setRand(RG& rg)
-	{
-		fp::getRandVal(v_, rg, op_.p, pBitLen_);
 	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y) { op_.add(z.v_, x.v_, y.v_); }
 	static inline void sub(FpT& z, const FpT& x, const FpT& y) { op_.sub(z.v_, x.v_, y.v_); }
