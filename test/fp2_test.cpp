@@ -176,7 +176,6 @@ CYBOZU_TEST_AUTO(compare)
 		CYBOZU_TEST_ASSERT(x == 5);
 	}
 }
-#if 0
 
 CYBOZU_TEST_AUTO(modulo)
 {
@@ -187,6 +186,7 @@ CYBOZU_TEST_AUTO(modulo)
 	Fp::getModulo(str);
 	CYBOZU_TEST_EQUAL(str, ms.str());
 }
+#if 0
 
 CYBOZU_TEST_AUTO(ope)
 {

@@ -79,6 +79,10 @@ public:
 		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> fixed; op_ = fixed.init(p); }
 		else { static fp::FixedFp<maxBitN, tag> fixed; op_ = fixed.init(p); }
 	}
+	static inline void getModulo(std::string& pstr)
+	{
+		Gmp::toStr(pstr, mp_);
+	}
 	FpT() {}
 	FpT(const FpT& x)
 	{
