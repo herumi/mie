@@ -257,20 +257,6 @@ CYBOZU_TEST_AUTO(power)
 	Fp::power(x, x, n);
 	CYBOZU_TEST_EQUAL(x, 125);
 }
-#if 0
-
-CYBOZU_TEST_AUTO(neg_power)
-{
-	Fp x, y, z;
-	x = 12345;
-	z = 1;
-	Fp rx = 1 / x;
-	for (int i = 0; i < 100; i++) {
-		Fp::power(y, x, -i);
-		CYBOZU_TEST_EQUAL(y, z);
-		z *= rx;
-	}
-}
 
 CYBOZU_TEST_AUTO(power_fp)
 {
@@ -295,6 +281,8 @@ CYBOZU_TEST_AUTO(another)
 	a *= b;
 	CYBOZU_TEST_EQUAL(a, 1);
 }
+
+#if 0
 
 CYBOZU_TEST_AUTO(setRaw)
 {
