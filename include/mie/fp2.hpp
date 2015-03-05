@@ -124,6 +124,14 @@ public:
 	}
 	// alias of fromStr
 	void set(const std::string& str, int base = 0) { fromStr(str, base); }
+	template<class S>
+	void setRaw(const S *inBuf, size_t n)
+	{
+		clear();
+		const size_t byteN = std::min(sizeof(S) * n, sizeof(Unit) * op_.N);
+		memcpy(v_, inBuf, byteN);
+		if (!isValid()) throw cybozu::Exception("setRaw:large value");
+	}
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
 		switch (base) {
@@ -215,11 +223,15 @@ public:
 	{
 		bv.append(v_, pBitLen_);
 	}
+	bool isValid() const
+	{
+		return op_.compare(v_, op_.p) < 0;
+	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
 		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
 		memcpy(v_, bv.getBlock(), bv.getBlockSize() *  sizeof(Unit));
-		if (op_.compare(v_, op_.p) >= 0) throw cybozu::Exception("FpT:fromBitVec:large x");
+		if (!isValid()) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getBitVecSize() { return pBitLen_; }
 	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }

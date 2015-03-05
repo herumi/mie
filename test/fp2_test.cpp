@@ -282,7 +282,6 @@ CYBOZU_TEST_AUTO(another)
 	CYBOZU_TEST_EQUAL(a, 1);
 }
 
-#if 0
 
 CYBOZU_TEST_AUTO(setRaw)
 {
@@ -295,7 +294,6 @@ CYBOZU_TEST_AUTO(setRaw)
 	x.setRaw(b2, 2);
 	CYBOZU_TEST_EQUAL(x, Fp("0x3400000012"));
 	x.fromStr("0xffffffffffff");
-	CYBOZU_TEST_EQUAL(x.getBitLen(), 48u);
 
 	Fp::setModulo("0x10000000000001234567a5");
 	const struct {
@@ -305,15 +303,16 @@ CYBOZU_TEST_AUTO(setRaw)
 	} tbl[] = {
 		{ { 0x234567a4, 0x00000001, 0x00100000}, 1, "0x234567a4" },
 		{ { 0x234567a4, 0x00000001, 0x00100000}, 2, "0x1234567a4" },
-		{ { 0x234567a4, 0x00000001, 0x00100000}, 3, "0x10000000000001234567a4" },
-		{ { 0x234567a5, 0x00000001, 0x34100000}, 3, "0" },
-		{ { 0x234567a6, 0x00000001, 0x99100000}, 3, "1" },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		x.setRaw(tbl[i].buf, tbl[i].bufN);
 		CYBOZU_TEST_EQUAL(x, Fp(tbl[i].expected));
 	}
+	uint32_t large[3] = { 0x234567a5, 0x00000001, 0x00100000};
+	CYBOZU_TEST_EXCEPTION(x.setRaw(large, 3), cybozu::Exception);
 }
+
+#if 0
 
 CYBOZU_TEST_AUTO(set64bit)
 {
