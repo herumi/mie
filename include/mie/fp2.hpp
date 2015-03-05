@@ -203,6 +203,10 @@ public:
 		self.fromStr(str, base);
 		return is;
 	}
+	/*
+		not support
+		getBitLen, operator<, >
+	*/
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{

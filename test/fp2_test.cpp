@@ -71,25 +71,6 @@ CYBOZU_TEST_AUTO(cstr)
 	}
 }
 
-#if 0
-CYBOZU_TEST_AUTO(bitLen)
-{
-	const struct {
-		const char *str;
-		size_t len;
-	} tbl[] = {
-		{ "0", 1 },
-		{ "1", 1 },
-		{ "2", 2 },
-		{ "3", 2 },
-		{ "0xffff", 16 },
-	};
-	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
-		Fp x(tbl[i].str);
-		CYBOZU_TEST_EQUAL(x.getBitLen(), tbl[i].len);
-	}
-}
-
 CYBOZU_TEST_AUTO(fromStr)
 {
 	const struct {
@@ -186,23 +167,16 @@ CYBOZU_TEST_AUTO(compare)
 		const int cmp = tbl[i].cmp;
 		if (cmp == 0) {
 			CYBOZU_TEST_EQUAL(x, y);
-			CYBOZU_TEST_ASSERT(x >= y);
-			CYBOZU_TEST_ASSERT(x <= y);
-		} else if (cmp > 0) {
-			CYBOZU_TEST_ASSERT(x > y);
-			CYBOZU_TEST_ASSERT(x >= y);
 		} else {
-			CYBOZU_TEST_ASSERT(x < y);
-			CYBOZU_TEST_ASSERT(x <= y);
+			CYBOZU_TEST_ASSERT(x != y);
 		}
 	}
 	{
 		Fp x(5);
-		CYBOZU_TEST_ASSERT(x < 10);
 		CYBOZU_TEST_ASSERT(x == 5);
-		CYBOZU_TEST_ASSERT(x > 2);
 	}
 }
+#if 0
 
 CYBOZU_TEST_AUTO(modulo)
 {
