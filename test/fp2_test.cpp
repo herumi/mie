@@ -330,8 +330,6 @@ CYBOZU_TEST_AUTO(set64bit)
 	}
 }
 
-#if 0
-
 CYBOZU_TEST_AUTO(getRaw)
 {
 	const struct {
@@ -354,6 +352,7 @@ CYBOZU_TEST_AUTO(getRaw)
 	}
 }
 
+
 CYBOZU_TEST_AUTO(toStr)
 {
 	const char *tbl[] = {
@@ -373,17 +372,6 @@ CYBOZU_TEST_AUTO(toStr)
 		mie::Gmp::toStr(xs, x, 16);
 		y.toStr(ys, 16);
 		CYBOZU_TEST_EQUAL(xs, ys);
-	}
-	{
-		Fp x;
-		x = 12345;
-		uint64_t y = x.cvtInt();
-		CYBOZU_TEST_EQUAL(y, 12345u);
-		x.fromStr("123456789012342342342342342");
-		CYBOZU_TEST_EXCEPTION(x.cvtInt(), cybozu::Exception);
-		bool err = false;
-		CYBOZU_TEST_NO_EXCEPTION(x.cvtInt(&err));
-		CYBOZU_TEST_ASSERT(err);
 	}
 }
 
@@ -422,7 +410,6 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		CYBOZU_TEST_EQUAL(x, y);
 	}
 }
-#endif
 #endif
 
 #ifdef NDEBUG

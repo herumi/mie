@@ -46,12 +46,12 @@ class FpT {
 	typedef fp::Unit Unit;
 	static const size_t UnitByteN = sizeof(Unit);
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
-private:
 	static fp::Op op_;
 	static mpz_class mp_;
 	static size_t pBitLen_;
 
 public:
+	typedef Unit BlockType;
 	Unit v_[maxUnitN];
 	void dump() const
 	{
@@ -138,6 +138,15 @@ public:
 		memcpy(v_, inBuf, byteN);
 		if (!isValid()) throw cybozu::Exception("setRaw:large value");
 	}
+	template<class S>
+	size_t getRaw(S *outBuf, size_t n)
+	{
+		const size_t byteN = sizeof(S) * n;
+		const size_t needByteN = sizeof(Unit) * op_.N;
+		if (byteN > needByteN) throw cybozu::Exception("getRaw:small n") << n << needByteN;
+		memcpy(outBuf, v_, needByteN);
+		return (needByteN + sizeof(S) - 1) / sizeof(S);
+	}
 	template<class RG>
 	void setRand(RG& rg)
 	{
@@ -221,7 +230,6 @@ public:
 		z = out;
 	}
 	bool isZero() const { return op_.isZero(v_); }
-	static inline size_t getModBitLen() { return pBitLen_; }
 	/*
 		append to bv(not clear bv)
 	*/
@@ -239,6 +247,7 @@ public:
 		memcpy(v_, bv.getBlock(), bv.getBlockSize() *  sizeof(Unit));
 		if (!isValid()) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
+	static inline size_t getModBitLen() { return pBitLen_; }
 	static inline size_t getBitVecSize() { return pBitLen_; }
 	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
