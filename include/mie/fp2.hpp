@@ -68,9 +68,9 @@ public:
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
 		pBitLen_ = Gmp::getBitLen(mp_);
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
-		Unit p[maxUnitN];
-		const size_t N = Gmp::getRaw(p, maxUnitN, mp_);
-		if (N == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+		Unit p[maxUnitN] = {};
+		const size_t n = Gmp::getRaw(p, maxUnitN, mp_);
+		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
 		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> fixed; op_ = fixed.init(p); }
 		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> fixed; op_ = fixed.init(p); }
@@ -168,8 +168,6 @@ public:
 		mul(z, x, rev);
 	}
 	bool isZero() const { return op_.isZero(v_); }
-	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }
-	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	static inline size_t getModBitLen() { return pBitLen_; }
 	/*
 		append to bv(not clear bv)
@@ -185,8 +183,16 @@ public:
 		if (op_.compare(v_, op_.p) >= 0) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getBitVecSize() { return pBitLen_; }
-	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; FpT::add(z, x, y); return z; }
+	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }
+	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
+	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; add(z, x, y); return z; }
+	inline friend FpT operator-(const FpT& x, const FpT& y) { FpT z; sub(z, x, y); return z; }
+	inline friend FpT operator*(const FpT& x, const FpT& y) { FpT z; mul(z, x, y); return z; }
+	inline friend FpT operator/(const FpT& x, const FpT& y) { FpT z; div(z, x, y); return z; }
 	FpT& operator+=(const FpT& x) { add(*this, *this, x); return *this; }
+	FpT& operator-=(const FpT& x) { sub(*this, *this, x); return *this; }
+	FpT& operator*=(const FpT& x) { mul(*this, *this, x); return *this; }
+	FpT& operator/=(const FpT& x) { div(*this, *this, x); return *this; }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
 		const std::ios_base::fmtflags f = os.flags();
