@@ -233,7 +233,6 @@ CYBOZU_TEST_AUTO(ope)
 		CYBOZU_TEST_EQUAL(z, tbl[i].x);
 	}
 }
-#if 0
 
 struct tag2;
 
@@ -258,6 +257,7 @@ CYBOZU_TEST_AUTO(power)
 	Fp::power(x, x, n);
 	CYBOZU_TEST_EQUAL(x, 125);
 }
+#if 0
 
 CYBOZU_TEST_AUTO(neg_power)
 {

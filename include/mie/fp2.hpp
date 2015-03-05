@@ -167,6 +167,45 @@ public:
 		inv(rev, y);
 		mul(z, x, rev);
 	}
+	template<size_t maxBitN2, class tag2>
+	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
+	{
+		FpT out(1);
+		FpT t(x);
+		for (size_t i = 0, n = op_.N; i < n; i++) {
+			const Unit v = y.v_[i];
+			int m = (int)sizeof(Unit) * 8;
+			if (i == n - 1) {
+				while (m > 0 && (v & (Unit(1) << (m - 1))) == 0) {
+					m--;
+				}
+			}
+			for (int j = 0; j < m; j++) {
+				if (v & (Unit(1) << j)) {
+					out *= t;
+				}
+				t *= t;
+			}
+		}
+		z = out;
+	}
+	static inline void power(FpT& z, const FpT& x, int y)
+	{
+		if (y < 0) throw cybozu::Exception("FpT:power with negative y is not support") << y;
+		FpT out(1);
+		FpT t(x);
+		int m = (int)sizeof(Unit) * 8;
+		while (m > 0 && (y & (Unit(1) << (m - 1))) == 0) {
+			m--;
+		}
+		for (int j = 0; j < m; j++) {
+			if (y & (Unit(1) << j)) {
+				out *= t;
+			}
+			t *= t;
+		}
+		z = out;
+	}
 	bool isZero() const { return op_.isZero(v_); }
 	static inline size_t getModBitLen() { return pBitLen_; }
 	/*
