@@ -43,6 +43,7 @@ typedef void (*void2op)(Unit*, const Unit*);
 typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 
 struct Op {
+	size_t N;
 	bool (*isZero)(const Unit*);
 	bool (*isEqual)(const Unit*, const Unit*);
 	int (*compare)(const Unit*, const Unit*);
@@ -120,9 +121,9 @@ struct FixedFp {
 	}
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
-		Unit ret[N + 1];
+		Unit ret[N + 2];
 		mpz_t mz, mx, my;
-		set_zero(mz, ret, N + 1);
+		set_zero(mz, ret, N + 2);
 		set_mpz_t(mx, x);
 		set_mpz_t(my, y);
 		mpz_sub(mz, mx, my);
@@ -187,6 +188,7 @@ struct FixedFp {
 	{
 		setModulo(p);
 		Op op;
+		op.N = N;
 		op.isZero = &isZero;
 		op.isEqual = &isEqual;
 		op.compare = &compare;

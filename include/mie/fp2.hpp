@@ -43,7 +43,6 @@ void maskBuffer(S* buf, size_t bufN, size_t bitLen)
 
 template<size_t maxBitN, class tag = fp::TagDefault>
 class FpT {
-public:
 	typedef fp::Unit Unit;
 	static const size_t UnitByteN = sizeof(Unit);
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
@@ -51,10 +50,17 @@ private:
 	static fp::Op op_;
 	static mpz_class mp_;
 	static size_t pBitLen_;
-	static size_t N_;
 
 public:
 	Unit v_[maxUnitN];
+	void dump() const
+	{
+		const size_t N = op_.N;
+		for (size_t i = 0; i < N; i++) {
+			printf("%016llx ", (long long)v_[N - 1 - i]);
+		}
+		printf("\n");
+	}
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		bool isMinus;
@@ -63,8 +69,8 @@ public:
 		pBitLen_ = Gmp::getBitLen(mp_);
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
 		Unit p[maxUnitN];
-		N_ = Gmp::getRaw(p, maxUnitN, mp_);
-		if (N_ == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+		const size_t N = Gmp::getRaw(p, maxUnitN, mp_);
+		if (N == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
 		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> fixed; op_ = fixed.init(p); }
 		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> fixed; op_ = fixed.init(p); }
@@ -94,10 +100,8 @@ public:
 	}
 	FpT& operator=(int x)
 	{
-		if (x == 0) {
-			clear();
-		} else {
-			op_.clear(v_);
+		clear();
+		if (x) {
 			v_[0] = abs(x);
 			if (x < 0) neg(*this, *this);
 		}
@@ -122,15 +126,15 @@ public:
 		case 10:
 			{
 				mpz_class x;
-				Gmp::setRaw(x, v_, N_);
+				Gmp::setRaw(x, v_, op_.N);
 				Gmp::toStr(str, x, 10);
 			}
 			return;
 		case 16:
-			mie::fp::toStr16(str, v_, N_, withPrefix);
+			mie::fp::toStr16(str, v_, op_.N, withPrefix);
 			return;
 		case 2:
-			mie::fp::toStr2(str, v_, N_, withPrefix);
+			mie::fp::toStr2(str, v_, op_.N, withPrefix);
 			return;
 		default:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
@@ -160,7 +164,7 @@ public:
 		mul(z, x, rev);
 	}
 	bool isZero() const { return op_.isZero(v_); }
-	bool operator==(const FpT& rhs) const { return op_.isEqual(v_); }
+	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	static inline size_t getModBitLen() { return pBitLen_; }
 	/*
@@ -179,6 +183,26 @@ public:
 	static inline size_t getBitVecSize() { return pBitLen_; }
 	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; FpT::add(z, x, y); return z; }
 	FpT& operator+=(const FpT& x) { add(*this, *this, x); return *this; }
+	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
+	{
+		const std::ios_base::fmtflags f = os.flags();
+		if (f & std::ios_base::oct) throw cybozu::Exception("fpT:operator<<:oct is not supported");
+		const int base = (f & std::ios_base::hex) ? 16 : 10;
+		const bool showBase = (f & std::ios_base::showbase) != 0;
+		std::string str;
+		self.toStr(str, base, showBase);
+		return os << str;
+	}
+	friend inline std::istream& operator>>(std::istream& is, FpT& self)
+	{
+		const std::ios_base::fmtflags f = is.flags();
+		if (f & std::ios_base::oct) throw cybozu::Exception("fpT:operator>>:oct is not supported");
+		const int base = (f & std::ios_base::hex) ? 16 : 0;
+		std::string str;
+		is >> str;
+		self.fromStr(str, base);
+		return is;
+	}
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
@@ -190,9 +214,10 @@ private:
 	static inline void toArray(Unit *y, const mpz_class& x)
 	{
 		const size_t n = Gmp::getBlockSize(x);
-		assert(n <= N_);
-		Gmp::getRaw(y, N_, x);
-		for (size_t i = n; i < N_; i++) y[i] = 0;
+		const size_t N = op_.N;
+		assert(n <= N);
+		Gmp::getRaw(y, N, x);
+		for (size_t i = n; i < N; i++) y[i] = 0;
 	}
 };
 
@@ -200,7 +225,6 @@ template<size_t maxBitN, class tag> fp::Op FpT<maxBitN, tag>::op_;
 template<size_t maxBitN, class tag> mpz_class FpT<maxBitN, tag>::mp_;
 
 template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
-template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::N_;
 
 } // mie
 

@@ -22,7 +22,7 @@ struct Init {
 
 CYBOZU_TEST_SETUP_FIXTURE(Init);
 
-#if 0 //#ifndef MIE_ONLY_BENCH
+#ifndef MIE_ONLY_BENCH
 CYBOZU_TEST_AUTO(cstr)
 {
 	const struct {
@@ -42,6 +42,7 @@ CYBOZU_TEST_AUTO(cstr)
 		// string cstr
 		Fp x(tbl[i].str);
 		CYBOZU_TEST_EQUAL(x, tbl[i].val);
+#if 0
 
 		// int cstr
 		Fp y(tbl[i].val);
@@ -68,9 +69,11 @@ CYBOZU_TEST_AUTO(cstr)
 		std::string str;
 		x.toStr(str);
 		CYBOZU_TEST_EQUAL(str, os.str());
+#endif
 	}
 }
 
+#if 0
 CYBOZU_TEST_AUTO(bitLen)
 {
 	const struct {
@@ -460,6 +463,7 @@ CYBOZU_TEST_AUTO(binaryRepl)
 		CYBOZU_TEST_EQUAL(x, y);
 	}
 }
+#endif
 #endif
 
 #ifdef NDEBUG
