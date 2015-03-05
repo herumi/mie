@@ -171,11 +171,7 @@ struct FixedFp {
 			if (x != y) clear(y, 0, N);
 			return;
 		}
-		mpz_t mx, my;
-		set_mpz_t(mx, x);
-		set_zero(my, y, N);
-		mpz_sub(my, mp_, mx);
-		clear(y, my->_mp_size, N);
+		sub(y, p_, x);
 	}
 	static inline void inv(Unit *y, const Unit *x)
 	{
