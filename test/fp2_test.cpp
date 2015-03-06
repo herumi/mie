@@ -318,10 +318,10 @@ CYBOZU_TEST_AUTO(set64bit)
 	Fp::setModulo("0x1000000000000000000f");
 	const struct {
 		const char *p;
-		uint64_t i;
+		int64_t i;
 	} tbl[] = {
-		{ "0x1234567812345678", uint64_t(0x1234567812345678ull) },
-		{ "0xaaaaaaaaaaaaaaaa", uint64_t(0xaaaaaaaaaaaaaaaaull) },
+		{ "0x1234567812345678", int64_t(0x1234567812345678ull) },
+		{ "0xfffedcba987edcba997", -int64_t(0x1234567812345678ull) },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		Fp x(tbl[i].p);
@@ -351,7 +351,6 @@ CYBOZU_TEST_AUTO(getRaw)
 		CYBOZU_TEST_EQUAL_ARRAY(buf, tbl[i].v, n);
 	}
 }
-
 
 CYBOZU_TEST_AUTO(toStr)
 {

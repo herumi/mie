@@ -97,24 +97,24 @@ public:
 	{
 		op_.clear(v_);
 	}
-	FpT(int x) { operator=(x); }
-	FpT(uint64_t x) { operator=(x); }
+	FpT(int64_t x) { operator=(x); }
 	explicit FpT(const std::string& str, int base = 0)
 	{
 		fromStr(str, base);
 	}
-	FpT& operator=(int x)
+	FpT& operator=(int64_t x)
 	{
 		clear();
 		if (x) {
-			v_[0] = abs(x);
+			int64_t y = x < 0 ? -x : x;
+			if (sizeof(Unit) == 8) {
+				v_[0] = y;
+			} else {
+				v_[0] = (uint32_t)y;
+				v_[1] = (uint32_t)(y >> 32);
+			}
 			if (x < 0) neg(*this, *this);
 		}
-		return *this;
-	}
-	FpT& operator=(uint64_t x)
-	{
-		setRaw(&x, 1);
 		return *this;
 	}
 	void fromStr(const std::string& str, int base = 0)
