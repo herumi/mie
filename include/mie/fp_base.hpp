@@ -54,6 +54,7 @@ struct Op {
 	void3op add;
 	void3op sub;
 	void3op mul;
+	mpz_class mp;
 	const Unit* p;
 };
 
@@ -200,6 +201,7 @@ struct FixedFp {
 		op.add = &add;
 		op.sub = &sub;
 		op.mul = &mul;
+		op.mp = mp_;
 		op.p = &p_[0];
 		return op;
 	}

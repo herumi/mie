@@ -27,27 +27,13 @@
 
 namespace mie {
 
-namespace fp {
-
-template<class S>
-void maskBuffer(S* buf, size_t bufN, size_t bitLen)
-{
-	size_t unitSize = sizeof(S) * 8;
-	if (bitLen >= unitSize * bufN) return;
-	const size_t n = getRoundNum<S>(bitLen);
-	const size_t rem = bitLen & (unitSize - 1);
-	if (rem > 0) buf[n - 1] &= (S(1) << rem) - 1;
-}
-
-} // fp
-
 template<size_t maxBitN, class tag = fp::TagDefault>
 class FpT {
 	typedef fp::Unit Unit;
 	static const size_t UnitByteN = sizeof(Unit);
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
 	static fp::Op op_;
-	static mpz_class mp_;
+//	static mpz_class mp_;
 	static size_t pBitLen_;
 
 public:
@@ -64,12 +50,13 @@ public:
 	static inline void setModulo(const std::string& mstr, int base = 0)
 	{
 		bool isMinus;
-		inFromStr(mp_, &isMinus, mstr, base);
+		mpz_class mp;
+		inFromStr(mp, &isMinus, mstr, base);
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
-		pBitLen_ = Gmp::getBitLen(mp_);
+		pBitLen_ = Gmp::getBitLen(mp);
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
 		Unit p[maxUnitN] = {};
-		const size_t n = Gmp::getRaw(p, maxUnitN, mp_);
+		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
 		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> fixed; op_ = fixed.init(p); }
@@ -81,7 +68,7 @@ public:
 	}
 	static inline void getModulo(std::string& pstr)
 	{
-		Gmp::toStr(pstr, mp_);
+		Gmp::toStr(pstr, op_.mp);
 	}
 	FpT() {}
 	FpT(const FpT& x)
@@ -122,7 +109,7 @@ public:
 		bool isMinus;
 		mpz_class x;
 		inFromStr(x, &isMinus, str, base);
-		if (x >= mp_) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
+		if (x >= op_.mp) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
 		toArray(v_, x);
 		if (isMinus) {
 			neg(*this, *this);
@@ -302,8 +289,6 @@ private:
 };
 
 template<size_t maxBitN, class tag> fp::Op FpT<maxBitN, tag>::op_;
-template<size_t maxBitN, class tag> mpz_class FpT<maxBitN, tag>::mp_;
-
 template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
 
 } // mie
