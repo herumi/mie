@@ -35,7 +35,7 @@ class FpT {
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
 	static fp::Op op_;
 	static size_t pBitLen_;
-
+	template<size_t maxBitN2, class tag2> friend class FpT;
 public:
 	typedef Unit BlockType;
 	Unit v_[maxUnitN];
@@ -111,8 +111,17 @@ public:
 				v_[1] = (uint32_t)(y >> 32);
 			}
 			if (x < 0) neg(*this, *this);
+			toMont(*this, *this);
 		}
 		return *this;
+	}
+	void toMont(FpT& y, const FpT& x)
+	{
+		if (op_.toMont) op_.toMont(y.v_, x.v_);
+	}
+	void fromMont(FpT& y, const FpT& x)
+	{
+		if (op_.fromMont) op_.fromMont(y.v_, x.v_);
 	}
 	void fromStr(const std::string& str, int base = 0)
 	{
@@ -124,6 +133,7 @@ public:
 		if (isMinus) {
 			neg(*this, *this);
 		}
+		toMont(*this, *this);
 	}
 	// alias of fromStr
 	void set(const std::string& str, int base = 0) { fromStr(str, base); }
@@ -134,6 +144,7 @@ public:
 		const size_t byteN = std::min(sizeof(S) * n, sizeof(Unit) * op_.N);
 		memcpy(v_, inBuf, byteN);
 		if (!isValid()) throw cybozu::Exception("setRaw:large value");
+		toMont(*this, *this);
 	}
 	template<class S>
 	size_t getRaw(S *outBuf, size_t n)
@@ -149,25 +160,35 @@ public:
 	{
 		fp::getRandVal(v_, rg, op_.p, pBitLen_);
 	}
-	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
+	static inline void toStr(std::string& str, const Unit *x, size_t n, int base = 10, bool withPrefix = false)
 	{
 		switch (base) {
 		case 10:
 			{
-				mpz_class x;
-				Gmp::setRaw(x, v_, op_.N);
-				Gmp::toStr(str, x, 10);
+				mpz_class t;
+				Gmp::setRaw(t, x, n);
+				Gmp::toStr(str, t, 10);
 			}
 			return;
 		case 16:
-			mie::fp::toStr16(str, v_, op_.N, withPrefix);
+			mie::fp::toStr16(str, x, n, withPrefix);
 			return;
 		case 2:
-			mie::fp::toStr2(str, v_, op_.N, withPrefix);
+			mie::fp::toStr2(str, x, n, withPrefix);
 			return;
 		default:
 			throw cybozu::Exception("fp:FpT:toStr:bad base") << base;
 		}
+	}
+	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
+	{
+		const Unit *p = v_;
+		FpT t;
+		if (op_.fromMont) {
+			op_.fromMont(t.v_, p);
+			p = t.v_;
+		}
+		toStr(str, p, op_.N, base, withPrefix);
 	}
 	std::string toStr(int base = 10, bool withPrefix = false) const
 	{
@@ -211,7 +232,13 @@ public:
 	template<size_t maxBitN2, class tag2>
 	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
 	{
-		powerArray(z, x, y.v_, FpT<maxBitN2, tag2>::getUnitN());
+		const Unit *p = y.v_;
+		FpT<maxBitN2, tag2> t;
+		if (FpT<maxBitN2, tag2>::op_.fromMont) {
+			FpT<maxBitN2, tag2>::op_.fromMont(t.v_, p);
+			p = t.v_;
+		}
+		powerArray(z, x, p, FpT<maxBitN2, tag2>::op_.N);
 	}
 	static inline void power(FpT& z, const FpT& x, int y)
 	{
@@ -244,7 +271,6 @@ public:
 	}
 	static inline size_t getModBitLen() { return pBitLen_; }
 	static inline size_t getBitVecSize() { return pBitLen_; }
-	static inline size_t getUnitN() { return op_.N; }
 	bool operator==(const FpT& rhs) const { return fp::local::isEqualArray(v_, rhs.v_, op_.N); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; add(z, x, y); return z; }

@@ -90,8 +90,9 @@ typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 typedef int (*int2op)(Unit*, const Unit*);
 
 struct Op {
+	mpz_class mp;
+	const Unit* p;
 	size_t N;
-	bool useMont;
 	bool (*isZero)(const Unit*);
 	void1op clear;
 	void2op neg;
@@ -101,8 +102,14 @@ struct Op {
 	void3op add;
 	void3op sub;
 	void3op mul;
-	mpz_class mp;
-	const Unit* p;
+	// for Montgomery
+	void2op toMont;
+	void2op fromMont;
+	Op()
+		: p(0), N(0), isZero(0), clear(0), neg(0), inv(0)
+		, square(0), copy(0),add(0), sub(0), mul(0), toMont(0), fromMont(0)
+	{
+	}
 };
 
 template<size_t bitN, class tag = TagDefault>
@@ -207,7 +214,6 @@ struct FixedFp {
 		setModulo(p);
 		Op op;
 		op.N = N;
-		op.useMont = false;
 		op.isZero = &isZero;
 		op.clear = &clear;
 		op.neg = &neg;
@@ -270,7 +276,7 @@ struct MontFp {
 		Unit t[N];
 		clear(t);
 		t[0] = 2;
-		mul_(t, t, RR_);
+		toMont(t, t);
 		for (int i = 0; i < invTblN; i++) {
 			copy(invTbl[invTblN - 1 - i], t);
 			add_(t, t, t);
@@ -304,14 +310,20 @@ struct MontFp {
 	{
 		mul_(y, x, x);
 	}
+	static inline void toMont(Unit *y, const Unit *x)
+	{
+		mul_(y, x, RR_);
+	}
+	static inline void fromMont(Unit *y, const Unit *x)
+	{
+		mul_(y, x, one_);
+	}
 	static inline Op init(const Unit *p)
 	{
 puts("use MontFp");
 		setModulo(p);
 		Op op;
 		op.N = N;
-		op.useMont = true;
-
 		op.isZero = &isZero;
 		op.clear = &clear;
 		op.neg = Xbyak::CastTo<void2op>(fg_.neg_);
@@ -324,6 +336,8 @@ puts("use MontFp");
 		op.mul = mul_;
 		op.mp = mp_;
 		op.p = &p_[0];
+		op.toMont = &toMont;
+		op.fromMont = &fromMont;
 
 //		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
 //		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
