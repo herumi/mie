@@ -22,6 +22,12 @@
 	#pragma warning(pop)
 #endif
 #include <cybozu/inttype.hpp>
+#if defined(_WIN64) || defined(__x86_64__)
+	#define USE_MONT_FP
+#endif
+#ifdef USE_MONT_FP
+#include <mie/fp_generator.hpp>
+#endif
 
 namespace mie { namespace fp {
 
@@ -84,10 +90,12 @@ typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 
 struct Op {
 	size_t N;
+	bool useMont;
 	bool (*isZero)(const Unit*);
 	void1op clear;
 	void2op neg;
 	void2op inv;
+	void2op square;
 	void2op copy;
 	void3op add;
 	void3op sub;
@@ -169,6 +177,10 @@ struct FixedFp {
 		mpz_mod(mz, mz, mp_.get_mpz_t());
 		local::toArray(z, N, mz);
 	}
+	static inline void square(Unit *z, const Unit *x)
+	{
+		mul(z, x, x); // QQQ : use powMod with 2?
+	}
 	static inline void inv(Unit *y, const Unit *x)
 	{
 		mpz_class my;
@@ -197,10 +209,12 @@ struct FixedFp {
 		setModulo(p);
 		Op op;
 		op.N = N;
+		op.useMont = false;
 		op.isZero = &isZero;
 		op.clear = &clear;
 		op.neg = &neg;
 		op.inv = &inv;
+		op.square = &square;
 		op.copy = &copy;
 		op.add = &add;
 		op.sub = &sub;
@@ -213,5 +227,85 @@ struct FixedFp {
 
 template<size_t bitN, class tag> mpz_class FixedFp<bitN, tag>::mp_;
 template<size_t bitN, class tag> fp::Unit FixedFp<bitN, tag>::p_[FixedFp<bitN, tag>::N];
+
+#ifdef USE_MONT_FP
+template<size_t bitN, class tag>
+struct MontFp {
+	typedef fp::Unit Unit;
+	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+	static mpz_class mp_;
+//	static mie::SquareRoot sq_;
+	static Unit p_[N];
+	static Unit one_[N];
+	static Unit R_[N]; // (1 << (N * 64)) % p
+	static Unit RR_[N]; // (R * R) % p
+	static Unit invTbl_[N * 64 * 2];
+	static size_t modBitLen_;
+	static FpGenerator fg_;
+
+	static inline void fromRawGmp(Unit *y, const mpz_class& x)
+	{
+		local::toArray(y, N, x.get_mpz_t());
+	}
+
+	static inline void setModulo(const Unit *p)
+	{
+		copy(p_, p);
+		Gmp::setRaw(mp_, p, N);
+//		p_.fromRawGmp(pOrg_);
+//		sq_.set(pOrg_);
+
+		mpz_class t = 1;
+		fromRawGmp(one_, t);
+#if 0
+		t = (t << (N * 64)) % pOrg_;
+		fromRawGmp(R_, t);
+		t = (t * t) % pOrg_;
+		RR_.fromRawGmp(t);
+		fg_.init(p_.v_, N);
+		add = Xbyak::CastTo<void3op>(fg_.add_);
+		sub = Xbyak::CastTo<void3op>(fg_.sub_);
+		mul = Xbyak::CastTo<void3op>(fg_.mul_);
+		square = Xbyak::CastTo<void2op>(fg_.sqr_);
+		if (square == 0) square = squareC;
+		neg = Xbyak::CastTo<void2op>(fg_.neg_);
+		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
+		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
+		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
+		preInv = Xbyak::CastTo<int2op>(fg_.preInv_);
+		initInvTbl(invTbl_);
+#endif
+	}
+	static inline Op init(const Unit *p)
+	{
+		setModulo(p);
+		Op op;
+		op.N = N;
+		op.useMont = true;
+#if 0
+		op.isZero = &isZero;
+		op.clear = &clear;
+		op.neg = &neg;
+		op.inv = &inv;
+		op.square = &square;
+		op.copy = &copy;
+		op.add = &add;
+		op.sub = &sub;
+		op.mul = &mul;
+		op.mp = mp_;
+		op.p = &p_[0];
+#endif
+		return op;
+	}
+};
+template<size_t bitN, class tag> mpz_class MontFp<bitN, tag>::mp_;
+template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::p_[MontFp<bitN, tag>::N];
+template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::one_[MontFp<bitN, tag>::N];
+template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::R_[MontFp<bitN, tag>::N];
+template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::RR_[MontFp<bitN, tag>::N];
+template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::invTbl_[MontFp<bitN, tag>::N * 64 * 2];
+template<size_t bitN, class tag> size_t MontFp<bitN, tag>::modBitLen_;
+template<size_t bitN, class tag> FpGenerator MontFp<bitN, tag>::fg_;
+#endif
 
 } } // mie::fp

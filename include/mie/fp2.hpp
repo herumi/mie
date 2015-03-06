@@ -170,7 +170,7 @@ public:
 	static inline void mul(FpT& z, const FpT& x, const FpT& y) { op_.mul(z.v_, x.v_, y.v_); }
 	static inline void inv(FpT& y, const FpT& x) { op_.inv(y.v_, x.v_); }
 	static inline void neg(FpT& y, const FpT& x) { op_.neg(y.v_, x.v_); }
-	static inline void square(FpT& y, const FpT& x) { op_.mul(y.v_, x.v_, x.v_); }
+	static inline void square(FpT& y, const FpT& x) { op_.square(y.v_, x.v_); }
 	static inline void div(FpT& z, const FpT& x, const FpT& y)
 	{
 		FpT rev;
