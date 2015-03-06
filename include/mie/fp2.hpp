@@ -217,6 +217,21 @@ public:
 		z = out;
 	}
 	bool isZero() const { return op_.isZero(v_); }
+	static inline bool isEqual(const Unit* x, const Unit* y)
+	{
+		for (size_t i = 0, N = op_.N; i < N; i++) {
+			if (x[i] != y[i]) return false;
+		}
+		return true;
+	}
+	static inline int compare(const Unit* x, const Unit* y)
+	{
+		for (size_t i = op_.N - 1; i != size_t(-1); i--) {
+			if (x[i] < y[i]) return -1;
+			if (x[i] > y[i]) return 1;
+		}
+		return 0;
+	}
 	/*
 		append to bv(not clear bv)
 	*/
@@ -226,17 +241,17 @@ public:
 	}
 	bool isValid() const
 	{
-		return op_.compare(v_, op_.p) < 0;
+		return compare(v_, op_.p) < 0;
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
 		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
-		memcpy(v_, bv.getBlock(), bv.getBlockSize() *  sizeof(Unit));
+		memcpy(v_, bv.getBlock(), bv.getBlockSize() * sizeof(Unit));
 		if (!isValid()) throw cybozu::Exception("FpT:fromBitVec:large x");
 	}
 	static inline size_t getModBitLen() { return pBitLen_; }
 	static inline size_t getBitVecSize() { return pBitLen_; }
-	bool operator==(const FpT& rhs) const { return op_.isEqual(v_, rhs.v_); }
+	bool operator==(const FpT& rhs) const { return isEqual(v_, rhs.v_); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; add(z, x, y); return z; }
 	inline friend FpT operator-(const FpT& x, const FpT& y) { FpT z; sub(z, x, y); return z; }

@@ -45,8 +45,6 @@ typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 struct Op {
 	size_t N;
 	bool (*isZero)(const Unit*);
-	bool (*isEqual)(const Unit*, const Unit*);
-	int (*compare)(const Unit*, const Unit*);
 	void1op clear;
 	void2op neg;
 	void2op inv;
@@ -163,21 +161,6 @@ struct FixedFp {
 		}
 		return true;
 	}
-	static inline bool isEqual(const Unit *x, const Unit *y)
-	{
-		for (size_t i = 0; i < N; i++) {
-			if (x[i] != y[i]) return false;
-		}
-		return true;
-	}
-	static inline int compare(const Unit *x, const Unit *y)
-	{
-		for (size_t i = N - 1; i != size_t(-1); i--) {
-			if (x[i] < y[i]) return -1;
-			if (x[i] > y[i]) return 1;
-		}
-		return 0;
-	}
 	static inline void neg(Unit *y, const Unit *x)
 	{
 		if (isZero(x)) {
@@ -192,8 +175,6 @@ struct FixedFp {
 		Op op;
 		op.N = N;
 		op.isZero = &isZero;
-		op.isEqual = &isEqual;
-		op.compare = &compare;
 		op.clear = &clear;
 		op.neg = &neg;
 		op.inv = &inv;
