@@ -15,12 +15,13 @@
 		#define NOMINMAX
 	#endif
 #endif
+#if defined(_WIN64) || defined(__x86_64__)
+//	#define USE_MONT_FP
+#endif
 #include <cybozu/hash.hpp>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
 #include <cybozu/bitvector.hpp>
-#include <mie/operator.hpp>
-#include <mie/power.hpp>
 #include <mie/fp_base.hpp>
 #include <mie/fp_util.hpp>
 #include <mie/gmp_util.hpp>
@@ -33,7 +34,6 @@ class FpT {
 	static const size_t UnitByteN = sizeof(Unit);
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
 	static fp::Op op_;
-//	static mpz_class mp_;
 	static size_t pBitLen_;
 
 public:
@@ -58,13 +58,23 @@ public:
 		Unit p[maxUnitN] = {};
 		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+#ifdef USE_MONT_FP
+		if (pBitLen_ <= 128) {  op_ = fp::MontFp<128, tag>::init(p); }
+		else if (pBitLen_ <= 192) { static fp::MontFp<192, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 256) { static fp::MontFp<256, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 384) { static fp::MontFp<384, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 448) { static fp::MontFp<448, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 576) { static fp::MontFp<576, tag> f; op_ = f.init(p); }
+		else { static fp::MontFp<maxBitN, tag> f; op_ = f.init(p); }
+#else
 		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
-		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> fixed; op_ = fixed.init(p); }
-		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> fixed; op_ = fixed.init(p); }
-		else if (pBitLen_ <= 384) { static fp::FixedFp<384, tag> fixed; op_ = fixed.init(p); }
-		else if (pBitLen_ <= 448) { static fp::FixedFp<448, tag> fixed; op_ = fixed.init(p); }
-		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> fixed; op_ = fixed.init(p); }
-		else { static fp::FixedFp<maxBitN, tag> fixed; op_ = fixed.init(p); }
+		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 384) { static fp::FixedFp<384, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 448) { static fp::FixedFp<448, tag> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> f; op_ = f.init(p); }
+		else { static fp::FixedFp<maxBitN, tag> f; op_ = f.init(p); }
+#endif
 	}
 	static inline void getModulo(std::string& pstr)
 	{
