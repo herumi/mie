@@ -110,7 +110,7 @@ public:
 		mpz_class x;
 		inFromStr(x, &isMinus, str, base);
 		if (x >= op_.mp) throw cybozu::Exception("fp:FpT:fromStr:large str") << str;
-		toArray(v_, x);
+		fp::local::toArray(v_, op_.N, x.get_mpz_t());
 		if (isMinus) {
 			neg(*this, *this);
 		}
@@ -177,15 +177,14 @@ public:
 		inv(rev, y);
 		mul(z, x, rev);
 	}
-	template<size_t maxBitN2, class tag2>
-	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
+	static inline void powerArray(FpT& z, const FpT& x, const Unit *y, size_t yn)
 	{
 		FpT out(1);
 		FpT t(x);
-		for (size_t i = 0, n = op_.N; i < n; i++) {
-			const Unit v = y.v_[i];
+		for (size_t i = 0; i < yn; i++) {
+			const Unit v = y[i];
 			int m = (int)sizeof(Unit) * 8;
-			if (i == n - 1) {
+			if (i == yn - 1) {
 				while (m > 0 && (v & (Unit(1) << (m - 1))) == 0) {
 					m--;
 				}
@@ -199,39 +198,23 @@ public:
 		}
 		z = out;
 	}
+	template<size_t maxBitN2, class tag2>
+	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
+	{
+		powerArray(z, x, y.v_, FpT<maxBitN2, tag2>::getUnitN());
+	}
 	static inline void power(FpT& z, const FpT& x, int y)
 	{
 		if (y < 0) throw cybozu::Exception("FpT:power with negative y is not support") << y;
-		FpT out(1);
-		FpT t(x);
-		int m = (int)sizeof(Unit) * 8;
-		while (m > 0 && (y & (Unit(1) << (m - 1))) == 0) {
-			m--;
-		}
-		for (int j = 0; j < m; j++) {
-			if (y & (Unit(1) << j)) {
-				out *= t;
-			}
-			t *= t;
-		}
-		z = out;
+		const Unit u = y;
+		powerArray(z, x, &u, 1);
+	}
+	static inline void power(FpT& z, const FpT& x, const mpz_class& y)
+	{
+		if (y < 0) throw cybozu::Exception("FpT:power with negative y is not support") << y;
+		powerArray(z, x, Gmp::getBlock(y), Gmp::getBlockSize(x));
 	}
 	bool isZero() const { return op_.isZero(v_); }
-	static inline bool isEqual(const Unit* x, const Unit* y)
-	{
-		for (size_t i = 0, N = op_.N; i < N; i++) {
-			if (x[i] != y[i]) return false;
-		}
-		return true;
-	}
-	static inline int compare(const Unit* x, const Unit* y)
-	{
-		for (size_t i = op_.N - 1; i != size_t(-1); i--) {
-			if (x[i] < y[i]) return -1;
-			if (x[i] > y[i]) return 1;
-		}
-		return 0;
-	}
 	/*
 		append to bv(not clear bv)
 	*/
@@ -241,7 +224,7 @@ public:
 	}
 	bool isValid() const
 	{
-		return compare(v_, op_.p) < 0;
+		return fp::local::compareArray(v_, op_.p, op_.N) < 0;
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
@@ -251,7 +234,8 @@ public:
 	}
 	static inline size_t getModBitLen() { return pBitLen_; }
 	static inline size_t getBitVecSize() { return pBitLen_; }
-	bool operator==(const FpT& rhs) const { return isEqual(v_, rhs.v_); }
+	static inline size_t getUnitN() { return op_.N; }
+	bool operator==(const FpT& rhs) const { return fp::local::isEqualArray(v_, rhs.v_, op_.N); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; add(z, x, y); return z; }
 	inline friend FpT operator-(const FpT& x, const FpT& y) { FpT z; sub(z, x, y); return z; }
@@ -292,14 +276,6 @@ private:
 		if (!Gmp::fromStr(x, p, base)) {
 			throw cybozu::Exception("fp:FpT:inFromStr") << str;
 		}
-	}
-	static inline void toArray(Unit *y, const mpz_class& x)
-	{
-		const size_t n = Gmp::getBlockSize(x);
-		const size_t N = op_.N;
-		assert(n <= N);
-		Gmp::getRaw(y, N, x);
-		for (size_t i = n; i < N; i++) y[i] = 0;
 	}
 };
 

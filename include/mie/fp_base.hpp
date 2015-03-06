@@ -25,13 +25,53 @@
 
 namespace mie { namespace fp {
 
-struct TagDefault;
-
 #if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
 typedef uint32_t Unit;
 #else
 typedef uint64_t Unit;
 #endif
+
+namespace local {
+
+inline int compareArray(const Unit* x, const Unit* y, size_t n)
+{
+	for (size_t i = n - 1; i != size_t(-1); i--) {
+		if (x[i] < y[i]) return -1;
+		if (x[i] > y[i]) return 1;
+	}
+	return 0;
+}
+
+inline bool isEqualArray(const Unit* x, const Unit* y, size_t n)
+{
+	for (size_t i = 0; i < n; i++) {
+		if (x[i] != y[i]) return false;
+	}
+	return true;
+}
+
+inline void clearArray(Unit *x, size_t begin, size_t end)
+{
+	for (size_t i = begin; i < end; i++) x[i] = 0;
+}
+
+inline void copyArray(Unit *y, const Unit *x, size_t n)
+{
+	for (size_t i = 0; i < n; i++) y[i] = x[i];
+}
+
+inline void toArray(Unit *y, size_t yn, const mpz_srcptr x)
+{
+	const int xn = x->_mp_size;
+	assert(xn >= 0);
+	const Unit* xp = (const Unit*)x->_mp_d;
+	assert(xn <= yn);
+	copyArray(y, xp, xn);
+	clearArray(y, xn, yn);
+}
+
+} // mie::fp
+struct TagDefault;
 
 // clear
 typedef void (*void1op)(Unit*);
@@ -84,30 +124,13 @@ struct FixedFp {
 		z->_mp_size = 0;
 		z->_mp_d = (mp_limb_t*)p;
 	}
-	static inline void clear(Unit *x, size_t begin, size_t end)
-	{
-		for (size_t i = begin; i < end; i++) x[i] = 0;
-	}
 	static inline void clear(Unit *x)
 	{
-		clear(x, 0, N);
-	}
-	static inline void copy(Unit *y, const Unit *x, size_t n)
-	{
-		for (size_t i = 0; i < n; i++) y[i] = x[i];
+		local::clearArray(x, 0, N);
 	}
 	static inline void copy(Unit *y, const Unit *x)
 	{
-		copy(y, x, N);
-	}
-	static inline void copy(Unit *p, const mpz_t& x)
-	{
-		const int n = x->_mp_size;
-		assert(n >= 0);
-		const Unit* xp = (const Unit*)x->_mp_d;
-		assert(n <= N);
-		copy(p, xp, n);
-		clear(p, n, N);
+		local::copyArray(y, x, N);
 	}
 	static inline void add(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -120,7 +143,7 @@ struct FixedFp {
 		if (mpz_cmp(mz, mp_.get_mpz_t()) >= 0) {
 			mpz_sub(mz, mz, mp_.get_mpz_t());
 		}
-		copy(z, mz);
+		local::toArray(z, N, mz);
 	}
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -133,7 +156,7 @@ struct FixedFp {
 		if (mpz_sgn(mz) < 0) {
 			mpz_add(mz, mz, mp_.get_mpz_t());
 		}
-		copy(z, mz);
+		local::toArray(z, N, mz);
 	}
 	static inline void mul(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -144,7 +167,7 @@ struct FixedFp {
 		set_mpz_t(my, y);
 		mpz_mul(mz, mx, my);
 		mpz_mod(mz, mz, mp_.get_mpz_t());
-		copy(z, mz);
+		local::toArray(z, N, mz);
 	}
 	static inline void inv(Unit *y, const Unit *x)
 	{
@@ -152,7 +175,7 @@ struct FixedFp {
 		mpz_t mx;
 		set_mpz_t(mx, x);
 		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
-		Gmp::getRaw(y, N, my);
+		local::toArray(y, N, my.get_mpz_t());
 	}
 	static inline bool isZero(const Unit *x)
 	{
