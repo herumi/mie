@@ -41,7 +41,7 @@ struct Block {
 	Unit v_[maxUnitN];
 };
 
-template<size_t maxBitN, class tag = fp::TagDefault>
+template<size_t maxBitN = 521, class tag = fp::TagDefault>
 class FpT {
 	typedef fp::Unit Unit;
 	static const size_t UnitByteN = sizeof(Unit);
@@ -316,6 +316,7 @@ public:
 	FpT& operator-=(const FpT& x) { sub(*this, *this, x); return *this; }
 	FpT& operator*=(const FpT& x) { mul(*this, *this, x); return *this; }
 	FpT& operator/=(const FpT& x) { div(*this, *this, x); return *this; }
+	FpT operator-() const { FpT x; neg(x, *this); return x; }
 	friend inline std::ostream& operator<<(std::ostream& os, const FpT& self)
 	{
 		const std::ios_base::fmtflags f = os.flags();

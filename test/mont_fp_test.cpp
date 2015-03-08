@@ -1,9 +1,20 @@
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
 #include <cybozu/test.hpp>
 #include <cybozu/benchmark.hpp>
+#include <time.h>
+
+//#define NEW_FP_T
+#ifdef NEW_FP_T
+#define USE_MONT_FP
+#include <mie/fp2.hpp>
+typedef mie::FpT<> Zn;
+typedef mie::FpT<> MontFp3;
+typedef mie::FpT<> MontFp4;
+typedef mie::FpT<> MontFp6;
+typedef mie::FpT<> MontFp9;
+#else
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
-#include <time.h>
 #include <mie/mont_fp.hpp>
 
 typedef mie::FpT<mie::Gmp> Zn;
@@ -11,6 +22,7 @@ typedef mie::MontFpT<4> MontFp4;
 typedef mie::MontFpT<3> MontFp3;
 typedef mie::MontFpT<6> MontFp6;
 typedef mie::MontFpT<9> MontFp9;
+#endif
 
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
@@ -113,7 +125,11 @@ void put(const uint64_t (&x)[N])
 
 template<size_t N>
 struct Test {
+#ifdef NEW_FP_T
+	typedef mie::FpT<> Fp;
+#else
 	typedef mie::MontFpT<N> Fp;
+#endif
 	mpz_class m;
 	void run(const char *p)
 	{
@@ -296,6 +312,7 @@ struct Test {
 	}
 	void edge()
 	{
+#ifndef NEW_FP_T
 		std::cout << std::hex;
 		/*
 			real mont
@@ -306,7 +323,7 @@ struct Test {
 			  -R    -1
 		*/
 		mpz_class t = 1;
-		const mpz_class R = (t << (Fp::BlockSize * 64)) % m;
+		const mpz_class R = (t << (N * 64)) % m;
 		const mpz_class tbl[] = {
 			0, 1, R, m - 1, m - R
 		};
@@ -325,6 +342,7 @@ struct Test {
 			}
 		}
 		std::cout << std::dec;
+#endif
 	}
 
 	void conv()
@@ -435,6 +453,7 @@ struct Test {
 	}
 	void cvtInt()
 	{
+#ifndef NEW_FP_T
 		Fp x;
 		x = 12345;
 		uint64_t y = x.cvtInt();
@@ -444,6 +463,7 @@ struct Test {
 		bool err = false;
 		CYBOZU_TEST_NO_EXCEPTION(x.cvtInt(&err));
 		CYBOZU_TEST_ASSERT(err);
+#endif
 	}
 
 	void power()
