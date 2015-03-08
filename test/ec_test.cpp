@@ -3,10 +3,16 @@
 #include <cybozu/test.hpp>
 #include <cybozu/benchmark.hpp>
 #include <mie/gmp_util.hpp>
+
+//#define NEW_FP_T
+#ifdef NEW_FP_T
+#include <mie/fp2.hpp>
+typedef mie::FpT<> Fp_3;
+typedef mie::FpT<> Fp_4;
+typedef mie::FpT<> Fp_6;
+typedef mie::FpT<> Fp_9;
+#else
 #include <mie/fp.hpp>
-#include <mie/ec.hpp>
-#include <mie/ecparam.hpp>
-#include <time.h>
 
 #if defined(_WIN64) || defined(__x86_64__)
 //	#define USE_MONT_FP
@@ -23,9 +29,17 @@ typedef mie::FpT<mie::Gmp> Fp_4;
 typedef mie::FpT<mie::Gmp> Fp_6;
 typedef mie::FpT<mie::Gmp> Fp_9;
 #endif
+#endif
+#include <mie/ec.hpp>
+#include <mie/ecparam.hpp>
+#include <time.h>
 
 struct tagZn;
+#ifdef NEW_FP_T
+typedef mie::FpT<521, tagZn> Zn;
+#else
 typedef mie::FpT<mie::Gmp, tagZn> Zn;
+#endif
 
 template<class Fp>
 struct Test {
