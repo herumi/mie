@@ -169,10 +169,11 @@ public:
 		const size_t fpByteN = sizeof(Unit) * op_.N;
 		if (byteN < fpByteN) throw cybozu::Exception("getRaw:bad n") << n << fpByteN;
 		assert(byteN >= fpByteN);
-		memcpy(outBuf, v_, fpByteN);
+		Block b;
+		getBlock(b);
+		memcpy(outBuf, b.p, fpByteN);
 		const size_t writeN = (fpByteN + sizeof(S) - 1) / sizeof(S);
 		memset((char *)outBuf + fpByteN, 0, writeN * sizeof(S) - fpByteN);
-		fromMont(*this, *this);
 		return writeN;
 	}
 	void getBlock(Block& b) const
@@ -281,7 +282,9 @@ public:
 	*/
 	void appendToBitVec(cybozu::BitVector& bv) const
 	{
-		bv.append(v_, pBitLen_);
+		Block b;
+		getBlock(b);
+		bv.append(b.p, pBitLen_);
 	}
 	bool isValid() const
 	{
@@ -290,8 +293,7 @@ public:
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
 		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
-		memcpy(v_, bv.getBlock(), bv.getBlockSize() * sizeof(Unit));
-		if (!isValid()) throw cybozu::Exception("FpT:fromBitVec:large x");
+		setRaw(bv.getBlock(), bv.getBlockSize());
 	}
 	static inline size_t getModBitLen() { return pBitLen_; }
 	static inline size_t getBitVecSize() { return pBitLen_; }
