@@ -26,7 +26,20 @@
 #include <mie/fp_util.hpp>
 #include <mie/gmp_util.hpp>
 
+#ifndef MIE_FP_BLOCK_MAX_BIT_N
+	#define MIE_FP_BLOCK_MAX_BIT_N 640
+#endif
+
 namespace mie {
+
+struct Block {
+	typedef fp::Unit Unit;
+	const Unit *p; // pointer to original FpT.v_
+	size_t n;
+	static const size_t UnitByteN = sizeof(Unit);
+	static const size_t maxUnitN = (MIE_FP_BLOCK_MAX_BIT_N + UnitByteN * 8 - 1) / (UnitByteN * 8);
+	Unit v_[maxUnitN];
+};
 
 template<size_t maxBitN, class tag = fp::TagDefault>
 class FpT {
@@ -140,25 +153,44 @@ public:
 	template<class S>
 	void setRaw(const S *inBuf, size_t n)
 	{
-		clear();
-		const size_t byteN = std::min(sizeof(S) * n, sizeof(Unit) * op_.N);
+		const size_t byteN = sizeof(S) * n;
+		const size_t fpByteN = sizeof(Unit) * op_.N;
+		if (byteN > fpByteN) throw cybozu::Exception("setRaw:bad n") << n << fpByteN;
+		assert(byteN <= fpByteN);
 		memcpy(v_, inBuf, byteN);
+		memset((char *)v_ + byteN, 0, fpByteN - byteN);
 		if (!isValid()) throw cybozu::Exception("setRaw:large value");
 		toMont(*this, *this);
 	}
 	template<class S>
-	size_t getRaw(S *outBuf, size_t n)
+	size_t getRaw(S *outBuf, size_t n) const
 	{
 		const size_t byteN = sizeof(S) * n;
-		const size_t needByteN = sizeof(Unit) * op_.N;
-		if (byteN > needByteN) throw cybozu::Exception("getRaw:small n") << n << needByteN;
-		memcpy(outBuf, v_, needByteN);
-		return (needByteN + sizeof(S) - 1) / sizeof(S);
+		const size_t fpByteN = sizeof(Unit) * op_.N;
+		if (byteN < fpByteN) throw cybozu::Exception("getRaw:bad n") << n << fpByteN;
+		assert(byteN >= fpByteN);
+		memcpy(outBuf, v_, fpByteN);
+		const size_t writeN = (fpByteN + sizeof(S) - 1) / sizeof(S);
+		memset((char *)outBuf + fpByteN, 0, writeN * sizeof(S) - fpByteN);
+		fromMont(*this, *this);
+		return writeN;
+	}
+	void getBlock(Block& b) const
+	{
+		assert(maxUnitN >= Block::maxUnitN);
+		b.n = op_.N;
+		if (op_.fromMont) {
+			op_.fromMont(b.v_, v_);
+			b.p = &b.v_[0];
+		} else {
+			b.p = &v_[0];
+		}
 	}
 	template<class RG>
 	void setRand(RG& rg)
 	{
 		fp::getRandVal(v_, rg, op_.p, pBitLen_);
+		fromMont(*this, *this);
 	}
 	static inline void toStr(std::string& str, const Unit *x, size_t n, int base = 10, bool withPrefix = false)
 	{
@@ -182,13 +214,9 @@ public:
 	}
 	void toStr(std::string& str, int base = 10, bool withPrefix = false) const
 	{
-		const Unit *p = v_;
-		FpT t;
-		if (op_.fromMont) {
-			op_.fromMont(t.v_, p);
-			p = t.v_;
-		}
-		toStr(str, p, op_.N, base, withPrefix);
+		Block b;
+		getBlock(b);
+		toStr(str, b.p, b.n, base, withPrefix);
 	}
 	std::string toStr(int base = 10, bool withPrefix = false) const
 	{
@@ -232,13 +260,9 @@ public:
 	template<size_t maxBitN2, class tag2>
 	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
 	{
-		const Unit *p = y.v_;
-		FpT<maxBitN2, tag2> t;
-		if (FpT<maxBitN2, tag2>::op_.fromMont) {
-			FpT<maxBitN2, tag2>::op_.fromMont(t.v_, p);
-			p = t.v_;
-		}
-		powerArray(z, x, p, FpT<maxBitN2, tag2>::op_.N);
+		Block b;
+		y.getBlock(b);
+		powerArray(z, x, b.p, b.n);
 	}
 	static inline void power(FpT& z, const FpT& x, int y)
 	{
