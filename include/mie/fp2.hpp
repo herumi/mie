@@ -49,9 +49,12 @@ class FpT {
 	static fp::Op op_;
 	static size_t pBitLen_;
 	template<size_t maxBitN2, class tag2> friend class FpT;
-public:
-	typedef Unit BlockType;
 	Unit v_[maxUnitN];
+public:
+	// return pointer to array v_[]
+	const Unit *getUnit() const { return v_; }
+	size_t getUnitN() const { return op_.N; }
+	typedef Unit BlockType;
 	void dump() const
 	{
 		const size_t N = op_.N;
@@ -92,6 +95,12 @@ public:
 	static inline void getModulo(std::string& pstr)
 	{
 		Gmp::toStr(pstr, op_.mp);
+	}
+	static inline bool isYodd(const FpT& x)
+	{
+		Block b;
+		x.getBlock(b);
+		return (b.p[0] & 1) == 1;
 	}
 	FpT() {}
 	FpT(const FpT& x)
@@ -349,18 +358,13 @@ template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
-#if 0
-template<size_t maxUnitN, class tag>
-struct hash<mie::FpT<maxUnitN, tag> > : public std::unary_function<mie::FpT<maxUnitN, tag>, size_t> {
-	size_t operator()(const mie::FpT<maxUnitN, tag>& x, uint64_t v_ = 0) const
+template<size_t maxBitN, class tag>
+struct hash<mie::FpT<maxBitN, tag> > : public std::unary_function<mie::FpT<maxBitN, tag>, size_t> {
+	size_t operator()(const mie::FpT<maxBitN, tag>& x, uint64_t v = 0) const
 	{
-		typedef mie::FpT<maxUnitN, tag> Fp;
-		size_t n = Fp::getBlockSize(x);
-		const typename Fp::uint64_t *p = Fp::getBlock(x);
-		return static_cast<size_t>(cybozu::hash64(p, n, v_));
+		return static_cast<size_t>(cybozu::hash64(x.getUnit(), x.getUnitN(), v));
 	}
 };
-#endif
 
 CYBOZU_NAMESPACE_TR1_END } // std::tr1
 
