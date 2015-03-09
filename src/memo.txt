@@ -1,0 +1,52 @@
+;
+define void @mie_fp_add192(i192* %pz, i192* %px, i192* %py, i192* %pp) {
+entry:
+	%x = load i192* %px
+	%y = load i192* %py
+	%p = load i192* %pp
+	%x1 = zext i192 %x to i256
+	%y1 = zext i192 %y to i256
+	%p1 = zext i192 %p to i256
+	%t0 = add i256 %x1, %y1
+	%t1 = sub i256 %t0, %p1 ; x + y - p
+	%t2 = lshr i256 %t1, 192
+	%t3 = trunc i256 %t2 to i64
+	%t4 = trunc i256 %t1 to i192
+	%t5 = trunc i256 %t0 to i192
+	%zero = icmp eq i64 %t3, 0
+	br i1 %zero, label %nocarry, label %carry
+carry:
+	br label %exit
+nocarry:
+	br label %exit
+exit:
+	%t6 = phi i192 [%t4, %carry], [%t5, %nocarry]
+	store i192 %t6, i192* %pz
+	ret void
+}
+;
+mie_fp_add192:                          # @mie_fp_add192
+# BB#0:                                 # %entry
+        mov     r9, qword ptr [rdx + 16]
+        mov     r8, qword ptr [rdx]
+        mov     r10, qword ptr [rdx + 8]
+        add     r8, qword ptr [rsi]
+        adc     r10, qword ptr [rsi + 8]
+        adc     r9, qword ptr [rsi + 16]
+        sbb     r11, r11
+        and     r11, 1
+        mov     rax, r8
+        sub     rax, qword ptr [rcx]
+        mov     rdx, r10
+        sbb     rdx, qword ptr [rcx + 8]
+        mov     rsi, r9
+        sbb     rsi, qword ptr [rcx + 16]
+        sbb     r11, 0
+        cmove   rsi, r9
+        cmove   rdx, r10
+        cmove   rax, r8
+        mov     qword ptr [rdi + 8], rdx
+        mov     qword ptr [rdi], rax
+        mov     qword ptr [rdi + 16], rsi
+        ret
+
