@@ -176,9 +176,9 @@ struct FixedFp {
 		local::toArray(z, N, mz);
 	}
 #ifdef MIE_USE_LLVM
-	static inline void add128(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add128(z, x, y, p_); }
+	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128(z, x, y, p_); }
 	static inline void add192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add192(z, x, y, p_); }
-	static inline void add256(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add256(z, x, y, p_); }
+	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256(z, x, y, p_); }
 #endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -241,13 +241,10 @@ struct FixedFp {
 		op.copy = &copy;
 #ifdef MIE_USE_LLVM
 		if (bitN == 128) {
-puts("use add128");
 			op.add = &add128;
 		} else if (bitN == 192) {
-puts("use add192");
 			op.add = &add192;
 		} else if (bitN == 256) {
-puts("use add256");
 			op.add = &add256;
 		} else {
 			op.add = &add;

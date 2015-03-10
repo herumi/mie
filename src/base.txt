@@ -13,8 +13,8 @@ entry:
 	%t1 = sub i@BitNP %t0, %p1 ; x + y - p
 	%t2 = lshr i@BitNP %t1, @BitN
 	%t3 = trunc i@BitNP %t2 to i@Unit
-	%t4 = trunc i@BitNP %t1 to i@BitN
-	%t5 = trunc i@BitNP %t0 to i@BitN
+	%t4 = trunc i@BitNP %t1 to i@BitN ; x + y - p
+	%t5 = trunc i@BitNP %t0 to i@BitN ; x + y
 	%zero = icmp eq i@Unit %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
@@ -22,7 +22,7 @@ carry:
 nocarry:
 	br label %exit
 exit:
-	%t6 = phi i@BitN [%t4, %carry], [%t5, %nocarry]
+	%t6 = phi i@BitN [%t5, %carry], [%t4, %nocarry]
 	store i@BitN %t6, i@BitN* %pz
 	ret void
 }

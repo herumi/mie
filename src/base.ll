@@ -13,8 +13,8 @@ entry:
 	%t1 = sub i192 %t0, %p1 ; x + y - p
 	%t2 = lshr i192 %t1, 128
 	%t3 = trunc i192 %t2 to i64
-	%t4 = trunc i192 %t1 to i128
-	%t5 = trunc i192 %t0 to i128
+	%t4 = trunc i192 %t1 to i128 ; x + y - p
+	%t5 = trunc i192 %t0 to i128 ; x + y
 	%zero = icmp eq i64 %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
@@ -22,7 +22,7 @@ carry:
 nocarry:
 	br label %exit
 exit:
-	%t6 = phi i128 [%t4, %carry], [%t5, %nocarry]
+	%t6 = phi i128 [%t5, %carry], [%t4, %nocarry]
 	store i128 %t6, i128* %pz
 	ret void
 }
@@ -43,8 +43,8 @@ entry:
 	%t1 = sub i256 %t0, %p1 ; x + y - p
 	%t2 = lshr i256 %t1, 192
 	%t3 = trunc i256 %t2 to i64
-	%t4 = trunc i256 %t1 to i192
-	%t5 = trunc i256 %t0 to i192
+	%t4 = trunc i256 %t1 to i192 ; x + y - p
+	%t5 = trunc i256 %t0 to i192 ; x + y
 	%zero = icmp eq i64 %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
@@ -52,7 +52,7 @@ carry:
 nocarry:
 	br label %exit
 exit:
-	%t6 = phi i192 [%t4, %carry], [%t5, %nocarry]
+	%t6 = phi i192 [%t5, %carry], [%t4, %nocarry]
 	store i192 %t6, i192* %pz
 	ret void
 }
@@ -73,8 +73,8 @@ entry:
 	%t1 = sub i320 %t0, %p1 ; x + y - p
 	%t2 = lshr i320 %t1, 256
 	%t3 = trunc i320 %t2 to i64
-	%t4 = trunc i320 %t1 to i256
-	%t5 = trunc i320 %t0 to i256
+	%t4 = trunc i320 %t1 to i256 ; x + y - p
+	%t5 = trunc i320 %t0 to i256 ; x + y
 	%zero = icmp eq i64 %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
@@ -82,7 +82,7 @@ carry:
 nocarry:
 	br label %exit
 exit:
-	%t6 = phi i256 [%t4, %carry], [%t5, %nocarry]
+	%t6 = phi i256 [%t5, %carry], [%t4, %nocarry]
 	store i256 %t6, i256* %pz
 	ret void
 }
