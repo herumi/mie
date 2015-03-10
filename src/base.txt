@@ -9,13 +9,13 @@ entry:
 	%x1 = zext i@BitN %x to i@BitNP
 	%y1 = zext i@BitN %y to i@BitNP
 	%p1 = zext i@BitN %p to i@BitNP
-	%t0 = add i@BitNP %x1, %y1
+	%t0 = add i@BitNP %x1, %y1 ; x + y
 	%t1 = sub i@BitNP %t0, %p1 ; x + y - p
 	%t2 = lshr i@BitNP %t1, @BitN
-	%t3 = trunc i@BitNP %t2 to i@Unit
+	%t3 = trunc i@BitNP %t2 to i@UnitN
 	%t4 = trunc i@BitNP %t1 to i@BitN ; x + y - p
 	%t5 = trunc i@BitNP %t0 to i@BitN ; x + y
-	%zero = icmp eq i@Unit %t3, 0
+	%zero = icmp eq i@UnitN %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
 	br label %exit

@@ -9,7 +9,7 @@ entry:
 	%x1 = zext i128 %x to i192
 	%y1 = zext i128 %y to i192
 	%p1 = zext i128 %p to i192
-	%t0 = add i192 %x1, %y1
+	%t0 = add i192 %x1, %y1 ; x + y
 	%t1 = sub i192 %t0, %p1 ; x + y - p
 	%t2 = lshr i192 %t1, 128
 	%t3 = trunc i192 %t2 to i64
@@ -39,7 +39,7 @@ entry:
 	%x1 = zext i192 %x to i256
 	%y1 = zext i192 %y to i256
 	%p1 = zext i192 %p to i256
-	%t0 = add i256 %x1, %y1
+	%t0 = add i256 %x1, %y1 ; x + y
 	%t1 = sub i256 %t0, %p1 ; x + y - p
 	%t2 = lshr i256 %t1, 192
 	%t3 = trunc i256 %t2 to i64
@@ -69,7 +69,7 @@ entry:
 	%x1 = zext i256 %x to i320
 	%y1 = zext i256 %y to i320
 	%p1 = zext i256 %p to i320
-	%t0 = add i320 %x1, %y1
+	%t0 = add i320 %x1, %y1 ; x + y
 	%t1 = sub i320 %t0, %p1 ; x + y - p
 	%t2 = lshr i320 %t1, 256
 	%t3 = trunc i320 %t2 to i64
