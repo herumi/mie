@@ -4,6 +4,12 @@ ifeq ($(USE_MONT_FP),1)
   CFLAGS += -DUSE_MONT_FP
 endif
 
+ifeq ($(USE_LLVM),1)
+  CFLAGS += -DMIE_USE_LLVM
+  SRC+=../src/base.$(CPU).s
+  LDFLAGS+=../src/base.$(CPU).o
+endif
+
 TARGET=$(TEST_FILE)
 LIBS=
 
@@ -28,3 +34,7 @@ $(LIBS):
 
 -include $(DEPEND_FILE)
 
+ifeq ($(USE_LLVM),1)
+../src/base.$(CPU).o: ../src/base.$(CPU).s
+	$(CXX) $< -o $@ -c
+endif

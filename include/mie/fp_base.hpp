@@ -34,6 +34,25 @@ typedef uint32_t Unit;
 typedef uint64_t Unit;
 #endif
 
+typedef void (*void1op)(Unit*);
+typedef void (*void2op)(Unit*, const Unit*);
+typedef void (*void3op)(Unit*, const Unit*, const Unit*);
+typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
+typedef int (*int2op)(Unit*, const Unit*);
+
+} } // mie::fp
+
+#ifdef MIE_USE_LLVM
+
+extern "C" {
+void mie_fp_add128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+}
+#endif
+
+namespace mie { namespace fp {
+
 namespace local {
 
 inline int compareArray(const Unit* x, const Unit* y, size_t n)
@@ -83,11 +102,6 @@ inline void toArray(Unit *y, size_t yn, const mpz_srcptr x)
 
 } // mie::fp
 struct TagDefault;
-
-typedef void (*void1op)(Unit*);
-typedef void (*void2op)(Unit*, const Unit*);
-typedef void (*void3op)(Unit*, const Unit*, const Unit*);
-typedef int (*int2op)(Unit*, const Unit*);
 
 struct Op {
 	mpz_class mp;
@@ -161,6 +175,11 @@ struct FixedFp {
 		}
 		local::toArray(z, N, mz);
 	}
+#ifdef MIE_USE_LLVM
+	static inline void add128(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add128(z, x, y, p_); }
+	static inline void add192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add192(z, x, y, p_); }
+	static inline void add256(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add256(z, x, y, p_); }
+#endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
 		Unit ret[N + 1];
@@ -220,7 +239,22 @@ struct FixedFp {
 		op.inv = &inv;
 		op.square = &square;
 		op.copy = &copy;
+#ifdef MIE_USE_LLVM
+		if (bitN == 128) {
+puts("use add128");
+			op.add = &add128;
+		} else if (bitN == 192) {
+puts("use add192");
+			op.add = &add192;
+		} else if (bitN == 256) {
+puts("use add256");
+			op.add = &add256;
+		} else {
+			op.add = &add;
+		}
+#else
 		op.add = &add;
+#endif
 		op.sub = &sub;
 		op.mul = &mul;
 		op.mp = mp_;
