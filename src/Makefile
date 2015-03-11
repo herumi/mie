@@ -6,6 +6,8 @@ ASM=llvm-as$(VER)
 OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
 SRC = once.txt all.txt long.txt short.txt
+TARGET=x64.s x32.s arm.s arm64.s
+all: $(TARGET)
 
 base64.ll: gen.py $(SRC)
 	python gen.py 64
@@ -30,6 +32,10 @@ x64.s: base64.ll
 	cat base64.ll|$(OPT_LLC) -mattr=bmi2 > x64.s
 x32.s: base32.ll
 	cat base32.ll|$(OPT_LLC) -mattr=bmi2 > x32.s
+arm.s: base32.ll
+	cat base32.ll|$(OPT_LLC) -march=arm > arm.s
+arm64.s: base32.ll
+	cat base64.ll|$(OPT_LLC) -march=aarch64 > arm64.s
 clean:
 	rm -rf base*.ll *.s
 

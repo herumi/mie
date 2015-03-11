@@ -6,8 +6,10 @@ endif
 
 ifeq ($(USE_LLVM),1)
   CFLAGS += -DMIE_USE_LLVM
-  SRC+=../src/base.$(CPU).s
-  LDFLAGS+=../src/base.$(CPU).o
+  ASM_SRC=../src/$(CPU).s
+  ASM_OBJ=$(ASM_SRC:.s=.o)
+  SRC+=$(ASM_SRC)
+  LDFLAGS+=$(ASM_OBJ)
 endif
 
 TARGET=$(TEST_FILE)
@@ -35,6 +37,6 @@ $(LIBS):
 -include $(DEPEND_FILE)
 
 ifeq ($(USE_LLVM),1)
-../src/base.$(CPU).o: ../src/base.$(CPU).s
+$(ASM_OBJ): $(ASM_SRC)
 	$(CXX) $< -o $@ -c
 endif

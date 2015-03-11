@@ -73,12 +73,13 @@ def main():
 	outName = 'base%d.ll' % unitN
 	fo = open(outName, 'w')
 	gen(fo, 'once.txt', unitN, [unitN * 2])
-	gen(fo, 'all.txt', unitN, [64, 128, 192, 256, 384, 512, 578])
 
 	if unitN == 64:
+		gen(fo, 'all.txt', unitN, [64, 128, 192, 256, 384, 512, 578])
 		gen(fo, 'short.txt', unitN, [128, 192, 256, 384])
 		gen(fo, 'long.txt', unitN, [448, 512, 578])
 	elif unitN == 32:
+		gen(fo, 'all.txt', unitN, [32, 64, 92])
 		gen(fo, 'short.txt', unitN, [128])
 		gen(fo, 'long.txt', unitN, [192, 384, 448, 512, 578])
 	else:
