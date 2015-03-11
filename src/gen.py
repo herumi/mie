@@ -39,7 +39,8 @@ def main():
 	if args == 2:
 		unitN = int(argv[1])
 
-	fo = open('base.ll', 'w')
+	outName = 'base%d.ll' % unitN
+	fo = open(outName, 'w')
 	gen(fo, 'once.txt', unitN, [unitN * 2])
 	gen(fo, 'all.txt', unitN, [64, 128, 192, 256, 384, 512, 578])
 
