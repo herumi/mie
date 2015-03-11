@@ -1,6 +1,5 @@
 ;declare { i64, i1 } @llvm.uadd.iwth.overflow.i64(i64, i64)
 
-; void mie_fp_add@BitN
 define void @mie_fp_add@BitN(i@BitN* %pz, i@BitN* %px, i@BitN* %py, i@BitN* %pp) {
 entry:
 	%x = load i@BitN* %px
@@ -39,7 +38,6 @@ define { i@BitN, i@UnitN } @mie_local_sbb@BitN(i@BitN %x, i@BitN %y) {
 	ret { i@BitN, i@UnitN } %r2
 }
 
-; void mie_fp_sub@BitN
 define void @mie_fp_sub@BitN(i@BitN* %pz, i@BitN* %px, i@BitN* %py, i@BitN* %pp) {
 entry:
 	%x = load i@BitN* %px

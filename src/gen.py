@@ -25,7 +25,7 @@ def main():
 
 	fo = open('base.ll', 'w')
 
-	for bitN in [128, 192, 256]: #[128, 192, 256]:
+	for bitN in [128, 192, 256, 384, 448, 512, 578]:
 		gen(fo, s, unitN, bitN)
 	fo.close()
 
