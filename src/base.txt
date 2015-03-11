@@ -6,15 +6,15 @@ entry:
 	%x = load i@BitN* %px
 	%y = load i@BitN* %py
 	%p = load i@BitN* %pp
-	%x1 = zext i@BitN %x to i@BitNP
-	%y1 = zext i@BitN %y to i@BitNP
-	%p1 = zext i@BitN %p to i@BitNP
-	%t0 = add i@BitNP %x1, %y1 ; x + y
-	%t1 = sub i@BitNP %t0, %p1 ; x + y - p
-	%t2 = lshr i@BitNP %t1, @BitN
-	%t3 = trunc i@BitNP %t2 to i@UnitN
-	%t4 = trunc i@BitNP %t1 to i@BitN ; x + y - p
-	%t5 = trunc i@BitNP %t0 to i@BitN ; x + y
+	%x1 = zext i@BitN %x to i@BitNpU
+	%y1 = zext i@BitN %y to i@BitNpU
+	%p1 = zext i@BitN %p to i@BitNpU
+	%t0 = add i@BitNpU %x1, %y1 ; x + y
+	%t1 = sub i@BitNpU %t0, %p1 ; x + y - p
+	%t2 = lshr i@BitNpU %t1, @BitN
+	%t3 = trunc i@BitNpU %t2 to i@UnitN
+	%t4 = trunc i@BitNpU %t1 to i@BitN ; x + y - p
+	%t5 = trunc i@BitNpU %t0 to i@BitN ; x + y
 	%zero = icmp eq i@UnitN %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
@@ -27,4 +27,37 @@ exit:
 	ret void
 }
 
+define { i@BitN, i@UnitN } @mie_local_sbb@BitN(i@BitN %x, i@BitN %y) {
+	%x1 = zext i@BitN %x to i@BitNpU
+	%y1 = zext i@BitN %y to i@BitNpU
+	%v1 = sub i@BitNpU %x1, %y1
+	%v = trunc i@BitNpU %v1 to i@BitN
+	%c = lshr i@BitNpU %v1, @BitN
+	%c1 = trunc i@BitNpU %c to i@UnitN
+	%r1 = insertvalue { i@BitN, i@UnitN } undef, i@BitN %v, 0
+	%r2 = insertvalue { i@BitN, i@UnitN } %r1, i@UnitN %c1, 1
+	ret { i@BitN, i@UnitN } %r2
+}
+
+; void mie_fp_sub@BitN
+define void @mie_fp_sub@BitN(i@BitN* %pz, i@BitN* %px, i@BitN* %py, i@BitN* %pp) {
+entry:
+	%x = load i@BitN* %px
+	%y = load i@BitN* %py
+	%p = load i@BitN* %pp
+	%vc = call { i@BitN, i@UnitN } @mie_local_sbb@BitN(i@BitN %x, i@BitN %y)
+	%v = extractvalue { i@BitN, i@UnitN } %vc, 0 ; x - y
+	%c = extractvalue { i@BitN, i@UnitN } %vc, 1
+	%t = add i@BitN %v, %p ; x - y + p
+	%zero = icmp eq i@UnitN %c, 0
+	br i1 %zero, label %nocarry, label %carry
+carry:
+	br label %exit
+nocarry:
+	br label %exit
+exit:
+	%t1 = phi i@BitN [%t, %carry], [%v, %nocarry]
+	store i@BitN %t1, i@BitN* %pz
+	ret void
+}
 
