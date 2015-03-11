@@ -48,9 +48,11 @@ extern "C" {
 void mie_fp_add128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_add192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_add256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 }
 #endif
 
@@ -182,9 +184,11 @@ struct FixedFp {
 	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128(z, x, y, p_); }
 	static inline void add192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_add192(z, x, y, p_); }
 	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256(z, x, y, p_); }
+	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384(z, x, y, p_); }
 	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128(z, x, y, p_); }
 	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_sub192(z, x, y, p_); }
 	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256(z, x, y, p_); }
+	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384(z, x, y, p_); }
 #endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -249,12 +253,18 @@ struct FixedFp {
 		if (bitN == 128) {
 			op.add = &add128;
 			op.sub = &sub128;
-		} else if (bitN == 192) {
+		} else
+		if (bitN == 192) {
 			op.add = &add192;
 			op.sub = &sub192;
-		} else if (bitN == 256) {
+		} else
+		if (bitN == 256) {
 			op.add = &add256;
 			op.sub = &sub256;
+		} else
+		if (bitN == 384) {
+			op.add = &add384;
+			op.sub = &sub384;
 		} else
 #endif
 		{

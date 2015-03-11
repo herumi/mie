@@ -1,5 +1,3 @@
-;declare { i64, i1 } @llvm.uadd.iwth.overflow.i64(i64, i64)
-
 define void @mie_fp_add@BitN(i@BitN* %pz, i@BitN* %px, i@BitN* %py, i@BitN* %pp) {
 entry:
 	%x = load i@BitN* %px
@@ -9,24 +7,22 @@ entry:
 	%y1 = zext i@BitN %y to i@BitNpU
 	%p1 = zext i@BitN %p to i@BitNpU
 	%t0 = add i@BitNpU %x1, %y1 ; x + y
+	%t4 = trunc i@BitNpU %t0 to i@BitN ; x + y
+	store i@BitN %t4, i@BitN* %pz
 	%t1 = sub i@BitNpU %t0, %p1 ; x + y - p
 	%t2 = lshr i@BitNpU %t1, @BitN
 	%t3 = trunc i@BitNpU %t2 to i@UnitN
-	%t4 = trunc i@BitNpU %t1 to i@BitN ; x + y - p
-	%t5 = trunc i@BitNpU %t0 to i@BitN ; x + y
 	%zero = icmp eq i@UnitN %t3, 0
 	br i1 %zero, label %nocarry, label %carry
 carry:
-	br label %exit
+	ret void
 nocarry:
-	br label %exit
-exit:
-	%t6 = phi i@BitN [%t5, %carry], [%t4, %nocarry]
-	store i@BitN %t6, i@BitN* %pz
+	%t5 = trunc i@BitNpU %t1 to i@BitN ; x + y - p
+	store i@BitN %t5, i@BitN* %pz
 	ret void
 }
 
-define { i@BitN, i@UnitN } @mie_local_sbb@BitN(i@BitN %x, i@BitN %y) {
+define internal { i@BitN, i@UnitN } @local_sbb@BitN(i@BitN %x, i@BitN %y) {
 	%x1 = zext i@BitN %x to i@BitNpU
 	%y1 = zext i@BitN %y to i@BitNpU
 	%v1 = sub i@BitNpU %x1, %y1
@@ -43,7 +39,7 @@ entry:
 	%x = load i@BitN* %px
 	%y = load i@BitN* %py
 	%p = load i@BitN* %pp
-	%vc = call { i@BitN, i@UnitN } @mie_local_sbb@BitN(i@BitN %x, i@BitN %y)
+	%vc = call { i@BitN, i@UnitN } @local_sbb@BitN(i@BitN %x, i@BitN %y)
 	%v = extractvalue { i@BitN, i@UnitN } %vc, 0 ; x - y
 	%c = extractvalue { i@BitN, i@UnitN } %vc, 1
 	%t = add i@BitN %v, %p ; x - y + p

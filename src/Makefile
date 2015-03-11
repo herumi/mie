@@ -5,9 +5,9 @@ DIS=llvm-dis$(VER)
 ASM=llvm-as$(VER)
 OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
-SRC = base.txt
+SRC = base.txt base.long.txt base.short.txt
 
-base.ll: base.txt gen.py
+base.ll: gen.py $(SRC)
 	python gen.py
 
 x64:
