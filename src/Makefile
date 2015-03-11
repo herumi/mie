@@ -5,29 +5,31 @@ DIS=llvm-dis$(VER)
 ASM=llvm-as$(VER)
 OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
-SRC = base.txt base.long.txt base.short.txt
+SRC = once.txt all.txt long.txt short.txt
 
-base.ll: gen.py $(SRC)
-	python gen.py
+base64.ll: gen.py $(SRC)
+	python gen.py 64
 
-x64:
-	$(LLC) base.ll -o - -x86-asm-syntax=intel
-x86:
-	$(LLC) base.ll -o - -x86-asm-syntax=intel -march=x86
-arm64:
-	$(LLC) base.ll -o - -march=aarch64
+base32.ll: gen.py $(SRC)
+	python gen.py 32
 
-arm:
-	$(LLC) base.ll -o - -march=arm
+x64: base64.ll
+	$(LLC) base64.ll -o - -x86-asm-syntax=intel
+x86: base32.ll
+	$(LLC) base32.ll -o - -x86-asm-syntax=intel -march=x86
+arm64: base64.ll
+	$(LLC) base64.ll -o - -march=aarch64
 
-#test: modp_test.cpp base.ll
-#	clang++ -O3 modp_test.cpp base.ll -o test -Wall -Wextra -I ../../cybozulib/include -I ../../mie/include -lgmp -lgmpxx -march=native
+arm: base32.ll
+	$(LLC) base32.ll -o - -march=arm
 
-opt: base.ll
-	cat base.ll|$(OPT_LLC) -x86-asm-syntax=intel -mattr=bmi2
+opt: base64.ll
+	cat base64.ll|$(OPT_LLC) -x86-asm-syntax=intel -mattr=bmi2
 
-base.x64.s: base.ll
-	cat base.ll|$(OPT_LLC) -mattr=bmi2 > base.x64.s
+x64.s: base64.ll
+	cat base64.ll|$(OPT_LLC) -mattr=bmi2 > x64.s
+x32.s: base32.ll
+	cat base32.ll|$(OPT_LLC) -mattr=bmi2 > x32.s
 clean:
-	rm -rf test
+	rm -rf base*.ll *.s
 

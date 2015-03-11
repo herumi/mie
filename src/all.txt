@@ -1,0 +1,6 @@
+
+define i@unitN @extract@bitNpU(i@bitNpU %x, i@bitNpU %shift) {
+	%t0 = lshr i@bitNpU %x, %shift
+	%t1 = trunc i@bitNpU %t0 to i@unitN
+	ret i@unitN %t1
+}
