@@ -27,7 +27,7 @@
 #include <mie/gmp_util.hpp>
 
 #ifndef MIE_FP_BLOCK_MAX_BIT_N
-	#define MIE_FP_BLOCK_MAX_BIT_N 640
+	#define MIE_FP_BLOCK_MAX_BIT_N 521
 #endif
 
 namespace mie {
@@ -41,7 +41,7 @@ struct Block {
 	Unit v_[maxUnitN];
 };
 
-template<size_t maxBitN = 521, class tag = fp::TagDefault>
+template<class tag = fp::TagDefault, size_t maxBitN = MIE_FP_BLOCK_MAX_BIT_N>
 class FpT {
 	typedef fp::Unit Unit;
 	static const size_t UnitByteN = sizeof(Unit);
@@ -49,7 +49,7 @@ class FpT {
 	static fp::Op op_;
 	static mie::SquareRoot sq_;
 	static size_t pBitLen_;
-	template<size_t maxBitN2, class tag2> friend class FpT;
+	template<class tag2, size_t maxBitN2> friend class FpT;
 	Unit v_[maxUnitN];
 public:
 	// return pointer to array v_[]
@@ -76,21 +76,21 @@ public:
 		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 #ifdef USE_MONT_FP
-		if (pBitLen_ <= 128) {  op_ = fp::MontFp<128, tag>::init(p); }
-		else if (pBitLen_ <= 192) { static fp::MontFp<192, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 256) { static fp::MontFp<256, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 384) { static fp::MontFp<384, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 448) { static fp::MontFp<448, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 576) { static fp::MontFp<576, tag> f; op_ = f.init(p); }
-		else { static fp::MontFp<maxBitN, tag> f; op_ = f.init(p); }
+		if (pBitLen_ <= 128) {  op_ = fp::MontFp<tag, 128>::init(p); }
+		else if (pBitLen_ <= 192) { static fp::MontFp<tag, 192> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 256) { static fp::MontFp<tag, 256> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 384) { static fp::MontFp<tag, 384> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 448) { static fp::MontFp<tag, 448> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 576) { static fp::MontFp<tag, 576> f; op_ = f.init(p); }
+		else { static fp::MontFp<tag, maxBitN> f; op_ = f.init(p); }
 #else
-		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<128, tag>::init(p); }
-		else if (pBitLen_ <= 192) { static fp::FixedFp<192, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 256) { static fp::FixedFp<256, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 384) { static fp::FixedFp<384, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 448) { static fp::FixedFp<448, tag> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> f; op_ = f.init(p); }
-		else { static fp::FixedFp<maxBitN, tag> f; op_ = f.init(p); }
+		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<tag, 128>::init(p); }
+		else if (pBitLen_ <= 192) { static fp::FixedFp<tag, 192> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 256) { static fp::FixedFp<tag, 256> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 384) { static fp::FixedFp<tag, 384> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 448) { static fp::FixedFp<tag, 448> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 576) { static fp::FixedFp<tag, 576> f; op_ = f.init(p); }
+		else { static fp::FixedFp<tag, maxBitN> f; op_ = f.init(p); }
 #endif
 		sq_.set(mp);
 	}
@@ -288,8 +288,8 @@ public:
 		}
 		z = out;
 	}
-	template<size_t maxBitN2, class tag2>
-	static inline void power(FpT& z, const FpT& x, const FpT<maxBitN2, tag2>& y)
+	template<class tag2, size_t maxBitN2>
+	static inline void power(FpT& z, const FpT& x, const FpT<tag2, maxBitN2>& y)
 	{
 		Block b;
 		y.getBlock(b);
@@ -383,18 +383,18 @@ private:
 	}
 };
 
-template<size_t maxBitN, class tag> fp::Op FpT<maxBitN, tag>::op_;
-template<size_t maxBitN, class tag> mie::SquareRoot FpT<maxBitN, tag>::sq_;
-template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
+template<class tag, size_t maxBitN> fp::Op FpT<tag, maxBitN>::op_;
+template<class tag, size_t maxBitN> mie::SquareRoot FpT<tag, maxBitN>::sq_;
+template<class tag, size_t maxBitN> size_t FpT<tag, maxBitN>::pBitLen_;
 
 } // mie
 
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
-template<size_t maxBitN, class tag>
-struct hash<mie::FpT<maxBitN, tag> > : public std::unary_function<mie::FpT<maxBitN, tag>, size_t> {
-	size_t operator()(const mie::FpT<maxBitN, tag>& x, uint64_t v = 0) const
+template<class tag, size_t maxBitN>
+struct hash<mie::FpT<tag, maxBitN> > : public std::unary_function<mie::FpT<tag, maxBitN>, size_t> {
+	size_t operator()(const mie::FpT<tag, maxBitN>& x, uint64_t v = 0) const
 	{
 		return static_cast<size_t>(cybozu::hash64(x.getUnit(), x.getUnitN(), v));
 	}

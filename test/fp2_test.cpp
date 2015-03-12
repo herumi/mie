@@ -8,7 +8,7 @@
 	#pragma warning(disable: 4127) // const condition
 #endif
 
-typedef mie::FpT<521> Fp;
+typedef mie::FpT<> Fp;
 
 const int m = 65537;
 struct Init {
@@ -246,7 +246,7 @@ CYBOZU_TEST_AUTO(power)
 		CYBOZU_TEST_EQUAL(y, z);
 		z *= x;
 	}
-	typedef mie::FpT<128, tag2> Fp2;
+	typedef mie::FpT<tag2, 128> Fp2;
 	Fp2::setModulo("1009");
 	x = 5;
 	Fp2 n = 3;
@@ -274,7 +274,7 @@ struct TagAnother;
 
 CYBOZU_TEST_AUTO(another)
 {
-	typedef mie::FpT<128, TagAnother> G;
+	typedef mie::FpT<TagAnother, 128> G;
 	G::setModulo("13");
 	G a = 3;
 	G b = 9;

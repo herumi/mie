@@ -138,7 +138,7 @@ struct Op {
 	}
 };
 
-template<size_t bitN, class tag = TagDefault>
+template<class tag, size_t bitN>
 struct FixedFp {
 	typedef fp::Unit Unit;
 	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
@@ -318,11 +318,11 @@ struct FixedFp {
 	}
 };
 
-template<size_t bitN, class tag> mpz_class FixedFp<bitN, tag>::mp_;
-template<size_t bitN, class tag> fp::Unit FixedFp<bitN, tag>::p_[FixedFp<bitN, tag>::N];
+template<class tag, size_t bitN> mpz_class FixedFp<tag, bitN>::mp_;
+template<class tag, size_t bitN> fp::Unit FixedFp<tag, bitN>::p_[FixedFp<tag, bitN>::N];
 
 #ifdef USE_MONT_FP
-template<size_t bitN, class tag>
+template<class, tag, size_t bitN>
 struct MontFp {
 	typedef fp::Unit Unit;
 	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
@@ -435,16 +435,16 @@ puts("use MontFp");
 		return op;
 	}
 };
-template<size_t bitN, class tag> mpz_class MontFp<bitN, tag>::mp_;
-template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::p_[MontFp<bitN, tag>::N];
-template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::one_[MontFp<bitN, tag>::N];
-template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::R_[MontFp<bitN, tag>::N];
-template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::RR_[MontFp<bitN, tag>::N];
-template<size_t bitN, class tag> fp::Unit MontFp<bitN, tag>::invTbl_[MontFp<bitN, tag>::invTblN][MontFp<bitN, tag>::N];
-template<size_t bitN, class tag> size_t MontFp<bitN, tag>::modBitLen_;
-template<size_t bitN, class tag> FpGenerator MontFp<bitN, tag>::fg_;
-template<size_t bitN, class tag> void3op MontFp<bitN, tag>::add_;
-template<size_t bitN, class tag> void3op MontFp<bitN, tag>::mul_;
+template<class tag, size_t bitN> mpz_class MontFp<tag, bitN>::mp_;
+template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::p_[MontFp<tag, bitN>::N];
+template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::one_[MontFp<tag, bitN>::N];
+template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::R_[MontFp<tag, bitN>::N];
+template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::RR_[MontFp<tag, bitN>::N];
+template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::invTbl_[MontFp<tag, bitN>::invTblN][MontFp<tag, bitN>::N];
+template<class tag, size_t bitN> size_t MontFp<tag, bitN>::modBitLen_;
+template<class tag, size_t bitN> FpGenerator MontFp<tag, bitN>::fg_;
+template<class tag, size_t bitN> void3op MontFp<tag, bitN>::add_;
+template<class tag, size_t bitN> void3op MontFp<tag, bitN>::mul_;
 #endif
 
 } } // mie::fp
