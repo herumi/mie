@@ -322,7 +322,7 @@ template<class tag, size_t bitN> mpz_class FixedFp<tag, bitN>::mp_;
 template<class tag, size_t bitN> fp::Unit FixedFp<tag, bitN>::p_[FixedFp<tag, bitN>::N];
 
 #ifdef USE_MONT_FP
-template<class, tag, size_t bitN>
+template<class tag, size_t bitN>
 struct MontFp {
 	typedef fp::Unit Unit;
 	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
@@ -409,7 +409,7 @@ struct MontFp {
 	}
 	static inline Op init(const Unit *p)
 	{
-puts("use MontFp");
+puts("use MontFp2");
 		setModulo(p);
 		Op op;
 		op.N = N;
