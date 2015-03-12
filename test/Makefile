@@ -22,7 +22,7 @@ endif
 
 all: $(TARGET)
 
-test: $(TARGET)
+test: $(TARGET) $(ASM_OBJ)
 	@$(UNIT_TEST)
 
 $(OBJDIR):

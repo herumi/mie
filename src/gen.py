@@ -3,7 +3,7 @@ import sys, re
 def gen_mulNx1(fo, unitN, n):
 	inN = unitN * n
 	outN = unitN * (n + 1)
-	print>>fo, "define i%d @mul%dx%d(i%d %%x, i%d %%y) {" % (outN, inN, unitN, inN, unitN)
+	print>>fo, "define private i%d @mul%dx%d(i%d %%x, i%d %%y) {" % (outN, inN, unitN, inN, unitN)
 	for i in xrange(0, n):
 		print>>fo, "  %%x%d = call i%d @extract%d(i%d %%x, i%d %d)" % (i, unitN, inN, inN, inN, i * unitN)
 		print>>fo, "  %%x%dy = call i%d @mul%dx%d(i%d %%x%d, i%d %%y)" % (i, unitN * 2, unitN, unitN, unitN, i, unitN)
@@ -21,7 +21,7 @@ def gen_mulNxN(fo, unitN, n):
 	inN = unitN * n
 	bitNpU = inN + unitN
 	outN = inN * 2
-	print>>fo, "define void @mul%dx%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, inN, unitN, inN, inN)
+	print>>fo, "define void @mie_fp_mul%dx%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, inN, unitN, inN, inN)
 	print>>fo, "  %%x = load i%d* %%px" % inN
 	print>>fo, "  %%y = load i%d* %%py" % inN
 	for i in xrange(0, n):
@@ -46,6 +46,13 @@ def gen_mulNxN(fo, unitN, n):
 	print>>fo, "  store i%d %%sum%d, i%d* %%p" % (bitNpU, n - 1, bitNpU)
 	print>>fo, "  ret void"
 	print>>fo, "}"
+
+def gen_mul(fo, unitN):
+	bitN = 576
+	n = (bitN + unitN - 1) / unitN
+	for i in xrange(2, n + 1):
+		gen_mulNx1(fo, unitN, i)
+		gen_mulNxN(fo, unitN, i)
 
 
 def gen_sub(fo, s, unitN, bitN):
@@ -74,20 +81,17 @@ def main():
 	fo = open(outName, 'w')
 	gen(fo, 'once.txt', unitN, [unitN * 2])
 
+	gen(fo, 'all.txt', unitN, range(unitN, 576 + 1, unitN))
 	if unitN == 64:
-		gen(fo, 'all.txt', unitN, [64, 128, 192, 256, 384, 512, 578])
 		gen(fo, 'short.txt', unitN, [128, 192, 256, 384])
-		gen(fo, 'long.txt', unitN, [448, 512, 578])
+		gen(fo, 'long.txt', unitN, [448, 512, 576])
 	elif unitN == 32:
-		gen(fo, 'all.txt', unitN, [32, 64, 92])
 		gen(fo, 'short.txt', unitN, [128])
-		gen(fo, 'long.txt', unitN, [192, 384, 448, 512, 578])
+		gen(fo, 'long.txt', unitN, [192, 384, 448, 512, 576])
 	else:
 		print "bad unitN", unitN
 		exit(1)
-	for i in xrange(2, 4):
-		gen_mulNx1(fo, unitN, i)
-	gen_mulNxN(fo, unitN, 3)
+	gen_mul(fo, unitN)
 	fo.close()
 
 if __name__ == "__main__":
