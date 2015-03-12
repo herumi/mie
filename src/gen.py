@@ -22,7 +22,7 @@ def gen_mulNxN(fo, unitN, n):
 	bitNpU = inN + unitN
 	outN = inN * 2
 #	print>>fo, "define void @mie_fp_mul%dx%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, inN, unitN, inN, inN)
-	print>>fo, "define void @mie_fp_mul%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, unitN, inN, inN)
+	print>>fo, "define void @mie_fp_pre_mul%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, unitN, inN, inN)
 	print>>fo, "  %%x = load i%d* %%px" % inN
 	print>>fo, "  %%y = load i%d* %%py" % inN
 	for i in xrange(0, n):

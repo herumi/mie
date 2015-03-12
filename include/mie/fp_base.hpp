@@ -45,19 +45,21 @@ typedef int (*int2op)(Unit*, const Unit*);
 #ifdef MIE_USE_LLVM
 
 extern "C" {
-void mie_fp_addMod128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_subMod128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_addMod192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_subMod192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_addMod256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_subMod256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_addMod384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_subMod384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
-void mie_fp_mul128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul448(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_pre_mul576(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 }
 #endif
 
@@ -186,14 +188,14 @@ struct FixedFp {
 		local::toArray(z, N, mz);
 	}
 #ifdef MIE_USE_LLVM
-	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod128(z, x, y, p_); }
-	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod128(z, x, y, p_); }
-	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod192(z, x, y, p_); }
-	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod192(z, x, y, p_); }
-	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod256(z, x, y, p_); }
-	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod256(z, x, y, p_); }
-	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod384(z, x, y, p_); }
-	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod384(z, x, y, p_); }
+	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128(z, x, y, p_); }
+	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128(z, x, y, p_); }
+	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_add192(z, x, y, p_); }
+	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub192(z, x, y, p_); }
+	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256(z, x, y, p_); }
+	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256(z, x, y, p_); }
+	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384(z, x, y, p_); }
+	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384(z, x, y, p_); }
 #endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -211,6 +213,20 @@ struct FixedFp {
 	static inline void mul(Unit *z, const Unit *x, const Unit *y)
 	{
 		Unit ret[N * 2];
+#ifdef MIE_USE_LLVM
+		switch (N * sizeof(Unit) * 8) {
+		case 128: mie_fp_pre_mul128(ret, x, y); mod(z, ret); return;
+		case 192: mie_fp_pre_mul192(ret, x, y); mod(z, ret); return;
+		case 256: mie_fp_pre_mul256(ret, x, y); mod(z, ret); return;
+		case 384: mie_fp_pre_mul384(ret, x, y); mod(z, ret); return;
+		case 448: mie_fp_pre_mul448(ret, x, y); mod(z, ret); return;
+//		case 576: mie_fp_mul576(ret, x, y); mod(z, ret); return;
+		}
+#endif
+#if 0
+		pre_mul(ret, x, y);
+		mod(z, ret);
+#else
 		mpz_t mx, my, mz;
 		set_zero(mz, ret, N * 2);
 		set_mpz_t(mx, x);
@@ -218,6 +234,16 @@ struct FixedFp {
 		mpz_mul(mz, mx, my);
 		mpz_mod(mz, mz, mp_.get_mpz_t());
 		local::toArray(z, N, mz);
+#endif
+	}
+	static inline void pre_mul(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_t mx, my, mz;
+		set_zero(mz, z, N * 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_mul(mz, mx, my);
+		local::toArray(z, N * 2, mz);
 	}
 	// x[N * 2] -> y[N]
 	static inline void mod(Unit *y, const Unit *x)
