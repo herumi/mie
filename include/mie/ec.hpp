@@ -353,11 +353,11 @@ public:
 	}
 	static inline void neg(EcT& R, const EcT& P)
 	{
-#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		if (P.isZero()) {
 			R.clear();
 			return;
 		}
+#if MIE_EC_COORD == MIE_EC_USE_AFFINE
 		R.inf_ = false;
 		R.x = P.x;
 		Fp::neg(R.y, P.y);
