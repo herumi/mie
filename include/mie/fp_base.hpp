@@ -220,7 +220,7 @@ struct FixedFp {
 		case 256: mie_fp_pre_mul256(ret, x, y); mod(z, ret); return;
 		case 384: mie_fp_pre_mul384(ret, x, y); mod(z, ret); return;
 		case 448: mie_fp_pre_mul448(ret, x, y); mod(z, ret); return;
-//		case 576: mie_fp_mul576(ret, x, y); mod(z, ret); return;
+		case 576: mie_fp_pre_mul576(ret, x, y); mod(z, ret); return;
 		}
 #endif
 #if 0

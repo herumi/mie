@@ -3,7 +3,11 @@ import sys, re
 def gen_mulNx1(fo, unitN, n):
 	inN = unitN * n
 	outN = unitN * (n + 1)
-	print>>fo, "define private i%d @mul%dx%d(i%d %%x, i%d %%y) {" % (outN, inN, unitN, inN, unitN)
+	if n > 4:
+		attr = "noinline"
+	else:
+		attr = ""
+	print>>fo, "define private i%d @mul%dx%d(i%d %%x, i%d %%y) %s {" % (outN, inN, unitN, inN, unitN, attr)
 	for i in xrange(0, n):
 		print>>fo, "  %%x%d = call i%d @extract%d(i%d %%x, i%d %d)" % (i, unitN, inN, inN, inN, i * unitN)
 		print>>fo, "  %%x%dy = call i%d @mul%dx%d(i%d %%x%d, i%d %%y)" % (i, unitN * 2, unitN, unitN, unitN, i, unitN)
