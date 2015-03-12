@@ -47,6 +47,7 @@ class FpT {
 	static const size_t UnitByteN = sizeof(Unit);
 	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
 	static fp::Op op_;
+	static mie::SquareRoot sq_;
 	static size_t pBitLen_;
 	template<size_t maxBitN2, class tag2> friend class FpT;
 	Unit v_[maxUnitN];
@@ -91,6 +92,7 @@ public:
 		else if (pBitLen_ <= 576) { static fp::FixedFp<576, tag> f; op_ = f.init(p); }
 		else { static fp::FixedFp<maxBitN, tag> f; op_ = f.init(p); }
 #endif
+		sq_.set(mp);
 	}
 	static inline void getModulo(std::string& pstr)
 	{
@@ -101,6 +103,15 @@ public:
 		Block b;
 		x.getBlock(b);
 		return (b.p[0] & 1) == 1;
+	}
+	static inline bool squareRoot(FpT& y, const FpT& x)
+	{
+		mpz_class mx, my;
+		x.toGmp(mx);
+		bool b = sq_.get(my, mx);
+		if (!b) return false;
+		y.fromGmp(my);
+		return true;
 	}
 	FpT() {}
 	FpT(const FpT& x)
@@ -234,6 +245,16 @@ public:
 		toStr(str, base, withPrefix);
 		return str;
 	}
+	void toGmp(mpz_class& x) const
+	{
+		Block b;
+		getBlock(b);
+		Gmp::setRaw(x, b.p, b.n);
+	}
+	void fromGmp(const mpz_class& x)
+	{
+		setRaw(Gmp::getBlock(x), Gmp::getBlockSize(x));
+	}
 	static inline void add(FpT& z, const FpT& x, const FpT& y) { op_.add(z.v_, x.v_, y.v_); }
 	static inline void sub(FpT& z, const FpT& x, const FpT& y) { op_.sub(z.v_, x.v_, y.v_); }
 	static inline void mul(FpT& z, const FpT& x, const FpT& y) { op_.mul(z.v_, x.v_, y.v_); }
@@ -341,6 +362,17 @@ public:
 		not support
 		getBitLen, operator<, >
 	*/
+	/*
+		QQQ : should be removed
+	*/
+	bool operator<(const FpT&) const { return false; }
+	static inline int compare(const FpT& x, const FpT& y)
+	{
+		Block xb, yb;
+		x.getBlock(xb);
+		y.getBlock(yb);
+		return fp::local::compareArray(xb.p, yb.p, xb.n);
+	}
 private:
 	static inline void inFromStr(mpz_class& x, bool *isMinus, const std::string& str, int base)
 	{
@@ -352,6 +384,7 @@ private:
 };
 
 template<size_t maxBitN, class tag> fp::Op FpT<maxBitN, tag>::op_;
+template<size_t maxBitN, class tag> mie::SquareRoot FpT<maxBitN, tag>::sq_;
 template<size_t maxBitN, class tag> size_t FpT<maxBitN, tag>::pBitLen_;
 
 } // mie
