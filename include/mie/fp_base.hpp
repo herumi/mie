@@ -107,7 +107,7 @@ inline void toArray(Unit *y, size_t yn, const mpz_srcptr x)
 	const int xn = x->_mp_size;
 	assert(xn >= 0);
 	const Unit* xp = (const Unit*)x->_mp_d;
-	assert(xn <= yn);
+	assert(xn <= (int)yn);
 	copyArray(y, xp, xn);
 	clearArray(y, xn, yn);
 }
