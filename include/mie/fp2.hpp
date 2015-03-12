@@ -25,6 +25,7 @@
 #include <mie/fp_base.hpp>
 #include <mie/fp_util.hpp>
 #include <mie/gmp_util.hpp>
+#include <mie/power.hpp>
 
 #ifndef MIE_FP_BLOCK_MAX_BIT_N
 	#define MIE_FP_BLOCK_MAX_BIT_N 521
@@ -387,6 +388,17 @@ template<class tag, size_t maxBitN> fp::Op FpT<tag, maxBitN>::op_;
 template<class tag, size_t maxBitN> mie::SquareRoot FpT<tag, maxBitN>::sq_;
 template<class tag, size_t maxBitN> size_t FpT<tag, maxBitN>::pBitLen_;
 
+namespace power_impl {
+
+template<class G, class tag, size_t bitN, template<class _tag, size_t _bitN>class FpT>
+void power(G& z, const G& x, const FpT<tag, bitN>& y)
+{
+	Block b;
+	y.getBlock(b);
+	mie::power_impl::powerArray(z, x, b.p, b.n);
+}
+
+} // mie::power_impl
 } // mie
 
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN

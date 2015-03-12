@@ -36,7 +36,7 @@ typedef mie::FpT<mie::Gmp> Fp_9;
 
 struct tagZn;
 #ifdef NEW_FP_T
-typedef mie::FpT<521, tagZn> Zn;
+typedef mie::FpT<tagZn> Zn;
 #else
 typedef mie::FpT<mie::Gmp, tagZn> Zn;
 #endif
