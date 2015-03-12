@@ -77,6 +77,7 @@ public:
 		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 #ifdef USE_MONT_FP
+		puts("fp2 MontFp");
 		if (pBitLen_ <= 128) {  op_ = fp::MontFp<tag, 128>::init(p); }
 		else if (pBitLen_ <= 192) { static fp::MontFp<tag, 192> f; op_ = f.init(p); }
 		else if (pBitLen_ <= 256) { static fp::MontFp<tag, 256> f; op_ = f.init(p); }
@@ -85,6 +86,7 @@ public:
 		else if (pBitLen_ <= 576) { static fp::MontFp<tag, 576> f; op_ = f.init(p); }
 		else { static fp::MontFp<tag, maxBitN> f; op_ = f.init(p); }
 #else
+		puts("fp2 FixedFp");
 		if (pBitLen_ <= 128) {  op_ = fp::FixedFp<tag, 128>::init(p); }
 		else if (pBitLen_ <= 192) { static fp::FixedFp<tag, 192> f; op_ = f.init(p); }
 		else if (pBitLen_ <= 256) { static fp::FixedFp<tag, 256> f; op_ = f.init(p); }

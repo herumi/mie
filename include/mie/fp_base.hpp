@@ -290,6 +290,7 @@ struct FixedFp {
 		op.square = &square;
 		op.copy = &copy;
 #ifdef MIE_USE_LLVM
+		puts("fp2 use llvm");
 		if (bitN == 128) {
 			op.add = &add128;
 			op.sub = &sub128;
