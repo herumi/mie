@@ -1,4 +1,4 @@
-define void @mie_fp_add@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_addMod@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
@@ -34,7 +34,7 @@ define internal { i@bitN, i@unitN } @local_sbb@bitN(i@bitN %x, i@bitN %y) {
 	ret { i@bitN, i@unitN } %r2
 }
 
-define void @mie_fp_sub@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_subMod@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
