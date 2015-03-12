@@ -188,8 +188,8 @@ struct FixedFp {
 #ifdef MIE_USE_LLVM
 	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod128(z, x, y, p_); }
 	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod128(z, x, y, p_); }
-	static inline void add192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_addMod192(z, x, y, p_); }
-	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { return mie_fp_subMod192(z, x, y, p_); }
+	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod192(z, x, y, p_); }
+	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod192(z, x, y, p_); }
 	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod256(z, x, y, p_); }
 	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_subMod256(z, x, y, p_); }
 	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_addMod384(z, x, y, p_); }
