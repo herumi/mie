@@ -6,7 +6,7 @@ ASM=llvm-as$(VER)
 OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
 SRC = once.txt all.txt long.txt short.txt
-TARGET=x64.s #x86.s arm.s arm64.s
+TARGET=x64.s x86.s arm.s arm64.s
 all: $(TARGET)
 
 base64.ll: gen.py $(SRC)
