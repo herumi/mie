@@ -60,6 +60,9 @@ void mie_fp_pre_mul256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit
 void mie_fp_pre_mul384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_pre_mul448(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_pre_mul576(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+
+void mie_fp_mul_NIST_P192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+
 }
 #endif
 
@@ -312,7 +315,14 @@ struct FixedFp {
 			op.add = &add;
 			op.sub = &sub;
 		}
-		op.mul = &mul;
+#ifdef MIE_USE_LLVM
+		if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
+			op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
+		} else
+#endif
+		{
+			op.mul = &mul;
+		}
 		op.mp = mp_;
 		op.p = &p_[0];
 		return op;

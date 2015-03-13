@@ -5,3 +5,64 @@ define i@unitN2 @mul@unitNx@unitN(i@unitN %x, i@unitN %y) {
 	%z = mul i@unitN2 %x0, %y0
 	ret i@unitN2 %z
 }
+
+; NIST_P192
+; 0xfffffffffffffffffffffffffffffffeffffffffffffffff
+;
+;       0                1                2
+; ffffffffffffffff fffffffffffffffe ffffffffffffffff
+;
+; p = (1 << 192) - (1 << 64) - 1
+; (1 << 192) % p = (1 << 64) + 1
+;
+; L : 192bit
+; Hi: 64bit
+; x = [H:L] = [H2:H1:H0:L]
+; mod p
+;    x = L + H + (H << 64)
+;      = L + H + [H1:H0:0] + H2 + (H2 << 64)
+;[e:t] = L + H + [H1:H0:H2] + [H2:0] ; 2bit(e) over
+;      = t + e + (e << 64)
+
+define internal void @modNIST_P192(i192* %out, i192* %px) {
+	%L192 = load i192* %px
+	%L = zext i192 %L192 to i256
+
+	%pH = getelementptr i192* %px, i32 1
+	%H192 = load i192* %pH
+	%H = zext i192 %H192 to i256
+
+	%H10_ = shl i192 %H192, 64
+	%H10 = zext i192 %H10_ to i256
+
+	%H2_ = call i64 @extract192(i192 %H192, i192 128)
+	%H2 = zext i64 %H2_ to i256
+	%H102 = or i256 %H10, %H2
+
+	%H2s = shl i256 %H2, 64
+
+	%t0 = add i256 %L, %H
+	%t1 = add i256 %t0, %H102
+	%t2 = add i256 %t1, %H2s
+
+	%e = lshr i256 %t2, 192
+	%t3 = trunc i256 %t2 to i192
+	%e1 = trunc i256 %e to i192
+
+
+	%t4 = add i192 %t3, %e1
+	%e2 = shl i192 %e1, 64
+	%t5 = add i192 %t4, %e2
+
+	store i192 %t5, i192* %out
+
+	ret void
+}
+
+define void @mie_fp_mul_NIST_P192(i192* %pz, i192* %px, i192* %py) {
+	%buf = alloca i64, i32 6
+	call void @mie_fp_pre_mul192(i64* %buf, i192* %px, i192* %py)
+	%p = bitcast i64* %buf to i192*
+	call void @modNIST_P192(i192* %pz, i192* %p)
+	ret void
+}

@@ -7,6 +7,7 @@
 #include <mie/fp.hpp>
 #include <mie/gmp_util.hpp>
 #include <mie/ecparam.hpp>
+#include <mie/ec.hpp>
 #if defined(_WIN64) || defined(__x86_64__)
 #define USE_MONT_FP
 #endif
