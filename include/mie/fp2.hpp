@@ -92,9 +92,10 @@ public:
 		else if (pBitLen_ <= 256) { static fp::FixedFp<tag, 256> f; op_ = f.init(p); }
 		else if (pBitLen_ <= 384) { static fp::FixedFp<tag, 384> f; op_ = f.init(p); }
 		else if (pBitLen_ <= 448) { static fp::FixedFp<tag, 448> f; op_ = f.init(p); }
-		else if (pBitLen_ <= 576) { static fp::FixedFp<tag, 576> f; op_ = f.init(p); }
+		else if (pBitLen_ <= 521) { static fp::FixedFp<tag, 521> f; op_ = f.init(p); }
 		else { static fp::FixedFp<tag, maxBitN> f; op_ = f.init(p); }
 #endif
+		assert(op_.N <= maxUnitN);
 		sq_.set(mp);
 	}
 	static inline void getModulo(std::string& pstr)
@@ -201,7 +202,7 @@ public:
 	}
 	void getBlock(Block& b) const
 	{
-		assert(maxUnitN >= Block::maxUnitN);
+		assert(maxUnitN <= Block::maxUnitN);
 		b.n = op_.N;
 		if (op_.fromMont) {
 			op_.fromMont(b.v_, v_);
