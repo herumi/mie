@@ -13,13 +13,7 @@ entry:
 	%t4 = trunc i@bitNpU %t1 to i@bitN ; x + y - p
 	%t5 = trunc i@bitNpU %t0 to i@bitN ; x + y
 	%zero = icmp eq i@unitN %t3, 0
-	br i1 %zero, label %nocarry, label %carry
-carry:
-	br label %exit
-nocarry:
-	br label %exit
-exit:
-	%t6 = phi i@bitN [%t5, %carry], [%t4, %nocarry]
+    %t6 = select i1 %zero, i@bitN %t4, i@bitN %t5
 	store i@bitN %t6, i@bitN* %pz
 	ret void
 }

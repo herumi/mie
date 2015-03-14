@@ -7,6 +7,7 @@ OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
 SRC = once.txt all.txt long.txt short.txt
 TARGET=x64.s x86.s arm.s arm64.s
+#AFLAGS=-mattr=bmi2
 all: $(TARGET)
 
 base64.ll: gen.py $(SRC)
@@ -26,12 +27,12 @@ arm: base32.ll
 	$(LLC) base32.ll -o - -march=arm
 
 opt: base64.ll
-	cat base64.ll|$(OPT_LLC) -x86-asm-syntax=intel -mattr=bmi2
+	cat base64.ll|$(OPT_LLC) -x86-asm-syntax=intel $(AFLAGS)
 
 x64.s: base64.ll
-	cat base64.ll|$(OPT_LLC) -mattr=bmi2 > x64.s
+	cat base64.ll|$(OPT_LLC) $(AFLAGS) > x64.s
 x86.s: base32.ll
-	cat base32.ll|$(OPT_LLC) -mattr=bmi2 -march=x86 > x86.s
+	cat base32.ll|$(OPT_LLC) $(AFLAGS) -march=x86 > x86.s
 arm.s: base32.ll
 	cat base32.ll|$(OPT_LLC) -march=arm > arm.s
 arm64.s: base32.ll
