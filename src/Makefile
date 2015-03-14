@@ -31,7 +31,7 @@ opt: base64.ll
 x64.s: base64.ll
 	cat base64.ll|$(OPT_LLC) -mattr=bmi2 > x64.s
 x86.s: base32.ll
-	cat base32.ll|$(OPT_LLC) -mattr=bmi2 > x86.s
+	cat base32.ll|$(OPT_LLC) -mattr=bmi2 -march=x86 > x86.s
 arm.s: base32.ll
 	cat base32.ll|$(OPT_LLC) -march=arm > arm.s
 arm64.s: base32.ll

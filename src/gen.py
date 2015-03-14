@@ -92,7 +92,7 @@ def main():
 		gen(fo, 'long.txt', unitN, [448, 512, 576])
 	elif unitN == 32:
 		gen(fo, 'short.txt', unitN, [128])
-		gen(fo, 'long.txt', unitN, [192, 384, 448, 512, 576])
+		gen(fo, 'long.txt', unitN, [192, 256, 384, 448, 512, 576])
 	else:
 		print "bad unitN", unitN
 		exit(1)
