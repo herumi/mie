@@ -68,7 +68,7 @@ define internal void @modNIST_P192(i192* %out, i192* %px) {
 define void @mie_fp_mul_NIST_P192(i192* %pz, i192* %px, i192* %py) {
 	%buf = alloca i192, i32 2
 	%p = bitcast i192* %buf to i@unitN*
-	call void @mie_fp_pre_mul192(i@unitN* %p, i192* %px, i192* %py)
+	call void @mie_fp_mul192pre(i@unitN* %p, i192* %px, i192* %py)
 	call void @modNIST_P192(i192* %pz, i192* %buf)
 	ret void
 }

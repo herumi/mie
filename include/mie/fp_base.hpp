@@ -47,19 +47,31 @@ typedef int (*int2op)(Unit*, const Unit*);
 extern "C" {
 void mie_fp_add128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul128pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_add192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul192pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_add256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul256pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_add384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 void mie_fp_sub384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-
-void mie_fp_pre_mul128(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_pre_mul192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_pre_mul256(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_pre_mul384(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_pre_mul448(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_pre_mul576(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul384pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+#if CYBOZU_OS_BIT == 64
+void mie_fp_add576(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub576(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul576pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+#else
+void mie_fp_add160(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub160(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul160pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add224(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub224(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul224pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_add544(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_sub544(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+void mie_fp_mul544pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+#endif
 
 void mie_fp_mul_NIST_P192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
@@ -144,7 +156,8 @@ struct Op {
 template<class tag, size_t bitN>
 struct FixedFp {
 	typedef fp::Unit Unit;
-	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+	static const size_t _N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+	static const size_t N = _N >= 2 ? _N : 2;
 	static mpz_class mp_;
 	static Unit p_[N];
 	static inline void setModulo(const Unit* p)
@@ -199,6 +212,17 @@ struct FixedFp {
 	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256(z, x, y, p_); }
 	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384(z, x, y, p_); }
 	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384(z, x, y, p_); }
+#if CYBOZU_OS_BIT == 64
+	static inline void add576(Unit *z, const Unit *x, const Unit *y) { mie_fp_add576(z, x, y, p_); }
+	static inline void sub576(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub576(z, x, y, p_); }
+#else
+	static inline void add160(Unit *z, const Unit *x, const Unit *y) { mie_fp_add160(z, x, y, p_); }
+	static inline void sub160(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub160(z, x, y, p_); }
+	static inline void add224(Unit *z, const Unit *x, const Unit *y) { mie_fp_add224(z, x, y, p_); }
+	static inline void sub224(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub224(z, x, y, p_); }
+	static inline void add544(Unit *z, const Unit *x, const Unit *y) { mie_fp_add544(z, x, y, p_); }
+	static inline void sub544(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub544(z, x, y, p_); }
+#endif
 #endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
@@ -217,14 +241,21 @@ struct FixedFp {
 	{
 		Unit ret[N * 2];
 #ifdef MIE_USE_LLVM
-		switch (N * sizeof(Unit) * 8) {
-		case 128: mie_fp_pre_mul128(ret, x, y); mod(z, ret); return;
-		case 192: mie_fp_pre_mul192(ret, x, y); mod(z, ret); return;
-		case 256: mie_fp_pre_mul256(ret, x, y); mod(z, ret); return;
-		case 384: mie_fp_pre_mul384(ret, x, y); mod(z, ret); return;
-		case 448: mie_fp_pre_mul448(ret, x, y); mod(z, ret); return;
-		case 576: mie_fp_pre_mul576(ret, x, y); mod(z, ret); return;
-		}
+#if CYBOZU_OS_BIT == 64
+		if (bitN <= 128) { mie_fp_mul128pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 192) { mie_fp_mul192pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 256) { mie_fp_mul256pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 384) { mie_fp_mul384pre(ret, x, y); mod(z, ret); return; }
+//		if (bitN <= 576) { mie_fp_mul576pre(ret, x, y); mod(z, ret); return; }
+#else
+		if (bitN <= 128) { mie_fp_mul128pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 160) { mie_fp_mul160pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 192) { mie_fp_mul192pre(ret, x, y); mod(z, ret); return; }
+		if (bitN <= 224) { mie_fp_mul224pre(ret, x, y); mod(z, ret); return; }
+//		if (bitN <= 256) { mie_fp_mul256pre(ret, x, y); mod(z, ret); return; }
+//		if (bitN <= 384) { mie_fp_mul384pre(ret, x, y); mod(z, ret); return; }
+//		if (bitN <= 544) { mie_fp_mul544pre(ret, x, y); mod(z, ret); return; }
+#endif
 #endif
 #if 0
 		pre_mul(ret, x, y);
@@ -293,23 +324,46 @@ struct FixedFp {
 		op.square = &square;
 		op.copy = &copy;
 #ifdef MIE_USE_LLVM
-		puts("fp2 use llvm");
-		if (bitN == 128) {
+		printf("fp2 use llvm bitN=%zd\n", bitN);
+		if (bitN <= 128) {
 			op.add = &add128;
 			op.sub = &sub128;
 		} else
-		if (bitN == 192) {
+#if CYBOZU_OS_BIT == 32
+		if (bitN <= 160) {
+			op.add = &add160;
+			op.sub = &sub160;
+		} else
+#endif
+		if (bitN <= 192) {
 			op.add = &add192;
 			op.sub = &sub192;
 		} else
-		if (bitN == 256) {
+#if CYBOZU_OS_BIT == 32
+		if (bitN <= 224) {
+			op.add = &add224;
+			op.sub = &sub224;
+		} else
+#endif
+		if (bitN <= 256) {
 			op.add = &add256;
 			op.sub = &sub256;
 		} else
-		if (bitN == 384) {
+		if (bitN <= 384) {
 			op.add = &add384;
 			op.sub = &sub384;
 		} else
+#if CYBOZU_OS_BIT == 64
+		if (bitN <= 576) {
+			op.add = &add576;
+			op.sub = &sub576;
+		} else
+#else
+		if (bitN <= 544) {
+			op.add = &add544;
+			op.sub = &sub544;
+		} else
+#endif
 #endif
 		{
 			op.add = &add;

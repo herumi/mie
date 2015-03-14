@@ -25,8 +25,7 @@ def gen_mulNxN(fo, unitN, n):
 	inN = unitN * n
 	bitNpU = inN + unitN
 	outN = inN * 2
-#	print>>fo, "define void @mie_fp_mul%dx%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, inN, unitN, inN, inN)
-	print>>fo, "define void @mie_fp_pre_mul%d(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, unitN, inN, inN)
+	print>>fo, "define void @mie_fp_mul%dpre(i%d* %%pz, i%d* %%px, i%d* %%py) {" % (inN, unitN, inN, inN)
 	print>>fo, "  %%x = load i%d* %%px" % inN
 	print>>fo, "  %%y = load i%d* %%py" % inN
 	for i in xrange(0, n):
@@ -89,10 +88,10 @@ def main():
 	gen(fo, 'all.txt', unitN, range(unitN, 576 + 1, unitN))
 	if unitN == 64:
 		gen(fo, 'short.txt', unitN, [128, 192, 256, 384])
-		gen(fo, 'long.txt', unitN, [448, 512, 576])
+		gen(fo, 'long.txt', unitN, [576])
 	elif unitN == 32:
-		gen(fo, 'short.txt', unitN, [128])
-		gen(fo, 'long.txt', unitN, [192, 256, 384, 448, 512, 576])
+		gen(fo, 'short.txt', unitN, [128, 160, 192])
+		gen(fo, 'long.txt', unitN, [224, 256, 384, 448, 544])
 	else:
 		print "bad unitN", unitN
 		exit(1)
