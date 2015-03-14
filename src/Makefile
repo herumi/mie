@@ -7,7 +7,7 @@ OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
 
 SRC = once.txt all.txt long.txt short.txt
 TARGET=x64.s x86.s arm.s arm64.s
-#AFLAGS=-mattr=bmi2
+AFLAGS=-mattr=bmi2
 all: $(TARGET)
 
 base64.ll: gen.py $(SRC)

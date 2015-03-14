@@ -11,13 +11,18 @@ entry:
 	%t0 = add i@bitNpU %x1, %y1 ; x + y
 	%t1 = sub i@bitNpU %t0, %p1 ; x + y - p
 	%t2 = lshr i@bitNpU %t1, @bitN
-	%t3 = trunc i@bitNpU %t2 to i@unitN
-	%t4 = trunc i@bitNpU %t1 to i@bitN ; x + y - p
-	%t5 = trunc i@bitNpU %t0 to i@bitN ; x + y
-	%zero = icmp eq i@unitN %t3, 0
-    %t6 = select i1 %zero, i@bitN %t4, i@bitN %t5
-	store i@bitN %t6, i@bitN* %pz
+	%t3 = trunc i@bitNpU %t2 to i1
+	%t4 = select i1 %t3, i@bitNpU %t0, i@bitNpU %t1
+	%t5 = trunc i@bitNpU %t4 to i@bitN
+	store i@bitN %t5, i@bitN* %pz
 	ret void
+;	%t3 = trunc i@bitNpU %t2 to i@unitN
+;	%t4 = trunc i@bitNpU %t1 to i@bitN ; x + y - p
+;	%t5 = trunc i@bitNpU %t0 to i@bitN ; x + y
+;	%zero = icmp eq i@unitN %t3, 0
+;	%t6 = select i1 %zero, i@bitN %t4, i@bitN %t5
+;	store i@bitN %t6, i@bitN* %pz
+;	ret void
 
 
 ;    %t = add i@bitNpU %x1, %y1
