@@ -3,7 +3,7 @@ LLC=llc$(VER)
 OPT=opt$(VER)
 DIS=llvm-dis$(VER)
 ASM=llvm-as$(VER)
-OPT_LLC= $(ASM) -o - | $(OPT) -O3 -o - | $(DIS) -o - | $(LLC) -
+OPT_LLC= $(OPT) -O3 -o - | $(LLC) -O3 -o -
 
 SRC = once.txt all.txt long.txt short.txt
 TARGET=x64.s x86.s arm.s arm64.s
