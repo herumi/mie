@@ -1,6 +1,4 @@
-declare { i@bitNpU, i1 } @llvm.usub.with.overflow.i@bitNpU(i@bitNpU, i@bitNpU)
-
-define void @mie_fp_add@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_add@bitNS(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
@@ -30,7 +28,7 @@ define internal { i@bitN, i@unitN } @mie_local_sbb@bitN(i@bitN %x, i@bitN %y) {
 	ret { i@bitN, i@unitN } %r2
 }
 
-define void @mie_fp_sub@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_sub@bitNS(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py

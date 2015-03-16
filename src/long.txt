@@ -1,4 +1,4 @@
-define void @mie_fp_add@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_add@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
@@ -34,24 +34,21 @@ define internal { i@bitN, i@unitN } @local_sbb@bitN(i@bitN %x, i@bitN %y) {
 	ret { i@bitN, i@unitN } %r2
 }
 
-define void @mie_fp_sub@bitN(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
+define void @mie_fp_sub@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
-	%p = load i@bitN* %pp
-	%vc = call { i@bitN, i@unitN } @local_sbb@bitN(i@bitN %x, i@bitN %y)
-	%v = extractvalue { i@bitN, i@unitN } %vc, 0 ; x - y
-	%c = extractvalue { i@bitN, i@unitN } %vc, 1
-	%t = add i@bitN %v, %p ; x - y + p
-	%zero = icmp eq i@unitN %c, 0
-	br i1 %zero, label %nocarry, label %carry
+	%vc = call { i@bitN, i1 } @llvm.usub.with.overflow.i@bitN(i@bitN %x, i@bitN %y)
+	%v = extractvalue { i@bitN, i1 } %vc, 0 ; x - y
+	%c = extractvalue { i@bitN, i1 } %vc, 1
+	br i1 %c, label %nocarry, label %carry
 carry:
-	br label %exit
+	%p = load i@bitN* %pp
+	%t = add i@bitN %v, %p ; x - y + p
+	store i@bitN %t, i@bitN* %pz
+	ret void
 nocarry:
-	br label %exit
-exit:
-	%t1 = phi i@bitN [%t, %carry], [%v, %nocarry]
-	store i@bitN %t1, i@bitN* %pz
+	store i@bitN %v, i@bitN* %pz
 	ret void
 }
 

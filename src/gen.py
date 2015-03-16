@@ -80,21 +80,18 @@ def main():
 	unitN = 64
 	if args == 2:
 		unitN = int(argv[1])
+	if unitN not in [32, 64]:
+		print "bad unitN", unitN
+		exit(1)
 
 	outName = 'base%d.ll' % unitN
 	fo = open(outName, 'w')
 	gen(fo, 'once.txt', unitN, [unitN * 2])
 
-	gen(fo, 'all.txt', unitN, range(unitN, 576 + 1, unitN))
-	if unitN == 64:
-		gen(fo, 'short.txt', unitN, [128, 192, 256, 384])
-		gen(fo, 'long.txt', unitN, [576])
-	elif unitN == 32:
-		gen(fo, 'short.txt', unitN, [128, 160, 192])
-		gen(fo, 'long.txt', unitN, [224, 256, 384, 448, 544])
-	else:
-		print "bad unitN", unitN
-		exit(1)
+	bitNL = range(unitN, 576 + 1, unitN)
+	gen(fo, 'all.txt', unitN, bitNL)
+	gen(fo, 'short.txt', unitN, bitNL)
+	gen(fo, 'long.txt', unitN, bitNL)
 	gen_mul(fo, unitN)
 	fo.close()
 
