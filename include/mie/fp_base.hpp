@@ -156,12 +156,12 @@ struct Op {
 template<class tag, size_t bitN>
 struct FixedFp {
 	typedef fp::Unit Unit;
-	static const size_t _N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
-	static const size_t N = _N >= 2 ? _N : 2;
+	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
 	static mpz_class mp_;
 	static Unit p_[N];
 	static inline void setModulo(const Unit* p)
 	{
+		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
 		copy(p_, p);
 		Gmp::setRaw(mp_, p, N);
