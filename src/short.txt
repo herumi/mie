@@ -16,23 +16,6 @@ entry:
 	%t5 = trunc i@bitNpU %t4 to i@bitN
 	store i@bitN %t5, i@bitN* %pz
 	ret void
-;	%t3 = trunc i@bitNpU %t2 to i@unitN
-;	%t4 = trunc i@bitNpU %t1 to i@bitN ; x + y - p
-;	%t5 = trunc i@bitNpU %t0 to i@bitN ; x + y
-;	%zero = icmp eq i@unitN %t3, 0
-;	%t6 = select i1 %zero, i@bitN %t4, i@bitN %t5
-;	store i@bitN %t6, i@bitN* %pz
-;	ret void
-
-
-;    %t = add i@bitNpU %x1, %y1
-;    %vc = call { i@bitNpU, i1 } @llvm.usub.with.overflow.i@bitNpU(i@bitNpU %t, i@bitNpU %p1)
-;    %v = extractvalue { i@bitNpU, i1 } %vc, 0
-;    %c = extractvalue { i@bitNpU, i1 } %vc, 1
-;    %z = select i1 %c, i@bitNpU %t, i@bitNpU %v
-;    %z1 = trunc i@bitNpU %z to i@bitN
-;    store i@bitN %z1, i@bitN* %pz
-
 }
 
 define internal { i@bitN, i@unitN } @mie_local_sbb@bitN(i@bitN %x, i@bitN %y) {
@@ -57,13 +40,7 @@ entry:
 	%c = extractvalue { i@bitN, i@unitN } %vc, 1
 	%t = add i@bitN %v, %p ; x - y + p
 	%zero = icmp eq i@unitN %c, 0
-	br i1 %zero, label %nocarry, label %carry
-carry:
-	br label %exit
-nocarry:
-	br label %exit
-exit:
-	%t1 = phi i@bitN [%t, %carry], [%v, %nocarry]
+	%t1 = select i1 %zero, i@bitN %t, i@bitN %v
 	store i@bitN %t1, i@bitN* %pz
 	ret void
 }
