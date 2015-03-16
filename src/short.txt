@@ -40,7 +40,7 @@ entry:
 	%c = extractvalue { i@bitN, i@unitN } %vc, 1
 	%t = add i@bitN %v, %p ; x - y + p
 	%zero = icmp eq i@unitN %c, 0
-	%t1 = select i1 %zero, i@bitN %t, i@bitN %v
+	%t1 = select i1 %zero, i@bitN %v, i@bitN %t
 	store i@bitN %t1, i@bitN* %pz
 	ret void
 }
