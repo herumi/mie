@@ -6,6 +6,12 @@
 #include <cybozu/bit_operation.hpp>
 #include <mie/fp_util.hpp>
 
+#if (CYBOZU_HOST == CYBOZU_HOST_INTEL) && (CYBOZU_OS_BIT == 64)
+	#define USE_XBYAK
+	#include <mie/fp_generator.hpp>
+	static mie::FpGenerator fg;
+#endif
+
 #ifdef NDEBUG
 void benchSub(const mie::fp::Unit *p, size_t bitLen)
 {
@@ -16,35 +22,31 @@ void benchSub(const mie::fp::Unit *p, size_t bitLen)
 	if (bitLen <= 128) {
 		CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
 		CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
-		CYBOZU_BENCH("sub128S", mie_fp_sub128S, x, y, x, p);
-		CYBOZU_BENCH("sub128L", mie_fp_sub128L, x, y, x, p);
 	} else
 	if (bitLen <= 192) {
 		CYBOZU_BENCH("add192S", mie_fp_add192S, x, y, x, p);
 		CYBOZU_BENCH("add192L", mie_fp_add192L, x, y, x, p);
-		CYBOZU_BENCH("sub192S", mie_fp_sub192S, x, y, x, p);
-		CYBOZU_BENCH("sub192L", mie_fp_sub192L, x, y, x, p);
 	} else
 	if (bitLen <= 256) {
 		CYBOZU_BENCH("add256S", mie_fp_add256S, x, y, x, p);
 		CYBOZU_BENCH("add256L", mie_fp_add256L, x, y, x, p);
-		CYBOZU_BENCH("sub256S", mie_fp_sub256S, x, y, x, p);
-		CYBOZU_BENCH("sub256L", mie_fp_sub256L, x, y, x, p);
 	} else
 	if (bitLen <= 384) {
 		CYBOZU_BENCH("add384S", mie_fp_add384S, x, y, x, p);
 		CYBOZU_BENCH("add384L", mie_fp_add384L, x, y, x, p);
-		CYBOZU_BENCH("sub384S", mie_fp_sub384S, x, y, x, p);
-		CYBOZU_BENCH("sub384L", mie_fp_sub384L, x, y, x, p);
 	} else
 	if (bitLen <= 576) {
 		CYBOZU_BENCH("add576S", mie_fp_add576S, x, y, x, p);
 		CYBOZU_BENCH("add576L", mie_fp_add576L, x, y, x, p);
-		CYBOZU_BENCH("sub576S", mie_fp_sub576S, x, y, x, p);
-		CYBOZU_BENCH("sub576L", mie_fp_sub576L, x, y, x, p);
 	} else {
 		puts("ERR"); exit(1);
 	}
+#ifdef USE_XBYAK
+	if (bitLen <= 128) return;
+	fg.init(p, (bitLen + 63) / 64);
+	CYBOZU_BENCH("add-asm", fg.add_, x, y, x);
+	CYBOZU_BENCH("sub-asm", fg.sub_, x, y, x);
+#endif
 }
 CYBOZU_TEST_AUTO(bench)
 {
