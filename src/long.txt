@@ -38,17 +38,17 @@ define void @mie_fp_sub@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
-	%vc = call { i@bitN, i1 } @llvm.usub.with.overflow.i@bitN(i@bitN %x, i@bitN %y)
-	%v = extractvalue { i@bitN, i1 } %vc, 0 ; x - y
-	%c = extractvalue { i@bitN, i1 } %vc, 1
-	br i1 %c, label %nocarry, label %carry
+	%v = sub i@bitN %x, %y
+	%c = lshr i@bitN %v, @bitNm1
+	%c1 = trunc i@bitN %c to i1
+	store i@bitN %v, i@bitN* %pz
+	br i1 %c1, label %nocarry, label %carry
+nocarry:
+	ret void
 carry:
 	%p = load i@bitN* %pp
 	%t = add i@bitN %v, %p ; x - y + p
 	store i@bitN %t, i@bitN* %pz
-	ret void
-nocarry:
-	store i@bitN %v, i@bitN* %pz
 	ret void
 }
 

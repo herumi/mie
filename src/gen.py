@@ -60,8 +60,10 @@ def gen_mul(fo, unitN):
 
 
 def gen_sub(fo, s, unitN, bitN):
-	s = s.replace('@bitNpUm1', str(bitN + unitN - 1))
-	s = s.replace('@bitNpU', str(bitN + unitN))
+	bitNpU = bitN + unitN
+	s = s.replace('@bitNpUm1', str(bitNpU - 1))
+	s = s.replace('@bitNpU', str(bitNpU))
+	s = s.replace('@bitNm1', str(bitN - 1))
 	s = s.replace('@bitN', str(bitN))
 	s = s.replace('@unitN2', str(unitN * 2))
 	s = s.replace('@unitN', str(unitN))
