@@ -5,6 +5,7 @@
 #include <cybozu/xorshift.hpp>
 #include <cybozu/bit_operation.hpp>
 #include <mie/fp_util.hpp>
+#include <mie/fp2.hpp>
 
 #if (CYBOZU_HOST == CYBOZU_HOST_INTEL) && (CYBOZU_OS_BIT == 64)
 	#define USE_XBYAK
@@ -12,53 +13,99 @@
 	static mie::FpGenerator fg;
 #endif
 
-#ifdef NDEBUG
-void benchSub(const mie::fp::Unit *p, size_t bitLen)
+const size_t MAX_N = 32;
+typedef mie::fp::Unit Unit;
+
+size_t getUnitN(size_t bitLen)
 {
-	mie::fp::Unit x[32], y[32];
+	return (bitLen + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+}
+
+void setMpz(mpz_class& mx, const Unit *x, size_t n)
+{
+	mie::Gmp::setRaw(mx, x, n);
+}
+void getMpz(Unit *x, size_t n, const mpz_class& mx)
+{
+	mie::fp::local::toArray(x,  n, mx.get_mpz_t());
+}
+void addC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
+{
+	mpz_class mx, my, mp;
+	setMpz(mx, x, n);
+	setMpz(my, y, n);
+	setMpz(mp, p, n);
+	mx += my;
+	if (mx >= mp) mx -= mp;
+	getMpz(z, n, mx);
+}
+
+void test(const Unit *p, size_t bitLen)
+{
+	const size_t n = getUnitN(bitLen);
+	mie::fp::Unit x[MAX_N], y[MAX_N];
 	cybozu::XorShift rg;
 	mie::fp::getRandVal(x, rg, p, bitLen);
 	mie::fp::getRandVal(y, rg, p, bitLen);
+#ifdef NDEBUG
+	bool doBench = true;
+#else
+	bool doBench = false;
+#endif
+
 	if (bitLen <= 128) {
-		CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
-		CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
-		CYBOZU_BENCH("sub128S", mie_fp_sub128S, x, y, x, p);
-		CYBOZU_BENCH("sub128L", mie_fp_sub128L, x, y, x, p);
+		if (doBench) {
+			CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
+			CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
+			CYBOZU_BENCH("sub128S", mie_fp_sub128S, x, y, x, p);
+			CYBOZU_BENCH("sub128L", mie_fp_sub128L, x, y, x, p);
+		}
 	} else
 	if (bitLen <= 192) {
-		CYBOZU_BENCH("add192S", mie_fp_add192S, x, y, x, p);
-		CYBOZU_BENCH("add192L", mie_fp_add192L, x, y, x, p);
-		CYBOZU_BENCH("sub192S", mie_fp_sub192S, x, y, x, p);
-		CYBOZU_BENCH("sub192L", mie_fp_sub192L, x, y, x, p);
+		if (doBench) {
+			CYBOZU_BENCH("add192S", mie_fp_add192S, x, y, x, p);
+			CYBOZU_BENCH("add192L", mie_fp_add192L, x, y, x, p);
+			CYBOZU_BENCH("sub192S", mie_fp_sub192S, x, y, x, p);
+			CYBOZU_BENCH("sub192L", mie_fp_sub192L, x, y, x, p);
+		}
 	} else
 	if (bitLen <= 256) {
-		CYBOZU_BENCH("add256S", mie_fp_add256S, x, y, x, p);
-		CYBOZU_BENCH("add256L", mie_fp_add256L, x, y, x, p);
-		CYBOZU_BENCH("sub256S", mie_fp_sub256S, x, y, x, p);
-		CYBOZU_BENCH("sub256L", mie_fp_sub256L, x, y, x, p);
+		if (doBench) {
+			CYBOZU_BENCH("add256S", mie_fp_add256S, x, y, x, p);
+			CYBOZU_BENCH("add256L", mie_fp_add256L, x, y, x, p);
+			CYBOZU_BENCH("sub256S", mie_fp_sub256S, x, y, x, p);
+			CYBOZU_BENCH("sub256L", mie_fp_sub256L, x, y, x, p);
+		}
 	} else
 	if (bitLen <= 384) {
-		CYBOZU_BENCH("add384S", mie_fp_add384S, x, y, x, p);
-		CYBOZU_BENCH("add384L", mie_fp_add384L, x, y, x, p);
-		CYBOZU_BENCH("sub384S", mie_fp_sub384S, x, y, x, p);
-		CYBOZU_BENCH("sub384L", mie_fp_sub384L, x, y, x, p);
+		if (doBench) {
+			CYBOZU_BENCH("add384S", mie_fp_add384S, x, y, x, p);
+			CYBOZU_BENCH("add384L", mie_fp_add384L, x, y, x, p);
+			CYBOZU_BENCH("sub384S", mie_fp_sub384S, x, y, x, p);
+			CYBOZU_BENCH("sub384L", mie_fp_sub384L, x, y, x, p);
+		}
 	} else
 	if (bitLen <= 576) {
-		CYBOZU_BENCH("add576S", mie_fp_add576S, x, y, x, p);
-		CYBOZU_BENCH("add576L", mie_fp_add576L, x, y, x, p);
-		CYBOZU_BENCH("sub576S", mie_fp_sub576S, x, y, x, p);
-		CYBOZU_BENCH("sub576L", mie_fp_sub576L, x, y, x, p);
+		if (doBench) {
+			CYBOZU_BENCH("add576S", mie_fp_add576S, x, y, x, p);
+			CYBOZU_BENCH("add576L", mie_fp_add576L, x, y, x, p);
+			CYBOZU_BENCH("sub576S", mie_fp_sub576S, x, y, x, p);
+			CYBOZU_BENCH("sub576L", mie_fp_sub576L, x, y, x, p);
+		}
 	} else {
 		puts("ERR"); exit(1);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
-	fg.init(p, (bitLen + 63) / 64);
-	CYBOZU_BENCH("add-asm", fg.add_, x, y, x);
-	CYBOZU_BENCH("sub-asm", fg.sub_, x, y, x);
+	if (doBench) {
+		fg.init(p, n);
+		CYBOZU_BENCH("add-asm", fg.add_, x, y, x);
+		CYBOZU_BENCH("sub-asm", fg.sub_, x, y, x);
+	}
 #endif
 }
-CYBOZU_TEST_AUTO(bench)
+
+CYBOZU_TEST_AUTO(all)
 {
 	const struct {
 		size_t n;
@@ -81,8 +128,7 @@ CYBOZU_TEST_AUTO(bench)
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		const size_t n = tbl[i].n;
 		const size_t bitLen = (n - 1) * 64 + cybozu::bsr<uint64_t>(tbl[i].p[n - 1]);
-		benchSub(tbl[i].p, bitLen);
+		test((const Unit*)tbl[i].p, bitLen);
 	}
 }
-#endif
 
