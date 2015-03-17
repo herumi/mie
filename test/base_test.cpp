@@ -13,8 +13,38 @@ void benchSub(const mie::fp::Unit *p, size_t bitLen)
 	cybozu::XorShift rg;
 	mie::fp::getRandVal(x, rg, p, bitLen);
 	mie::fp::getRandVal(y, rg, p, bitLen);
-	CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
-	CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
+	if (bitLen <= 128) {
+		CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
+		CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
+		CYBOZU_BENCH("sub128S", mie_fp_sub128S, x, y, x, p);
+		CYBOZU_BENCH("sub128L", mie_fp_sub128L, x, y, x, p);
+	} else
+	if (bitLen <= 192) {
+		CYBOZU_BENCH("add192S", mie_fp_add192S, x, y, x, p);
+		CYBOZU_BENCH("add192L", mie_fp_add192L, x, y, x, p);
+		CYBOZU_BENCH("sub192S", mie_fp_sub192S, x, y, x, p);
+		CYBOZU_BENCH("sub192L", mie_fp_sub192L, x, y, x, p);
+	} else
+	if (bitLen <= 256) {
+		CYBOZU_BENCH("add256S", mie_fp_add256S, x, y, x, p);
+		CYBOZU_BENCH("add256L", mie_fp_add256L, x, y, x, p);
+		CYBOZU_BENCH("sub256S", mie_fp_sub256S, x, y, x, p);
+		CYBOZU_BENCH("sub256L", mie_fp_sub256L, x, y, x, p);
+	} else
+	if (bitLen <= 384) {
+		CYBOZU_BENCH("add384S", mie_fp_add384S, x, y, x, p);
+		CYBOZU_BENCH("add384L", mie_fp_add384L, x, y, x, p);
+		CYBOZU_BENCH("sub384S", mie_fp_sub384S, x, y, x, p);
+		CYBOZU_BENCH("sub384L", mie_fp_sub384L, x, y, x, p);
+	} else
+	if (bitLen <= 576) {
+		CYBOZU_BENCH("add576S", mie_fp_add576S, x, y, x, p);
+		CYBOZU_BENCH("add576L", mie_fp_add576L, x, y, x, p);
+		CYBOZU_BENCH("sub576S", mie_fp_sub576S, x, y, x, p);
+		CYBOZU_BENCH("sub576L", mie_fp_sub576L, x, y, x, p);
+	} else {
+		puts("ERR"); exit(1);
+	}
 }
 CYBOZU_TEST_AUTO(bench)
 {
@@ -22,6 +52,7 @@ CYBOZU_TEST_AUTO(bench)
 		size_t n;
 		const uint64_t p[9];
 	} tbl[] = {
+		{ 2, { 0xf000000000000001, 1 } },
 		{ 3, { 0x0f69466a74defd8d,  0xfffffffe26f2fc17,  0xffffffffffffffff,  } },
 		{ 3, { 0x7900342423332197,  0x1234567890123456,  0x1480948109481904,  } },
 		{ 3, { 0x0f69466a74defd8d,  0xfffffffe26f2fc17,  0x07ffffffffffffff,  } },
