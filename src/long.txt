@@ -1,5 +1,4 @@
 define void @mie_fp_add@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
-entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
 	%p = load i@bitN* %pp
@@ -7,18 +6,17 @@ entry:
 	%y1 = zext i@bitN %y to i@bitNpU
 	%p1 = zext i@bitN %p to i@bitNpU
 	%t0 = add i@bitNpU %x1, %y1 ; x + y
-	%t4 = trunc i@bitNpU %t0 to i@bitN ; x + y
-	store i@bitN %t4, i@bitN* %pz
-	%t1 = sub i@bitNpU %t0, %p1 ; x + y - p
-	%t2 = lshr i@bitNpU %t1, @bitN
-	%t3 = trunc i@bitNpU %t2 to i@unitN
-	%zero = icmp eq i@unitN %t3, 0
-	br i1 %zero, label %nocarry, label %carry
-carry:
-	ret void
+	%t1 = trunc i@bitNpU %t0 to i@bitN
+	store i@bitN %t1, i@bitN* %pz
+	%vc = sub i@bitNpU %t0, %p1
+	%c = lshr i@bitNpU %vc, @bitNpUm1
+	%c1 = trunc i@bitNpU %c to i1
+	br i1 %c1, label %carry, label %nocarry
 nocarry:
-	%t5 = trunc i@bitNpU %t1 to i@bitN ; x + y - p
-	store i@bitN %t5, i@bitN* %pz
+	%v = trunc i@bitNpU %vc to i@bitN
+	store i@bitN %v, i@bitN* %pz
+	ret void
+carry:
 	ret void
 }
 
