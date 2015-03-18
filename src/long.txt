@@ -38,11 +38,14 @@ define void @mie_fp_sub@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp
 entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
-	%v = sub i@bitN %x, %y
-	%c = lshr i@bitN %v, @bitNm1
-	%c1 = trunc i@bitN %c to i1
+	%x1 = zext i@bitN %x to i@bitNpU
+	%y1 = zext i@bitN %y to i@bitNpU
+	%vc = sub i@bitNpU %x1, %y1
+	%v = trunc i@bitNpU %vc to i@bitN
+	%c = lshr i@bitNpU %vc, @bitNpUm1
+	%c1 = trunc i@bitNpU %c to i1
 	store i@bitN %v, i@bitN* %pz
-	br i1 %c1, label %nocarry, label %carry
+	br i1 %c1, label %carry, label %nocarry
 nocarry:
 	ret void
 carry:

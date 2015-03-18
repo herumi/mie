@@ -1,3 +1,4 @@
+#include <map>
 #define MIE_USE_LLVM
 #include <mie/fp_base.hpp>
 #include <cybozu/test.hpp>
@@ -70,6 +71,55 @@ void subC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 	getMpz(z, n, mx);
 }
 
+typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
+
+const struct FuncOp {
+	size_t bitLen;
+	void4op addS;
+	void4op addL;
+	void4op subS;
+	void4op subL;
+} gFuncOpTbl[] = {
+//	{ 64, mie_fp_add64S, mie_fp_add64L, mie_fp_sub64S, mie_fp_sub64L },
+	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L },
+	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L },
+	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L },
+	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L },
+	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L },
+	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L },
+#if CYBOZU_OS_BIT == 32
+	{ 160, mie_fp_add160S, mie_fp_add160L, mie_fp_sub160S, mie_fp_sub160L },
+	{ 224, mie_fp_add224S, mie_fp_add224L, mie_fp_sub224S, mie_fp_sub224L },
+	{ 288, mie_fp_add288S, mie_fp_add288L, mie_fp_sub288S, mie_fp_sub288L },
+	{ 352, mie_fp_add352S, mie_fp_add352L, mie_fp_sub352S, mie_fp_sub352L },
+	{ 416, mie_fp_add416S, mie_fp_add416L, mie_fp_sub416S, mie_fp_sub416L },
+	{ 480, mie_fp_add480S, mie_fp_add480L, mie_fp_sub480S, mie_fp_sub480L },
+	{ 544, mie_fp_add544S, mie_fp_add544L, mie_fp_sub544S, mie_fp_sub544L },
+#else
+	{ 576, mie_fp_add576S, mie_fp_add576L, mie_fp_sub576S, mie_fp_sub576L },
+#endif
+};
+
+FuncOp getFuncOp(size_t bitLen)
+{
+	typedef std::map<size_t, FuncOp> Map;
+	static Map map;
+	static bool init = false;
+	if (!init) {
+		init = true;
+		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(gFuncOpTbl); i++) {
+			map[gFuncOpTbl[i].bitLen] = gFuncOpTbl[i];
+		}
+	}
+	for (Map::const_iterator i = map.begin(), ie = map.end(); i != ie; ++i) {
+		if (bitLen <= i->second.bitLen) {
+			return i->second;
+		}
+	}
+	printf("ERR bitLen=%d\n", (int)bitLen);
+	exit(1);
+}
+
 void test(const Unit *p, size_t bitLen)
 {
 	printf("test bitLen=%d\n", (int)bitLen);
@@ -79,41 +129,11 @@ void test(const Unit *p, size_t bitLen)
 #else
 	bool doBench = false;
 #endif
-	typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
-	void4op addS, addL, subS, subL;
-
-	if (bitLen <= 128) {
-		addS = mie_fp_add128S;
-		addL = mie_fp_add128L;
-		subS = mie_fp_sub128S;
-		subL = mie_fp_sub128L;
-	} else
-	if (bitLen <= 192) {
-		addS = mie_fp_add192S;
-		addL = mie_fp_add192L;
-		subS = mie_fp_sub192S;
-		subL = mie_fp_sub192L;
-	} else
-	if (bitLen <= 256) {
-		addS = mie_fp_add256S;
-		addL = mie_fp_add256L;
-		subS = mie_fp_sub256S;
-		subL = mie_fp_sub256L;
-	} else
-	if (bitLen <= 384) {
-		addS = mie_fp_add384S;
-		addL = mie_fp_add384L;
-		subS = mie_fp_sub384S;
-		subL = mie_fp_sub384L;
-	} else
-	if (bitLen <= 576) {
-		addS = mie_fp_add576S;
-		addL = mie_fp_add576L;
-		subS = mie_fp_sub576S;
-		subL = mie_fp_sub576L;
-	} else {
-		puts("ERR"); exit(1);
-	}
+	const FuncOp funcOp = getFuncOp(bitLen);
+	const void4op addS = funcOp.addS;
+	const void4op addL = funcOp.addL;
+	const void4op subS = funcOp.subS;
+	const void4op subL = funcOp.subL;
 
 	mie::fp::Unit x[MAX_N], y[MAX_N];
 	mie::fp::Unit z[MAX_N], w[MAX_N];
@@ -126,7 +146,6 @@ void test(const Unit *p, size_t bitLen)
 	addS(w, x, y, p);
 	VERIFY_EQUAL(z, w, n);
 	for (size_t i = 0; i < C; i++) {
-printf("i=%d\n", (int)i);
 		addC(z, y, z, p, n);
 		addS(w, y, w, p);
 		VERIFY_EQUAL(z, w, n);
@@ -150,8 +169,8 @@ printf("i=%d\n", (int)i);
 	if (bitLen <= 128) return;
 	if (doBench) {
 		fg.init(p, n);
-		CYBOZU_BENCH("add-asm", fg.add_, x, y, x);
-		CYBOZU_BENCH("sub-asm", fg.sub_, x, y, x);
+		CYBOZU_BENCH("addA", fg.add_, x, y, x);
+		CYBOZU_BENCH("subA", fg.sub_, x, y, x);
 	}
 #endif
 }
@@ -178,7 +197,7 @@ CYBOZU_TEST_AUTO(all)
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		const size_t n = tbl[i].n;
-		const size_t bitLen = (n - 1) * 64 + cybozu::bsr<uint64_t>(tbl[i].p[n - 1]);
+		const size_t bitLen = (n - 1) * 64 + cybozu::bsr<uint64_t>(tbl[i].p[n - 1]) + 1;
 		test((const Unit*)tbl[i].p, bitLen);
 	}
 }

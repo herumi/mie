@@ -45,58 +45,37 @@ typedef int (*int2op)(Unit*, const Unit*);
 #ifdef MIE_USE_LLVM
 
 extern "C" {
-void mie_fp_add128S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub128S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add128L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub128L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul128pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
-void mie_fp_add192S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub192S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add192L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub192L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul192pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+#define MIE_FP_DEF_FUNC(len) \
+void mie_fp_add ## len ## S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
+void mie_fp_add ## len ## L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
+void mie_fp_sub ## len ## S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
+void mie_fp_sub ## len ## L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
+void mie_fp_mul ## len ## pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
-void mie_fp_add256S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub256S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add256L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub256L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul256pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-
-void mie_fp_add384S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub384S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add384L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub384L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul384pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-#if CYBOZU_OS_BIT == 64
-void mie_fp_add576S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub576S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add576L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub576L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul576pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+MIE_FP_DEF_FUNC(128)
+MIE_FP_DEF_FUNC(192)
+MIE_FP_DEF_FUNC(256)
+MIE_FP_DEF_FUNC(320)
+MIE_FP_DEF_FUNC(384)
+MIE_FP_DEF_FUNC(448)
+MIE_FP_DEF_FUNC(512)
+#if CYBOZU_OS_BIT == 32
+MIE_FP_DEF_FUNC(160)
+MIE_FP_DEF_FUNC(224)
+MIE_FP_DEF_FUNC(288)
+MIE_FP_DEF_FUNC(352)
+MIE_FP_DEF_FUNC(416)
+MIE_FP_DEF_FUNC(480)
+MIE_FP_DEF_FUNC(544)
 #else
-void mie_fp_add160S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub160S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add160L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub160L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul160pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-
-void mie_fp_add224S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub224S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add224L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub224L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul224pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-
-void mie_fp_add544S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub544S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_add544L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_sub544L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
-void mie_fp_mul544pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
+MIE_FP_DEF_FUNC(576)
 #endif
 
 void mie_fp_mul_NIST_P192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
 }
+
 #endif
 
 namespace mie { namespace fp {
