@@ -12,6 +12,7 @@
 	#include <mie/fp_generator.hpp>
 	static mie::FpGenerator fg;
 #endif
+#define PUT(x) std::cout << #x "=" << (x) << std::endl
 
 const size_t MAX_N = 32;
 typedef mie::fp::Unit Unit;
@@ -29,6 +30,25 @@ void getMpz(Unit *x, size_t n, const mpz_class& mx)
 {
 	mie::fp::local::toArray(x,  n, mx.get_mpz_t());
 }
+
+void put(const char *msg, const Unit *x, size_t n)
+{
+	printf("%s ", msg);
+	for (size_t i = 0; i < n; i++) printf("%016llx ", (long long)x[n - 1 - i]);
+	printf("\n");
+}
+void verifyEqual(const Unit *x, const Unit *y, size_t n, const char *file, int line)
+{
+	bool ok = mie::fp::local::isEqualArray(x, y, n);
+	CYBOZU_TEST_ASSERT(ok);
+	if (ok) return;
+	printf("%s:%d\n", file, line);
+	put("L", x, n);
+	put("R", y, n);
+	exit(1);
+}
+#define VERIFY_EQUAL(x, y, n) verifyEqual(x, y, n, __FILE__, __LINE__)
+
 void addC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 {
 	mpz_class mx, my, mp;
@@ -39,61 +59,92 @@ void addC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 	if (mx >= mp) mx -= mp;
 	getMpz(z, n, mx);
 }
+void subC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
+{
+	mpz_class mx, my, mp;
+	setMpz(mx, x, n);
+	setMpz(my, y, n);
+	setMpz(mp, p, n);
+	mx -= my;
+	if (mx < 0) mx += mp;
+	getMpz(z, n, mx);
+}
 
 void test(const Unit *p, size_t bitLen)
 {
+	printf("test bitLen=%d\n", (int)bitLen);
 	const size_t n = getUnitN(bitLen);
-	mie::fp::Unit x[MAX_N], y[MAX_N];
-	cybozu::XorShift rg;
-	mie::fp::getRandVal(x, rg, p, bitLen);
-	mie::fp::getRandVal(y, rg, p, bitLen);
 #ifdef NDEBUG
 	bool doBench = true;
 #else
 	bool doBench = false;
 #endif
+	typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
+	void4op addS, addL, subS, subL;
 
 	if (bitLen <= 128) {
-		if (doBench) {
-			CYBOZU_BENCH("add128S", mie_fp_add128S, x, y, x, p);
-			CYBOZU_BENCH("add128L", mie_fp_add128L, x, y, x, p);
-			CYBOZU_BENCH("sub128S", mie_fp_sub128S, x, y, x, p);
-			CYBOZU_BENCH("sub128L", mie_fp_sub128L, x, y, x, p);
-		}
+		addS = mie_fp_add128S;
+		addL = mie_fp_add128L;
+		subS = mie_fp_sub128S;
+		subL = mie_fp_sub128L;
 	} else
 	if (bitLen <= 192) {
-		if (doBench) {
-			CYBOZU_BENCH("add192S", mie_fp_add192S, x, y, x, p);
-			CYBOZU_BENCH("add192L", mie_fp_add192L, x, y, x, p);
-			CYBOZU_BENCH("sub192S", mie_fp_sub192S, x, y, x, p);
-			CYBOZU_BENCH("sub192L", mie_fp_sub192L, x, y, x, p);
-		}
+		addS = mie_fp_add192S;
+		addL = mie_fp_add192L;
+		subS = mie_fp_sub192S;
+		subL = mie_fp_sub192L;
 	} else
 	if (bitLen <= 256) {
-		if (doBench) {
-			CYBOZU_BENCH("add256S", mie_fp_add256S, x, y, x, p);
-			CYBOZU_BENCH("add256L", mie_fp_add256L, x, y, x, p);
-			CYBOZU_BENCH("sub256S", mie_fp_sub256S, x, y, x, p);
-			CYBOZU_BENCH("sub256L", mie_fp_sub256L, x, y, x, p);
-		}
+		addS = mie_fp_add256S;
+		addL = mie_fp_add256L;
+		subS = mie_fp_sub256S;
+		subL = mie_fp_sub256L;
 	} else
 	if (bitLen <= 384) {
-		if (doBench) {
-			CYBOZU_BENCH("add384S", mie_fp_add384S, x, y, x, p);
-			CYBOZU_BENCH("add384L", mie_fp_add384L, x, y, x, p);
-			CYBOZU_BENCH("sub384S", mie_fp_sub384S, x, y, x, p);
-			CYBOZU_BENCH("sub384L", mie_fp_sub384L, x, y, x, p);
-		}
+		addS = mie_fp_add384S;
+		addL = mie_fp_add384L;
+		subS = mie_fp_sub384S;
+		subL = mie_fp_sub384L;
 	} else
 	if (bitLen <= 576) {
-		if (doBench) {
-			CYBOZU_BENCH("add576S", mie_fp_add576S, x, y, x, p);
-			CYBOZU_BENCH("add576L", mie_fp_add576L, x, y, x, p);
-			CYBOZU_BENCH("sub576S", mie_fp_sub576S, x, y, x, p);
-			CYBOZU_BENCH("sub576L", mie_fp_sub576L, x, y, x, p);
-		}
+		addS = mie_fp_add576S;
+		addL = mie_fp_add576L;
+		subS = mie_fp_sub576S;
+		subL = mie_fp_sub576L;
 	} else {
 		puts("ERR"); exit(1);
+	}
+
+	mie::fp::Unit x[MAX_N], y[MAX_N];
+	mie::fp::Unit z[MAX_N], w[MAX_N];
+	cybozu::XorShift rg;
+	mie::fp::getRandVal(x, rg, p, bitLen);
+	mie::fp::getRandVal(y, rg, p, bitLen);
+	const size_t C = 10;
+
+	addC(z, x, y, p, n);
+	addS(w, x, y, p);
+	VERIFY_EQUAL(z, w, n);
+	for (size_t i = 0; i < C; i++) {
+printf("i=%d\n", (int)i);
+		addC(z, y, z, p, n);
+		addS(w, y, w, p);
+		VERIFY_EQUAL(z, w, n);
+		addC(z, y, z, p, n);
+		addL(w, y, w, p);
+		VERIFY_EQUAL(z, w, n);
+		subC(z, x, z, p, n);
+		subS(w, x, w, p);
+		VERIFY_EQUAL(z, w, n);
+		subC(z, x, z, p, n);
+		subL(w, x, w, p);
+		VERIFY_EQUAL(z, w, n);
+	}
+	if (doBench) {
+		CYBOZU_BENCH("addS", addS, x, y, x, p);
+		CYBOZU_BENCH("addL", addL, x, y, x, p);
+		CYBOZU_BENCH("subS", subS, x, y, x, p);
+		CYBOZU_BENCH("subL", subL, x, y, x, p);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
