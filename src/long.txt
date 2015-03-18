@@ -35,7 +35,6 @@ define internal { i@bitN, i@unitN } @local_sbb@bitN(i@bitN %x, i@bitN %y) {
 }
 
 define void @mie_fp_sub@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
-entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
 	%x1 = zext i@bitN %x to i@bitNpU

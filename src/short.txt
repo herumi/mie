@@ -29,17 +29,18 @@ define internal { i@bitN, i@unitN } @mie_local_sbb@bitN(i@bitN %x, i@bitN %y) {
 }
 
 define void @mie_fp_sub@bitNS(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
-entry:
 	%x = load i@bitN* %px
 	%y = load i@bitN* %py
+	%x1 = zext i@bitN %x to i@bitNpU
+	%y1 = zext i@bitN %y to i@bitNpU
+	%vc = sub i@bitNpU %x1, %y1
+	%v = trunc i@bitNpU %vc to i@bitN
+	%c = lshr i@bitNpU %vc, @bitNpUm1
+	%c1 = trunc i@bitNpU %c to i1
 	%p = load i@bitN* %pp
-	%vc = call { i@bitN, i@unitN } @mie_local_sbb@bitN(i@bitN %x, i@bitN %y)
-	%v = extractvalue { i@bitN, i@unitN } %vc, 0 ; x - y
-	%c = extractvalue { i@bitN, i@unitN } %vc, 1
-	%t = add i@bitN %v, %p ; x - y + p
-	%zero = icmp eq i@unitN %c, 0
-	%t1 = select i1 %zero, i@bitN %v, i@bitN %t
-	store i@bitN %t1, i@bitN* %pz
+	%a = select i1 %c1, i@bitN %p, i@bitN 0
+	%v1 = add i@bitN %v, %a
+	store i@bitN %v1, i@bitN* %pz
 	ret void
 }
 
