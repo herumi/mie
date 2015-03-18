@@ -71,7 +71,7 @@ struct TagInt<int> {
 	}
 	static size_t getBitLen(int x)
 	{
-		return x == 0 ? 1 : cybozu::bsr(x);
+		return x == 0 ? 1 : cybozu::bsr(x) + 1;
 	}
 	static void shr(int& x, size_t n)
 	{
@@ -98,7 +98,7 @@ struct TagInt<size_t> {
 	}
 	static size_t getBitLen(size_t x)
 	{
-		return x == 0 ? 1 : cybozu::bsr<size_t>(x);
+		return x == 0 ? 1 : cybozu::bsr<size_t>(x) + 1;
 	}
 	static void shr(size_t& x, size_t n)
 	{
