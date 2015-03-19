@@ -80,7 +80,6 @@ const struct FuncOp {
 	void4op subS;
 	void4op subL;
 } gFuncOpTbl[] = {
-//	{ 64, mie_fp_add64S, mie_fp_add64L, mie_fp_sub64S, mie_fp_sub64L },
 	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L },
 	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L },
 	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L },
