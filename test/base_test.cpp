@@ -264,9 +264,12 @@ CYBOZU_TEST_AUTO(all)
 		{ 6, { 0x00000000ffffffff, 0xffffffff00000000, 0xfffffffffffffffe, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 		{ 6, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x4820984290482212, 0x9482094820948209, 0x0194810841094810, } },
 		{ 6, { 0x7204224233321972, 0x0342308472047204, 0x4567890123456790, 0x0948204204243123, 0x2098420984209482, 0x2093482094810948, } },
-		{ 9, { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff,  0x00000000000001ff,  } },
-		{ 9, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x2498540975555312, 0x9482904924029424, 0x0948209842098402, 0x1098410948109482,  0x0820958209582094, 0x0000000000000029,  } },
-		{ 9, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x7fffffffffffffff, 0x8572938572398583, 0x5732057823857293, 0x9820948205872380, 0x3409238420492034,  0x9483842098340298, 0x0000000000000003,  } },
+		{ 7, { 0x0000000000000063, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
+		{ 7, { 0x000000000fffcff1, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
+		{ 8, { 0xffffffffffffd0c9, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
+		{ 9, { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x00000000000001ff, } },
+		{ 9, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x2498540975555312, 0x9482904924029424, 0x0948209842098402, 0x1098410948109482, 0x0820958209582094, 0x0000000000000029, } },
+		{ 9, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x7fffffffffffffff, 0x8572938572398583, 0x5732057823857293, 0x9820948205872380, 0x3409238420492034, 0x9483842098340298, 0x0000000000000003, } },
 	};
 	for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
 		const size_t n = tbl[i].n;
