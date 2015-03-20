@@ -106,6 +106,29 @@ void mulPreC(Unit *z, const Unit *x, const Unit *y, size_t n)
 #endif
 }
 
+void modC(Unit *y, const Unit *x, const Unit *p, size_t n)
+{
+	mpz_t mx, my, mp;
+	set_mpz_t(mx, x, n * 2);
+	set_mpz_t(my, y, n);
+	set_mpz_t(mp, p, n);
+	mpz_mod(my, mx, mp);
+	mie::fp::local::clearArray(y, my->_mp_size, n);
+}
+
+void mul(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
+{
+	Unit ret[MAX_N * 2];
+	mpz_t mx, my, mz, mp;
+	set_zero(mz, ret, MAX_N * 2);
+	set_mpz_t(mx, x, n);
+	set_mpz_t(my, y, n);
+	set_mpz_t(mp, p, n);
+	mpz_mul(mz, mx, my);
+	mpz_mod(mz, mz, mp);
+	mie::fp::local::toArray(z, n, mz);
+}
+
 typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
 typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 
@@ -206,8 +229,9 @@ void test(const Unit *p, size_t bitLen)
 //		CYBOZU_BENCH("subS", subS, x, y, x, p);
 //		CYBOZU_BENCH("addL", addL, x, y, x, p);
 //		CYBOZU_BENCH("subL", subL, x, y, x, p);
-		CYBOZU_BENCH("mulPreA", mulPre, w, y, x);
-		CYBOZU_BENCH("mulPreC", mulPreC, w, y, x, n);
+		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
+		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
+		CYBOZU_BENCH("modC", modC, x, w2, p, n);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
@@ -215,6 +239,7 @@ void test(const Unit *p, size_t bitLen)
 		fg.init(p, n);
 		CYBOZU_BENCH("addA", fg.add_, x, y, x);
 		CYBOZU_BENCH("subA", fg.sub_, x, y, x);
+		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
 	}
 #endif
 }
