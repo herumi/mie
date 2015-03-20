@@ -143,6 +143,7 @@ const struct FuncOp {
 	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L, mie_fp_mul128pre },
 	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L, mie_fp_mul192pre },
 	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L, mie_fp_mul256pre },
+	{ 320, mie_fp_add320S, mie_fp_add320L, mie_fp_sub320S, mie_fp_sub320L, mie_fp_mul320pre },
 	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L, mie_fp_mul384pre },
 	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L, mie_fp_mul448pre },
 	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L, mie_fp_mul512pre },
@@ -231,9 +232,9 @@ void test(const Unit *p, size_t bitLen)
 //		CYBOZU_BENCH("subL", subL, x, y, x, p);
 		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
 		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
-		CYBOZU_BENCH("modC", modC, x, w2, p, n);
+//		CYBOZU_BENCH("modC", modC, x, w2, p, n);
 	}
-#ifdef USE_XBYAK
+#ifdef USE_XBYAKxx
 	if (bitLen <= 128) return;
 	if (doBench) {
 		fg.init(p, n);
@@ -259,6 +260,7 @@ CYBOZU_TEST_AUTO(all)
 		{ 4, { 0xa700000000000013, 0x6121000000000013, 0xba344d8000000008, 0x2523648240000001, } },
 		{ 4, { 0x7900342423332197, 0x4242342420123456, 0x1234567892342342, 0x1480948109481904, } },
 		{ 4, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x17ffffffffffffff, 0x1513423423423415, } },
+		{ 5, { 0x0000000000000009, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
 		{ 6, { 0x00000000ffffffff, 0xffffffff00000000, 0xfffffffffffffffe, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 		{ 6, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x4820984290482212, 0x9482094820948209, 0x0194810841094810, } },
 		{ 6, { 0x7204224233321972, 0x0342308472047204, 0x4567890123456790, 0x0948204204243123, 0x2098420984209482, 0x2093482094810948, } },
