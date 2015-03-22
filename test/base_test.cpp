@@ -26,18 +26,18 @@ size_t getUnitN(size_t bitLen)
 struct Montgomery {
 	typedef mie::Gmp::BlockType BlockType;
 	mpz_class p_;
-	mpz_class R_; // (1 << (pn_ * 64)) % p
+	mpz_class R_; // (1 << (n_ * 64)) % p
 	mpz_class RR_; // (R * R) % p
-	BlockType pp_; // p * pp = -1 mod M = 1 << 64
-	size_t pn_;
+	BlockType r_; // p * r = -1 mod M = 1 << 64
+	size_t n_;
 	Montgomery() {}
 	explicit Montgomery(const mpz_class& p)
 	{
 		p_ = p;
-		pp_ = mie::montgomery::getCoff(mie::Gmp::getBlock(p, 0));
-		pn_ = mie::Gmp::getBlockSize(p);
+		r_ = mie::montgomery::getCoff(mie::Gmp::getBlock(p, 0));
+		n_ = mie::Gmp::getBlockSize(p);
 		R_ = 1;
-		R_ = (R_ << (pn_ * 64)) % p_;
+		R_ = (R_ << (n_ * 64)) % p_;
 		RR_ = (R_ * R_) % p_;
 	}
 
@@ -49,14 +49,14 @@ struct Montgomery {
 #if 0
 		const size_t ySize = mie::Gmp::getBlockSize(y);
 		mpz_class c = x * mie::Gmp::getBlock(y, 0);
-		BlockType q = mie::Gmp::getBlock(c, 0) * pp_;
+		BlockType q = mie::Gmp::getBlock(c, 0) * r_;
 		c += p_ * q;
 		c >>= sizeof(BlockType) * 8;
-		for (size_t i = 1; i < pn_; i++) {
+		for (size_t i = 1; i < n_; i++) {
 			if (i < ySize) {
 				c += x * mie::Gmp::getBlock(y, i);
 			}
-			BlockType q = mie::Gmp::getBlock(c, 0) * pp_;
+			BlockType q = mie::Gmp::getBlock(c, 0) * r_;
 			c += p_ * q;
 			c >>= sizeof(BlockType) * 8;
 		}
@@ -66,8 +66,8 @@ struct Montgomery {
 		z = c;
 #else
 		z = x * y;
-		for (size_t i = 0; i < pn_; i++) {
-			BlockType q = mie::Gmp::getBlock(z, 0) * pp_;
+		for (size_t i = 0; i < n_; i++) {
+			BlockType q = mie::Gmp::getBlock(z, 0) * r_;
 			z += p_ * (mp_limb_t)q;
 			z >>= sizeof(BlockType) * 8;
 		}
