@@ -1,14 +1,16 @@
-define i64 @extract128(i128 %x, i128 %shift) {
+define i64 @extract128XXX(i128 %x, i128 %shift) {
 	%t0 = lshr i128 %x, %shift
 	%t1 = trunc i128 %t0 to i64
 	ret i64 %t1
 }
-define i128 @mul64x64(i64 %x, i64 %y) {
+define i128 @mul64x64XXX(i64 %x, i64 %y) {
 	%x0 = zext i64 %x to i128
 	%y0 = zext i64 %y to i128
 	%z = mul i128 %x0, %y0
 	ret i128 %z
 }
+declare i64 @extract128(i128 %x, i128 %shift)
+declare i128 @mul64x64(i64 %x, i64 %y)
 
 define i192 @mul128x64(i128 %x, i64 %y)  {
   %x0 = call i64 @extract128(i128 %x, i128 0)

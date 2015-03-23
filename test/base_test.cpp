@@ -18,9 +18,20 @@
 const size_t MAX_N = 32;
 typedef mie::fp::Unit Unit;
 
+extern "C" void mie_fp_mont128(Unit* z, const Unit* x,  const Unit* y, const Unit* p, size_t r);
+
 size_t getUnitN(size_t bitLen)
 {
 	return (bitLen + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+}
+
+void setMpz(mpz_class& mx, const Unit *x, size_t n)
+{
+	mie::Gmp::setRaw(mx, x, n);
+}
+void getMpz(Unit *x, size_t n, const mpz_class& mx)
+{
+	mie::fp::local::toArray(x,  n, mx.get_mpz_t());
 }
 
 struct Montgomery {
@@ -44,6 +55,14 @@ struct Montgomery {
 	void toMont(mpz_class& x) const { mul(x, x, RR_); }
 	void fromMont(mpz_class& x) const { mul(x, x, 1); }
 
+	void mont(Unit *z, const Unit *x, const Unit *y) const
+	{
+		mpz_class mx, my;
+		setMpz(mx, x, n_);
+		setMpz(my, y, n_);
+		mul(mx, mx, my);
+		getMpz(z, n_, mx);
+	}
 	void mul(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
 #if 0
@@ -77,15 +96,6 @@ struct Montgomery {
 #endif
 	}
 };
-
-void setMpz(mpz_class& mx, const Unit *x, size_t n)
-{
-	mie::Gmp::setRaw(mx, x, n);
-}
-void getMpz(Unit *x, size_t n, const mpz_class& mx)
-{
-	mie::fp::local::toArray(x,  n, mx.get_mpz_t());
-}
 
 void put(const char *msg, const Unit *x, size_t n)
 {
@@ -298,6 +308,36 @@ void test(const Unit *p, size_t bitLen)
 		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
 	}
 #endif
+	if (bitLen == 128) {
+		mpz_class mp;
+		setMpz(mp, p, n);
+		Montgomery m(mp);
+		/*
+			real mont
+			   0    0
+			   1    R^-1
+			   R    1
+			  -1    -R^-1
+			  -R    -1
+		*/
+		mpz_class t = 1;
+		const mpz_class R = (t << (n * 64)) % mp;
+		const mpz_class tbl[] = {
+			0, 1, R, mp - 1, mp - R
+		};
+		for (size_t i = 0; i < CYBOZU_NUM_OF_ARRAY(tbl); i++) {
+			const mpz_class& mx = tbl[i];
+			for (size_t j = i; j < CYBOZU_NUM_OF_ARRAY(tbl); j++) {
+				const mpz_class& my = tbl[j];
+				getMpz(x, n, mx);
+				getMpz(y, n, my);
+				m.mont(z, x, y);
+				mie_fp_mont128(w, x, y, p, m.r_);
+				VERIFY_EQUAL(z, w, n);
+			}
+		}
+
+	}
 }
 
 CYBOZU_TEST_AUTO(all)
