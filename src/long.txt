@@ -1,54 +1,54 @@
-define void @mie_fp_add@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
-	%x = load i@bitN* %px
-	%y = load i@bitN* %py
-	%p = load i@bitN* %pp
-	%x1 = zext i@bitN %x to i@bitNpU
-	%y1 = zext i@bitN %y to i@bitNpU
-	%p1 = zext i@bitN %p to i@bitNpU
-	%t0 = add i@bitNpU %x1, %y1 ; x + y
-	%t1 = trunc i@bitNpU %t0 to i@bitN
-	store i@bitN %t1, i@bitN* %pz
-	%vc = sub i@bitNpU %t0, %p1
-	%c = lshr i@bitNpU %vc, @bitNpUm1
-	%c1 = trunc i@bitNpU %c to i1
+define void @mie_fp_add@bitLL(i@bitL* %pz, i@bitL* %px, i@bitL* %py, i@bitL* %pp) {
+	%x = load i@bitL* %px
+	%y = load i@bitL* %py
+	%p = load i@bitL* %pp
+	%x1 = zext i@bitL %x to i@bitLpU
+	%y1 = zext i@bitL %y to i@bitLpU
+	%p1 = zext i@bitL %p to i@bitLpU
+	%t0 = add i@bitLpU %x1, %y1 ; x + y
+	%t1 = trunc i@bitLpU %t0 to i@bitL
+	store i@bitL %t1, i@bitL* %pz
+	%vc = sub i@bitLpU %t0, %p1
+	%c = lshr i@bitLpU %vc, @bitLpUm1
+	%c1 = trunc i@bitLpU %c to i1
 	br i1 %c1, label %carry, label %nocarry
 nocarry:
-	%v = trunc i@bitNpU %vc to i@bitN
-	store i@bitN %v, i@bitN* %pz
+	%v = trunc i@bitLpU %vc to i@bitL
+	store i@bitL %v, i@bitL* %pz
 	ret void
 carry:
 	ret void
 }
 
-define internal { i@bitN, i@unitN } @local_sbb@bitN(i@bitN %x, i@bitN %y) {
-	%x1 = zext i@bitN %x to i@bitNpU
-	%y1 = zext i@bitN %y to i@bitNpU
-	%v1 = sub i@bitNpU %x1, %y1
-	%v = trunc i@bitNpU %v1 to i@bitN
-	%c = lshr i@bitNpU %v1, @bitN
-	%c1 = trunc i@bitNpU %c to i@unitN
-	%r1 = insertvalue { i@bitN, i@unitN } undef, i@bitN %v, 0
-	%r2 = insertvalue { i@bitN, i@unitN } %r1, i@unitN %c1, 1
-	ret { i@bitN, i@unitN } %r2
+define internal { i@bitL, i@unitL } @local_sbb@bitL(i@bitL %x, i@bitL %y) {
+	%x1 = zext i@bitL %x to i@bitLpU
+	%y1 = zext i@bitL %y to i@bitLpU
+	%v1 = sub i@bitLpU %x1, %y1
+	%v = trunc i@bitLpU %v1 to i@bitL
+	%c = lshr i@bitLpU %v1, @bitL
+	%c1 = trunc i@bitLpU %c to i@unitL
+	%r1 = insertvalue { i@bitL, i@unitL } undef, i@bitL %v, 0
+	%r2 = insertvalue { i@bitL, i@unitL } %r1, i@unitL %c1, 1
+	ret { i@bitL, i@unitL } %r2
 }
 
-define void @mie_fp_sub@bitNL(i@bitN* %pz, i@bitN* %px, i@bitN* %py, i@bitN* %pp) {
-	%x = load i@bitN* %px
-	%y = load i@bitN* %py
-	%x1 = zext i@bitN %x to i@bitNpU
-	%y1 = zext i@bitN %y to i@bitNpU
-	%vc = sub i@bitNpU %x1, %y1
-	%v = trunc i@bitNpU %vc to i@bitN
-	%c = lshr i@bitNpU %vc, @bitNpUm1
-	%c1 = trunc i@bitNpU %c to i1
-	store i@bitN %v, i@bitN* %pz
+define void @mie_fp_sub@bitLL(i@bitL* %pz, i@bitL* %px, i@bitL* %py, i@bitL* %pp) {
+	%x = load i@bitL* %px
+	%y = load i@bitL* %py
+	%x1 = zext i@bitL %x to i@bitLpU
+	%y1 = zext i@bitL %y to i@bitLpU
+	%vc = sub i@bitLpU %x1, %y1
+	%v = trunc i@bitLpU %vc to i@bitL
+	%c = lshr i@bitLpU %vc, @bitLpUm1
+	%c1 = trunc i@bitLpU %c to i1
+	store i@bitL %v, i@bitL* %pz
 	br i1 %c1, label %carry, label %nocarry
 nocarry:
 	ret void
 carry:
-	%p = load i@bitN* %pp
-	%t = add i@bitN %v, %p ; x - y + p
-	store i@bitN %t, i@bitN* %pz
+	%p = load i@bitL* %pp
+	%t = add i@bitL %v, %p ; x - y + p
+	store i@bitL %t, i@bitL* %pz
 	ret void
 }
 
