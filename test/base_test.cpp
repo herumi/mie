@@ -68,12 +68,9 @@ struct Montgomery {
 #if 1
 		const size_t ySize = mie::Gmp::getBlockSize(y);
 		mpz_class c = y == 0 ? mpz_class(0) : x * mie::Gmp::getBlock(y, 0);
-PUT(c);
 		BlockType q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
-PUT(q);
 		c += p_ * q;
 		c >>= sizeof(BlockType) * 8;
-PUT(c);
 		for (size_t i = 1; i < n_; i++) {
 			if (i < ySize) {
 				c += x * mie::Gmp::getBlock(y, i);
@@ -337,7 +334,6 @@ void test(const Unit *p, size_t bitLen)
 				const mpz_class& my = tbl[j];
 				getMpz(x, n, mx);
 				getMpz(y, n, my);
-std::cout << std::hex << "mx=" << mx << ", my=" << my << ", mp=" << mp << std::endl;
 				m.mont(z, x, y);
 				mie_fp_mont128(w, x, y, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
