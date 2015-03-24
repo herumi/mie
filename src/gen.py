@@ -58,32 +58,52 @@ def gen_mul(fo, unitN):
 		gen_mulNx1(fo, unitN, i)
 		gen_mulNxN(fo, unitN, i)
 
-def expandFor(s):
+RE_VAL = re.compile(r'\$\(([^)]+)\)')
+
+def evalStr(s, envG, envL={}):
+	def eval2str(x):
+		return str(eval(x.group(1), envG, envL))
+	return RE_VAL.sub(eval2str, s)
+
+def expandFor(s, unitN, bitN):
 	out = []
 	inFor = False
 	b = 0
 	e = 0
-	RE_FOR = re.compile(r'@for\s+([0-9]+)\s*,\s*([0-9]+)')
+	N = bitN / unitN
+	envG = {
+		'N' : N,
+		'unitN' : unitN,
+		'bitN' : bitN
+	}
+	RE_FOR = re.compile(r'@for\s+([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
 		if inFor:
 			if line.strip() == '@end_for':
 				inFor = False
 				for i in xrange(b, e):
+					def eval2str(x):
+						v = eval(x.group(1), envG, { 'I' : str(i)})
+						print "v=", v
+						return str(v)
 					si = str(i)
 					for s in sub:
-						out.append(s.replace('@i', si))
+						s = s.replace('@I', si)
+						s = evalStr(s, envG, { 'I' : str(i)})
+						out.append(s)
 			else:
 				sub.append(line)
 		else:
 			p = RE_FOR.search(line)
 			if p:
+				v = RE_VAL.match(p.group(1))
 				b = int(p.group(1))
 				e = int(p.group(2))
 				print "for begin = %d, end = %d" % (b, e)
 				sub = []
 				inFor = True
 			else:
-				out.append(line)
+				out.append(evalStr(line, envG))
 	return '\n'.join(out)
 
 def gen_sub(fo, s, unitN, bitN):
@@ -94,7 +114,7 @@ def gen_sub(fo, s, unitN, bitN):
 	s = s.replace('@bitN', str(bitN))
 	s = s.replace('@unitN2', str(unitN * 2))
 	s = s.replace('@unitN', str(unitN))
-	s = expandFor(s)
+	s = expandFor(s, unitN, bitN)
 	fo.write(s)
 
 def gen(fo, inName, unitN, bitNL):
@@ -122,6 +142,7 @@ def main():
 	gen(fo, 'all.txt', unitN, bitNL)
 	gen(fo, 'short.txt', unitN, bitNL)
 	gen(fo, 'long.txt', unitN, bitNL)
+#	gen(fo, 'mul.txt', unitN, bitNL)
 	gen_mul(fo, unitN)
 	fo.close()
 

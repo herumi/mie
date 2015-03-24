@@ -1,7 +1,7 @@
 
 define i@unitN2 @mul@unitNx@unitN(i@unitN %x, i@unitN %y) {
-	%x0 = zext i@unitN %x to i@unitN2
-	%y0 = zext i@unitN %y to i@unitN2
+	%x0 = zext i@unitN %x to i$(unitN * 2)
+	%y0 = zext i@unitN %y to i$(unitN * 2)
 	%z = mul i@unitN2 %x0, %y0
 	ret i@unitN2 %z
 }
