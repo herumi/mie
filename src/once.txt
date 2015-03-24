@@ -1,9 +1,9 @@
 
-define i$(unitL2) @mul@unitLx@unitL(i@unitL %x, i@unitL %y) {
-	%x0 = zext i@unitL %x to i$(unitL2)
-	%y0 = zext i@unitL %y to i$(unitL2)
-	%z = mul i$(unitL2) %x0, %y0
-	ret i$(unitL2) %z
+define i$(unit*2) @mul$(unit)x$(unit)(i$(unit) %x, i$(unit) %y) {
+	%x0 = zext i$(unit) %x to i$(unit*2)
+	%y0 = zext i$(unit) %y to i$(unit*2)
+	%z = mul i$(unit*2) %x0, %y0
+	ret i$(unit*2) %z
 }
 
 ; NIST_P192
@@ -67,8 +67,8 @@ define internal void @modNIST_P192(i192* %out, i192* %px) {
 
 define void @mie_fp_mul_NIST_P192(i192* %pz, i192* %px, i192* %py) {
 	%buf = alloca i192, i32 2
-	%p = bitcast i192* %buf to i@unitL*
-	call void @mie_fp_mul192pre(i@unitL* %p, i192* %px, i192* %py)
+	%p = bitcast i192* %buf to i$(unit)*
+	call void @mie_fp_mul192pre(i$(unit)* %p, i192* %px, i192* %py)
 	call void @modNIST_P192(i192* %pz, i192* %buf)
 	ret void
 }

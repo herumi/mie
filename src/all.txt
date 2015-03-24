@@ -1,7 +1,7 @@
-declare { i@bitL, i1 } @llvm.usub.with.overflow.i@bitL(i@bitL %x, i@bitL %y)
+declare { i$(bit), i1 } @llvm.usub.with.overflow.i$(bit)(i$(bit) %x, i$(bit) %y)
 
-define i@unitL @extract@bitLpU(i@bitLpU %x, i@bitLpU %shift) {
-	%t0 = lshr i@bitLpU %x, %shift
-	%t1 = trunc i@bitLpU %t0 to i@unitL
-	ret i@unitL %t1
+define i$(unit) @extract$(bit+unit)(i$(bit+unit) %x, i$(bit+unit) %shift) {
+	%t0 = lshr i$(bit+unit) %x, %shift
+	%t1 = trunc i$(bit+unit) %t0 to i$(unit)
+	ret i$(unit) %t1
 }
