@@ -69,16 +69,20 @@ def evalStr(s, envG, envL={}):
 	return s
 
 def expandFor(s, unitL, bitL):
+	"""
+		eval "@(<expr>)" to integer
+
+		@for <var>, <begin>, <end>
+		...
+		@endfor
+	"""
 	out = ""
 	inFor = False
-	b = 0
-	e = 0
-	N = bitL / unitL
-	# available variables in @(...)
+	# available variables in @(<expr>)
 	envG = {
-		'N' : N,
-		'bit' : bitL,
 		'unit' : unitL,
+		'bit' : bitL,
+		'N' : bitL / unitL,
 	}
 	# @for <var>, <begin>, <end>
 	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
@@ -87,6 +91,7 @@ def expandFor(s, unitL, bitL):
 			if line.strip() == '@endfor':
 				inFor = False
 				for i in xrange(b, e):
+					# v is local variable in @for
 					envL = { v : i }
 					s = evalStr(sub, envG, envL)
 					out += s
@@ -105,16 +110,13 @@ def expandFor(s, unitL, bitL):
 				out += evalStr(line, envG) + '\n'
 	return out
 
-def gen_sub(fo, s, unitL, bitL):
-	s = expandFor(s, unitL, bitL)
-	fo.write(s)
-
 def gen(fo, inLame, unitL, bitLL):
 	fi = open(inLame, 'r')
 	s = fi.read()
 	fi.close()
 	for bitL in bitLL:
-		gen_sub(fo, s, unitL, bitL)
+		t = expandFor(s, unitL, bitL)
+		fo.write(t)
 
 def main():
 	argv = sys.argv
