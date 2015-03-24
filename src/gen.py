@@ -69,7 +69,7 @@ def evalStr(s, envG, envL={}):
 	return s
 
 def expandFor(s, unitL, bitL):
-	out = []
+	out = ""
 	inFor = False
 	b = 0
 	e = 0
@@ -89,7 +89,7 @@ def expandFor(s, unitL, bitL):
 				for i in xrange(b, e):
 					envL = { v : i }
 					s = evalStr(sub, envG, envL)
-					out.append(s)
+					out += s
 			else:
 				sub = sub + line + '\n'
 		else:
@@ -102,8 +102,8 @@ def expandFor(s, unitL, bitL):
 				sub = ""
 				inFor = True
 			else:
-				out.append(evalStr(line, envG))
-	return '\n'.join(out)
+				out += evalStr(line, envG) + '\n'
+	return out
 
 def gen_sub(fo, s, unitL, bitL):
 	s = expandFor(s, unitL, bitL)
