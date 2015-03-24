@@ -58,6 +58,33 @@ def gen_mul(fo, unitN):
 		gen_mulNx1(fo, unitN, i)
 		gen_mulNxN(fo, unitN, i)
 
+def expandFor(s):
+	out = []
+	inFor = False
+	b = 0
+	e = 0
+	RE_FOR = re.compile(r'@for\s+([0-9]+)\s*,\s*([0-9]+)')
+	for line in s.split('\n'):
+		if inFor:
+			if line.strip() == '@end_for':
+				inFor = False
+				for i in xrange(b, e):
+					si = str(i)
+					for s in sub:
+						out.append(s.replace('@i', si))
+			else:
+				sub.append(line)
+		else:
+			p = RE_FOR.search(line)
+			if p:
+				b = int(p.group(1))
+				e = int(p.group(2))
+				print "for begin = %d, end = %d" % (b, e)
+				sub = []
+				inFor = True
+			else:
+				out.append(line)
+	return '\n'.join(out)
 
 def gen_sub(fo, s, unitN, bitN):
 	bitNpU = bitN + unitN
@@ -67,6 +94,7 @@ def gen_sub(fo, s, unitN, bitN):
 	s = s.replace('@bitN', str(bitN))
 	s = s.replace('@unitN2', str(unitN * 2))
 	s = s.replace('@unitN', str(unitN))
+	s = expandFor(s)
 	fo.write(s)
 
 def gen(fo, inName, unitN, bitNL):
