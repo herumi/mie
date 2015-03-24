@@ -62,8 +62,11 @@ RE_VAL = re.compile(r'\$\(([^)]+)\)')
 
 def evalStr(s, envG, envL={}):
 	def eval2str(x):
-		return str(eval(x.group(1), envG, envL))
-	return RE_VAL.sub(eval2str, s)
+		s = x.group(1)
+		v = eval(s, envG, envL)
+		return str(v)
+	s = RE_VAL.sub(eval2str, s)
+	return s
 
 def expandFor(s, unitL, bitL):
 	out = []
@@ -71,36 +74,32 @@ def expandFor(s, unitL, bitL):
 	b = 0
 	e = 0
 	N = bitL / unitL
+	# available variables in @(...)
 	envG = {
 		'N' : N,
 		'bit' : bitL,
 		'unit' : unitL,
 	}
-	RE_FOR = re.compile(r'@for\s+([^ ]+)\s*,\s*([^ ]+)')
+	# @for <var>, <begin>, <end>
+	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
 		if inFor:
-			if line.strip() == '@end_for':
+			if line.strip() == '@endfor':
 				inFor = False
 				for i in xrange(b, e):
-					def eval2str(x):
-						v = eval(x.group(1), envG, { 'I' : str(i)})
-						print "v=", v
-						return str(v)
-					si = str(i)
-					for s in sub:
-						s = s.replace('@I', si)
-						s = evalStr(s, envG, { 'I' : str(i)})
-						out.append(s)
+					envL = { v : i }
+					s = evalStr(sub, envG, envL)
+					out.append(s)
 			else:
-				sub.append(line)
+				sub = sub + line + '\n'
 		else:
 			p = RE_FOR.search(line)
 			if p:
-				v = RE_VAL.match(p.group(1))
-				b = int(p.group(1))
-				e = int(p.group(2))
-				print "for begin = %d, end = %d" % (b, e)
-				sub = []
+				v = p.group(1).strip()
+				b = eval(p.group(2), envG)
+				e = eval(p.group(3), envG)
+#				print "for var = %s, begin = %d, end = %d" % (v, b, e)
+				sub = ""
 				inFor = True
 			else:
 				out.append(evalStr(line, envG))
@@ -129,6 +128,8 @@ def main():
 
 	outLame = 'base%d.ll' % unitL
 	fo = open(outLame, 'w')
+#	gen(fo, 't.txt', unitL, [unitL * 2])
+#	exit(1)
 	gen(fo, 'once.txt', unitL, [unitL * 2])
 
 	bitLL = range(unitL, 576 + 1, unitL)
