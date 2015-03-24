@@ -1,9 +1,9 @@
 
-define i@unitL2 @mul@unitLx@unitL(i@unitL %x, i@unitL %y) {
-	%x0 = zext i@unitL %x to i$(unitL * 2)
-	%y0 = zext i@unitL %y to i$(unitL * 2)
-	%z = mul i@unitL2 %x0, %y0
-	ret i@unitL2 %z
+define i$(unitL2) @mul@unitLx@unitL(i@unitL %x, i@unitL %y) {
+	%x0 = zext i@unitL %x to i$(unitL2)
+	%y0 = zext i@unitL %y to i$(unitL2)
+	%z = mul i$(unitL2) %x0, %y0
+	ret i$(unitL2) %z
 }
 
 ; NIST_P192

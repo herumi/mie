@@ -74,7 +74,11 @@ def expandFor(s, unitL, bitL):
 	envG = {
 		'N' : N,
 		'unitL' : unitL,
-		'bitL' : bitL
+		'bit_unitL' : bitL + unitL,
+		'bitL' : bitL,
+		'bit' : bitL,
+		'unit' : unitL,
+		'unitL2' : unitL * 2,
 	}
 	RE_FOR = re.compile(r'@for\s+([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
@@ -108,9 +112,7 @@ def expandFor(s, unitL, bitL):
 
 def gen_sub(fo, s, unitL, bitL):
 	bitLpU = bitL + unitL
-	s = s.replace('@bitLpUm1', str(bitLpU - 1))
 	s = s.replace('@bitLpU', str(bitLpU))
-	s = s.replace('@bitLm1', str(bitL - 1))
 	s = s.replace('@bitL', str(bitL))
 	s = s.replace('@unitL2', str(unitL * 2))
 	s = s.replace('@unitL', str(unitL))

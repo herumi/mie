@@ -9,7 +9,7 @@ define void @mie_fp_add@bitLL(i@bitL* %pz, i@bitL* %px, i@bitL* %py, i@bitL* %pp
 	%t1 = trunc i@bitLpU %t0 to i@bitL
 	store i@bitL %t1, i@bitL* %pz
 	%vc = sub i@bitLpU %t0, %p1
-	%c = lshr i@bitLpU %vc, @bitLpUm1
+	%c = lshr i@bitLpU %vc, $(bit+unit-1)
 	%c1 = trunc i@bitLpU %c to i1
 	br i1 %c1, label %carry, label %nocarry
 nocarry:
@@ -39,7 +39,7 @@ define void @mie_fp_sub@bitLL(i@bitL* %pz, i@bitL* %px, i@bitL* %py, i@bitL* %pp
 	%y1 = zext i@bitL %y to i@bitLpU
 	%vc = sub i@bitLpU %x1, %y1
 	%v = trunc i@bitLpU %vc to i@bitL
-	%c = lshr i@bitLpU %vc, @bitLpUm1
+	%c = lshr i@bitLpU %vc, $(bit+unit-1)
 	%c1 = trunc i@bitLpU %c to i1
 	store i@bitL %v, i@bitL* %pz
 	br i1 %c1, label %carry, label %nocarry
