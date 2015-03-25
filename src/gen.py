@@ -78,7 +78,10 @@ def parseFor(s, envG):
 
 def parseIf(s, envG):
 	out = ""
-	inIf = False
+	IF_INIT = 0
+	IF_IF = 1
+	IF_ELSE = 2
+	ifState = IF_INIT
 	ifVar = False
 	# available variables in @(<expr>)
 	envL = {}
@@ -89,21 +92,21 @@ def parseIf(s, envG):
 		# remove @define
 		if parseDefine(stripped, envG, envL):
 			continue
-		if inIf:
+		if ifState == IF_INIT:
+			p = RE_IF.match(stripped)
+			if p:
+				ifState = IF_IF
+				ifVar = evalIntLoc(p.group(1))
+				continue
+		elif ifState == IF_IF:
 			if stripped == '@endif':
-				inIf = False
+				ifState = IF_INIT
 				continue
 			p = RE_ELIF.match(stripped)
 			if p:
 				ifVar = evalIntLoc(p.group(1))
 				continue
 			if not ifVar:
-				continue
-		else:
-			p = RE_IF.match(stripped)
-			if p:
-				inIf = True
-				ifVar = evalIntLoc(p.group(1))
 				continue
 		out += evalStr(line, envG, envL) + '\n'
 	return out
