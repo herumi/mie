@@ -5,7 +5,7 @@ DIS=llvm-dis$(VER)
 ASM=llvm-as$(VER)
 OPT_LLC= $(OPT) -O3 -o - | $(LLC) -O3 -o -
 
-SRC = once.txt all.txt long.txt short.txt
+SRC = once.txt all.txt long.txt short.txt mul.txt
 TARGET=x64.s x86.s arm.s arm64.s
 AFLAGS=-mattr=bmi2
 all: $(TARGET)

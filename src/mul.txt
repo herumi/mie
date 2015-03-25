@@ -1,17 +1,44 @@
-
-@define out = $(bit+unit)
-define private i$(out) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)  {
+@define bu = $(bit+unit)
+define private i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)  {
 @for i, 0, N
   %x$(i) = call i$(unit) @extract$(bit)(i$(bit) %x, i$(bit) $(unit*i))
   %x$(i)y = call i$(unit*2) @mul$(unit)x$(unit)(i$(unit) %x$(i), i$(unit) %y)
-  %x$(i)y0 = zext i$(unit*2) %x$(i)y to i$(out)
+  %x$(i)y0 = zext i$(unit*2) %x$(i)y to i$(bu)
 @endfor
 @for i, 1, N
-  %x$(i)y1 = shl i$(out) %x$(i)y0, $(unit)
+  %x$(i)y1 = shl i$(bu) %x$(i)y0, $(unit*i)
 @endfor
-  %t0 = add i$(out) %x0y0, %x1y1
+  %t0 = add i$(bu) %x0y0, %x1y1
 @for i, 1, N-1
-  %t$(i) = add i$(out) %t$(i-1), %x$(i+1)y1
+  %t$(i) = add i$(bu) %t$(i-1), %x$(i+1)y1
 @endfor
-  ret i$(out) %t$(N-2)
+  ret i$(bu) %t$(N-2)
+}
+define void @mie_fp_mul$(bit)pre(i$(unit)* %pz, i$(bit)* %px, i$(bit)* %py) {
+  %x = load i$(bit)* %px
+  %y = load i$(bit)* %py
+@for i, 0, N
+  %y$(i) = call i$(unit) @extract$(bit)(i$(bit) %y, i$(bit) $(unit*i))
+@endfor
+  %sum0 = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y0)
+  %t0 = trunc i$(bu) %sum0 to i$(unit)
+  store i$(unit) %t0, i$(unit)* %pz
+@for i, 1, N-1
+
+  %s$(i-1) = lshr i$(bu) %sum$(i-1), $(unit)
+  %xy$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y$(i))
+  %sum$(i) = add i$(bu) %s$(i-1), %xy$(i)
+  %z$(i) = getelementptr i$(unit)* %pz, i32 $(i)
+  %ts$(i) = trunc i$(bu) %sum$(i) to i$(unit)
+  store i$(unit) %ts$(i), i$(unit)* %z$(i)
+@endfor
+
+@define i = $(N)-1
+  %s$(i-1) = lshr i$(bu) %sum$(i-1), $(unit)
+  %xy$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y$(i))
+  %sum$(i) = add i$(bu) %s$(i-1), %xy$(i)
+  %z$(i) = getelementptr i$(unit)* %pz, i32 $(i)
+  %p = bitcast i$(unit)* %z$(N-1) to i$(bu)*
+  store i$(bu) %sum$(N-1), i$(bu)* %p
+  ret void
 }

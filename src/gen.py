@@ -144,7 +144,7 @@ def main():
 
 	outLame = 'base%d.ll' % unitL
 	fo = open(outLame, 'w')
-#	gen(fo, 'mul.txt', unitL, [unitL * 2])
+#	gen(fo, 'mul.txt', unitL, [unitL * 4])
 #	exit(1)
 	gen(fo, 'once.txt', unitL, [unitL * 2])
 
@@ -152,8 +152,8 @@ def main():
 	gen(fo, 'all.txt', unitL, bitLL)
 	gen(fo, 'short.txt', unitL, bitLL)
 	gen(fo, 'long.txt', unitL, bitLL)
-#	gen(fo, 'mul.txt', unitL, bitLL)
-	gen_mul(fo, unitL)
+	gen(fo, 'mul.txt', unitL, bitLL[1:])
+#	gen_mul(fo, unitL)
 	fo.close()
 
 if __name__ == "__main__":
