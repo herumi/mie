@@ -27,21 +27,17 @@ define void @mie_fp_mul$(bit)pre(i$(unit)* %pz, i$(bit)* %px, i$(bit)* %py) {
   %sum0 = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y0)
   %t0 = trunc i$(bu) %sum0 to i$(unit)
   store i$(unit) %t0, i$(unit)* %pz
-@for i, 1, N-1
+@for i, 1, N
 
   %s$(i-1) = lshr i$(bu) %sum$(i-1), $(unit)
   %xy$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y$(i))
   %sum$(i) = add i$(bu) %s$(i-1), %xy$(i)
   %z$(i) = getelementptr i$(unit)* %pz, i32 $(i)
+  @if i < N - 1
   %ts$(i) = trunc i$(bu) %sum$(i) to i$(unit)
   store i$(unit) %ts$(i), i$(unit)* %z$(i)
+  @endif
 @endfor
-
-@define i = N - 1
-  %s$(i-1) = lshr i$(bu) %sum$(i-1), $(unit)
-  %xy$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y$(i))
-  %sum$(i) = add i$(bu) %s$(i-1), %xy$(i)
-  %z$(i) = getelementptr i$(unit)* %pz, i32 $(i)
   %p = bitcast i$(unit)* %z$(N-1) to i$(bu)*
   store i$(bu) %sum$(N-1), i$(bu)* %p
   ret void
