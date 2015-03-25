@@ -13,29 +13,23 @@ def evalStr(s, envG, envL={}):
 	s = RE_VAL.sub(eval2str, s)
 	return s
 
-def parse(s, unitL, bitL):
+def parseFor(s, unitL, bitL):
 	"""
-		eval "@(<expr>)" to integer
+	@for i, 0, 3
+	exp
+	@endif
+	|
+	v
+	@define i = 0
+	exp
+	@define i = 1
+	exp
+	@define i = 2
+	exp
 
-		@for <var>, <begin>, <end>
-		...
-		@endfor
-
-		REMARK : @for is not nestable
-
-		@define <var> = <exp>
-		REMARK : var is global
-
-		@if <exp>
-		@elif <exp>
-		@endif
-
-		REMARK : @if is not nestable
 	"""
 	out = ""
 	inFor = False
-	inIf = False
-	ifVar = False
 	# available variables in @(<expr>)
 	envG = {
 		'unit' : unitL,
@@ -45,6 +39,49 @@ def parse(s, unitL, bitL):
 	envL = {}
 	def evalStrLoc(s):
 		return evalStr(s, envG, envL)
+	def evalIntLoc(s):
+		return eval(s, envG, envL)
+	# @for <var>, <begin>, <end>
+	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
+	for line in s.split('\n'):
+		stripped = line.strip()
+		p = RE_DEFINE.match(stripped)
+		if p:
+			lhs = p.group(1).strip()
+			rhs = p.group(2).strip()
+			envL[lhs] = evalIntLoc(rhs)
+			# not continue for next parseIf
+		if inFor:
+			if line.strip() == '@endfor':
+				inFor = False
+				for i in xrange(b, e):
+					out += "@define %s = %d\n" % (v, i)
+					out += sub
+			else:
+				sub += line + '\n'
+		else:
+			p = RE_FOR.search(stripped)
+			if p:
+				v = p.group(1).strip()
+				b = eval(p.group(2), envG)
+				e = eval(p.group(3), envG)
+				sub = ""
+				inFor = True
+			else:
+				out += line + '\n'
+	return out
+
+def parseIf(s, unitL, bitL):
+	out = ""
+	inIf = False
+	ifVar = False
+	# available variables in @(<expr>)
+	envG = {
+		'unit' : unitL,
+		'bit' : bitL,
+		'N' : bitL / unitL,
+	}
+	envL = {}
 	def evalIntLoc(s):
 		return eval(s, envG, envL)
 	# @for <var>, <begin>, <end>
@@ -73,27 +110,31 @@ def parse(s, unitL, bitL):
 				inIf = True
 				ifVar = evalIntLoc(p.group(1))
 				continue
-		if inFor:
-			if line.strip() == '@endfor':
-				inFor = False
-				for i in xrange(b, e):
-					# v is local variable in @for
-					envL[v] = i
-					s = evalStrLoc(sub)
-					out += s
-			else:
-				sub = sub + line + '\n'
-		else:
-			p = RE_FOR.search(stripped)
-			if p:
-				v = p.group(1).strip()
-				b = eval(p.group(2), envG)
-				e = eval(p.group(3), envG)
-				sub = ""
-				inFor = True
-			else:
-				out += evalStrLoc(line) + '\n'
+		out += evalStr(line, envG, envL) + '\n'
 	return out
+
+def parse(s, unitL, bitL):
+	"""
+		eval "@(<expr>)" to integer
+
+		@for <var>, <begin>, <end>
+		...
+		@endfor
+
+		REMARK : @for is not nestable
+
+		@define <var> = <exp>
+		REMARK : var is global
+
+		@if <exp>
+		@elif <exp>
+		@endif
+
+		REMARK : @if is not nestable
+	"""
+	s = parseFor(s, unitL, bitL)
+	s = parseIf(s, unitL, bitL)
+	return s
 
 def gen(fo, inLame, unitL, bitLL):
 	fi = open(inLame, 'r')
@@ -115,7 +156,7 @@ def main():
 
 	outLame = 'base%d.ll' % unitL
 	fo = open(outLame, 'w')
-#	gen(fo, 'mul.txt', unitL, [unitL * 4])
+#	gen(fo, 't.txt', unitL, [unitL * 4])
 #	exit(1)
 	gen(fo, 'once.txt', unitL, [unitL * 2])
 
