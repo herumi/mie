@@ -1,5 +1,9 @@
 @define bu = bit + unit
-define private i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)  {
+define private i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)
+@if N > 4
+noinline
+@endif
+{
 @for i, 0, N
   %x$(i) = call i$(unit) @extract$(bit)(i$(bit) %x, i$(bit) $(unit*i))
   %x$(i)y = call i$(unit*2) @mul$(unit)x$(unit)(i$(unit) %x$(i), i$(unit) %y)

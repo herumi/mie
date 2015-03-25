@@ -60,6 +60,8 @@ def gen_mul(fo, unitL):
 
 RE_VAL = re.compile(r'\$\(([^)]+)\)')
 RE_DEFINE = re.compile(r'@define\s+(\w+)\s*=(.*)')
+RE_IF = re.compile(r'@if\s+(.*)')
+RE_ELIF = re.compile(r'@elif\s+(.*)')
 
 def evalStr(s, envG, envL={}):
 	def eval2str(x):
@@ -77,11 +79,21 @@ def parse(s, unitL, bitL):
 		...
 		@endfor
 
+		REMARK : @for is not nestable
+
 		@define <var> = <exp>
 		REMARK : var is global
+
+		@if <exp>
+		@elif <exp>
+		@endif
+
+		REMARK : @if is not nestable
 	"""
 	out = ""
 	inFor = False
+	inIf = False
+	ifVar = False
 	# available variables in @(<expr>)
 	envG = {
 		'unit' : unitL,
@@ -89,8 +101,11 @@ def parse(s, unitL, bitL):
 		'N' : bitL / unitL,
 	}
 	envL = {}
-	def evalLoc(s):
+	def evalStrLoc(s):
 		return evalStr(s, envG, envL)
+	def evalIntLoc(s):
+		print "s=", s
+		return eval(s, envG, envL)
 	# @for <var>, <begin>, <end>
 	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
@@ -99,15 +114,34 @@ def parse(s, unitL, bitL):
 		if p:
 			lhs = p.group(1).strip()
 			rhs = p.group(2).strip()
-			envL[lhs] = eval(rhs, envG, envL)
+			envL[lhs] = evalIntLoc(rhs)
 			continue
+		if inIf:
+			if stripped == '@endif':
+				inIf = False
+				print "found @endif"
+				continue
+			p = RE_ELIF.match(stripped)
+			if p:
+				ifVar = evalIntLoc(p.group(1))
+				continue
+			if not ifVar:
+				continue
+		else:
+			p = RE_IF.match(stripped)
+			if p:
+				inIf = True
+				print "found @if", p.group(1)
+				ifVar = evalIntLoc(p.group(1))
+				print "state ifVar", ifVar
+				continue
 		if inFor:
 			if line.strip() == '@endfor':
 				inFor = False
 				for i in xrange(b, e):
 					# v is local variable in @for
 					envL[v] = i
-					s = evalLoc(sub)
+					s = evalStrLoc(sub)
 					out += s
 			else:
 				sub = sub + line + '\n'
@@ -120,7 +154,7 @@ def parse(s, unitL, bitL):
 				sub = ""
 				inFor = True
 			else:
-				out += evalLoc(line) + '\n'
+				out += evalStrLoc(line) + '\n'
 	return out
 
 def gen(fo, inLame, unitL, bitLL):
@@ -152,7 +186,6 @@ def main():
 	gen(fo, 'short.txt', unitL, bitLL)
 	gen(fo, 'long.txt', unitL, bitLL)
 	gen(fo, 'mul.txt', unitL, bitLL[1:])
-#	gen_mul(fo, unitL)
 	fo.close()
 
 if __name__ == "__main__":
