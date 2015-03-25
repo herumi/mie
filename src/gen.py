@@ -102,12 +102,24 @@ def parseIf(s, envG):
 			if stripped == '@endif':
 				ifState = IF_INIT
 				continue
+			elif stripped == '@else':
+				ifState = IF_ELSE
+				ifVar = not ifVar
+				continue
 			p = RE_ELIF.match(stripped)
 			if p:
 				ifVar = evalIntLoc(p.group(1))
 				continue
 			if not ifVar:
 				continue
+		elif ifState == IF_ELSE:
+			if stripped == '@endif':
+				ifState = IF_INIT
+				continue
+			if not ifVar:
+				continue
+		else:
+			raise Exception('bad state', ifState)
 		out += evalStr(line, envG, envL) + '\n'
 	return out
 
