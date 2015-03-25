@@ -59,6 +59,7 @@ def gen_mul(fo, unitL):
 		gen_mulNxN(fo, unitL, i)
 
 RE_VAL = re.compile(r'\$\(([^)]+)\)')
+RE_DEFINE = re.compile(r'@define\s+(\w+)\s*=(.*)')
 
 def evalStr(s, envG, envL={}):
 	def eval2str(x):
@@ -68,13 +69,16 @@ def evalStr(s, envG, envL={}):
 	s = RE_VAL.sub(eval2str, s)
 	return s
 
-def expandFor(s, unitL, bitL):
+def parse(s, unitL, bitL):
 	"""
 		eval "@(<expr>)" to integer
 
 		@for <var>, <begin>, <end>
 		...
 		@endfor
+
+		@define <var> = <exp>
+		REMARK : var is global
 	"""
 	out = ""
 	inFor = False
@@ -84,30 +88,40 @@ def expandFor(s, unitL, bitL):
 		'bit' : bitL,
 		'N' : bitL / unitL,
 	}
+	envL = {}
+	def evalLoc(s):
+		return evalStr(s, envG, envL)
 	# @for <var>, <begin>, <end>
 	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
+		stripped = line.strip()
+		p = RE_DEFINE.match(stripped)
+		if p:
+			lhs = p.group(1).strip()
+			rhs = p.group(2).strip()
+			v = evalLoc(rhs)
+			envL[lhs] = eval(v)
+			continue
 		if inFor:
 			if line.strip() == '@endfor':
 				inFor = False
 				for i in xrange(b, e):
 					# v is local variable in @for
-					envL = { v : i }
-					s = evalStr(sub, envG, envL)
+					envL[v] = i
+					s = evalLoc(sub)
 					out += s
 			else:
 				sub = sub + line + '\n'
 		else:
-			p = RE_FOR.search(line)
+			p = RE_FOR.search(stripped)
 			if p:
 				v = p.group(1).strip()
 				b = eval(p.group(2), envG)
 				e = eval(p.group(3), envG)
-#				print "for var = %s, begin = %d, end = %d" % (v, b, e)
 				sub = ""
 				inFor = True
 			else:
-				out += evalStr(line, envG) + '\n'
+				out += evalLoc(line) + '\n'
 	return out
 
 def gen(fo, inLame, unitL, bitLL):
@@ -115,7 +129,7 @@ def gen(fo, inLame, unitL, bitLL):
 	s = fi.read()
 	fi.close()
 	for bitL in bitLL:
-		t = expandFor(s, unitL, bitL)
+		t = parse(s, unitL, bitL)
 		fo.write(t)
 
 def main():
@@ -130,7 +144,7 @@ def main():
 
 	outLame = 'base%d.ll' % unitL
 	fo = open(outLame, 'w')
-#	gen(fo, 't.txt', unitL, [unitL * 2])
+#	gen(fo, 'mul.txt', unitL, [unitL * 2])
 #	exit(1)
 	gen(fo, 'once.txt', unitL, [unitL * 2])
 
