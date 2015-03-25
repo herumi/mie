@@ -32,7 +32,7 @@ def parseDefine(s, envG, envL):
 	envL[lhs] = eval(rhs, envG, envL)
 	return True
 
-def parseFor(s, unitL, bitL):
+def parseFor(s, envG):
 	"""
 	@for i, 0, 3
 	<exp>
@@ -51,12 +51,6 @@ def parseFor(s, unitL, bitL):
 	"""
 	out = ""
 	inFor = False
-	# available variables in @(<expr>)
-	envG = {
-		'unit' : unitL,
-		'bit' : bitL,
-		'N' : bitL / unitL,
-	}
 	envL = {}
 	for line in s.split('\n'):
 		stripped = line.strip()
@@ -82,16 +76,11 @@ def parseFor(s, unitL, bitL):
 				out += line + '\n'
 	return out
 
-def parseIf(s, unitL, bitL):
+def parseIf(s, envG):
 	out = ""
 	inIf = False
 	ifVar = False
 	# available variables in @(<expr>)
-	envG = {
-		'unit' : unitL,
-		'bit' : bitL,
-		'N' : bitL / unitL,
-	}
 	envL = {}
 	def evalIntLoc(s):
 		return eval(s, envG, envL)
@@ -138,8 +127,14 @@ def parse(s, unitL, bitL):
 
 		REMARK : @if is not nestable
 	"""
-	s = parseFor(s, unitL, bitL)
-	s = parseIf(s, unitL, bitL)
+	# available variables in @(<expr>)
+	envG = {
+		'unit' : unitL,
+		'bit' : bitL,
+		'N' : bitL / unitL,
+	}
+	s = parseFor(s, envG)
+	s = parseIf(s, envG)
 	return s
 
 def gen(fo, inLame, unitL, bitLL):
