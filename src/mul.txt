@@ -1,4 +1,4 @@
-@define bu = $(bit+unit)
+@define bu = bit + unit
 define private i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)  {
 @for i, 0, N
   %x$(i) = call i$(unit) @extract$(bit)(i$(bit) %x, i$(bit) $(unit*i))
@@ -33,7 +33,7 @@ define void @mie_fp_mul$(bit)pre(i$(unit)* %pz, i$(bit)* %px, i$(bit)* %py) {
   store i$(unit) %ts$(i), i$(unit)* %z$(i)
 @endfor
 
-@define i = $(N)-1
+@define i = N - 1
   %s$(i-1) = lshr i$(bu) %sum$(i-1), $(unit)
   %xy$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y$(i))
   %sum$(i) = add i$(bu) %s$(i-1), %xy$(i)

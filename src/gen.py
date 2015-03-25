@@ -99,8 +99,7 @@ def parse(s, unitL, bitL):
 		if p:
 			lhs = p.group(1).strip()
 			rhs = p.group(2).strip()
-			v = evalLoc(rhs)
-			envL[lhs] = eval(v)
+			envL[lhs] = eval(rhs, envG, envL)
 			continue
 		if inFor:
 			if line.strip() == '@endfor':
