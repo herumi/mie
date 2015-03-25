@@ -1,0 +1,17 @@
+
+@define out = $(bit+unit)
+define private i$(out) @mul$(bit)x$(unit)(i$(bit) %x, i$(unit) %y)  {
+@for i, 0, N
+  %x$(i) = call i$(unit) @extract$(bit)(i$(bit) %x, i$(bit) $(unit*i))
+  %x$(i)y = call i$(unit*2) @mul$(unit)x$(unit)(i$(unit) %x$(i), i$(unit) %y)
+  %x$(i)y0 = zext i$(unit*2) %x$(i)y to i$(out)
+@endfor
+@for i, 1, N
+  %x$(i)y1 = shl i$(out) %x$(i)y0, $(unit)
+@endfor
+  %t0 = add i$(out) %x0y0, %x1y1
+@for i, 1, N-1
+  %t$(i) = add i$(out) %t$(i-1), %x$(i+1)y1
+@endfor
+  ret i$(out) %t$(N-2)
+}
