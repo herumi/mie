@@ -1,8 +1,14 @@
 import sys, re
 
+# @for <var>, <begin>, <end>
+RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
+# $(<exp>)
 RE_VAL = re.compile(r'\$\(([^)]+)\)')
+# @define <var>=<exp>
 RE_DEFINE = re.compile(r'@define\s+(\w+)\s*=(.*)')
+# @if <exp>
 RE_IF = re.compile(r'@if\s+(.*)')
+# @elif <exp>
 RE_ELIF = re.compile(r'@elif\s+(.*)')
 
 def evalStr(s, envG, envL={}):
@@ -13,19 +19,34 @@ def evalStr(s, envG, envL={}):
 	s = RE_VAL.sub(eval2str, s)
 	return s
 
+def parseDefine(s, envG, envL):
+	"""
+	if s is @define statement, then update envL and return True
+	otherwise return False
+	"""
+	p = RE_DEFINE.match(s)
+	if not p:
+		return False
+	lhs = p.group(1).strip()
+	rhs = p.group(2).strip()
+	envL[lhs] = eval(rhs, envG, envL)
+	return True
+
 def parseFor(s, unitL, bitL):
 	"""
 	@for i, 0, 3
-	exp
+	<exp>
 	@endif
+
 	|
 	v
 	@define i = 0
+	<exp>
 	exp
 	@define i = 1
-	exp
+	<exp>
 	@define i = 2
-	exp
+	<exp>
 
 	"""
 	out = ""
@@ -37,20 +58,10 @@ def parseFor(s, unitL, bitL):
 		'N' : bitL / unitL,
 	}
 	envL = {}
-	def evalStrLoc(s):
-		return evalStr(s, envG, envL)
-	def evalIntLoc(s):
-		return eval(s, envG, envL)
-	# @for <var>, <begin>, <end>
-	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
 		stripped = line.strip()
-		p = RE_DEFINE.match(stripped)
-		if p:
-			lhs = p.group(1).strip()
-			rhs = p.group(2).strip()
-			envL[lhs] = evalIntLoc(rhs)
-			# not continue for next parseIf
+		# save @define for parseIf
+		parseDefine(stripped, envG, envL)
 		if inFor:
 			if line.strip() == '@endfor':
 				inFor = False
@@ -84,15 +95,10 @@ def parseIf(s, unitL, bitL):
 	envL = {}
 	def evalIntLoc(s):
 		return eval(s, envG, envL)
-	# @for <var>, <begin>, <end>
-	RE_FOR = re.compile(r'@for\s+(\w+)\s*,\s*([^ ]+)\s*,\s*([^ ]+)')
 	for line in s.split('\n'):
 		stripped = line.strip()
-		p = RE_DEFINE.match(stripped)
-		if p:
-			lhs = p.group(1).strip()
-			rhs = p.group(2).strip()
-			envL[lhs] = evalIntLoc(rhs)
+		# remove @define
+		if parseDefine(stripped, envG, envL):
 			continue
 		if inIf:
 			if stripped == '@endif':
