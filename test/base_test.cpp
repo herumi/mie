@@ -18,8 +18,6 @@
 const size_t MAX_N = 32;
 typedef mie::fp::Unit Unit;
 
-extern "C" void mie_fp_mont128(Unit* z, const Unit* x,  const Unit* y, const Unit* p, size_t r);
-
 size_t getUnitN(size_t bitLen)
 {
 	return (bitLen + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
@@ -197,8 +195,9 @@ void mul(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 	mie::fp::local::toArray(z, n, mz);
 }
 
-typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
-typedef void (*void3op)(Unit*, const Unit*, const Unit*);
+typedef mie::fp::void3op void3op;
+typedef mie::fp::void4op void4op;
+typedef mie::fp::void4Iop void4Iop;
 
 const struct FuncOp {
 	size_t bitLen;
@@ -207,24 +206,25 @@ const struct FuncOp {
 	void4op subS;
 	void4op subL;
 	void3op mulPre;
+	void4Iop mont;
 } gFuncOpTbl[] = {
-	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L, mie_fp_mul128pre },
-	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L, mie_fp_mul192pre },
-	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L, mie_fp_mul256pre },
-	{ 320, mie_fp_add320S, mie_fp_add320L, mie_fp_sub320S, mie_fp_sub320L, mie_fp_mul320pre },
-	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L, mie_fp_mul384pre },
-	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L, mie_fp_mul448pre },
-	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L, mie_fp_mul512pre },
+	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L, mie_fp_mul128pre, mie_fp_mont128 },
+	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L, mie_fp_mul192pre, mie_fp_mont192 },
+	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L, mie_fp_mul256pre, mie_fp_mont256 },
+	{ 320, mie_fp_add320S, mie_fp_add320L, mie_fp_sub320S, mie_fp_sub320L, mie_fp_mul320pre, mie_fp_mont320 },
+	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L, mie_fp_mul384pre, mie_fp_mont384 },
+	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L, mie_fp_mul448pre, mie_fp_mont448 },
+	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L, mie_fp_mul512pre, mie_fp_mont512 },
 #if CYBOZU_OS_BIT == 32
-	{ 160, mie_fp_add160S, mie_fp_add160L, mie_fp_sub160S, mie_fp_sub160L, mie_fp_mul160pre },
-	{ 224, mie_fp_add224S, mie_fp_add224L, mie_fp_sub224S, mie_fp_sub224L, mie_fp_mul224pre },
-	{ 288, mie_fp_add288S, mie_fp_add288L, mie_fp_sub288S, mie_fp_sub288L, mie_fp_mul288pre },
-	{ 352, mie_fp_add352S, mie_fp_add352L, mie_fp_sub352S, mie_fp_sub352L, mie_fp_mul352pre },
-	{ 416, mie_fp_add416S, mie_fp_add416L, mie_fp_sub416S, mie_fp_sub416L, mie_fp_mul416pre },
-	{ 480, mie_fp_add480S, mie_fp_add480L, mie_fp_sub480S, mie_fp_sub480L, mie_fp_mul480pre },
-	{ 544, mie_fp_add544S, mie_fp_add544L, mie_fp_sub544S, mie_fp_sub544L, mie_fp_mul544pre },
+	{ 160, mie_fp_add160S, mie_fp_add160L, mie_fp_sub160S, mie_fp_sub160L, mie_fp_mul160pre, mie_fp_mont160 },
+	{ 224, mie_fp_add224S, mie_fp_add224L, mie_fp_sub224S, mie_fp_sub224L, mie_fp_mul224pre, mie_fp_mont224 },
+	{ 288, mie_fp_add288S, mie_fp_add288L, mie_fp_sub288S, mie_fp_sub288L, mie_fp_mul288pre, mie_fp_mont288 },
+	{ 352, mie_fp_add352S, mie_fp_add352L, mie_fp_sub352S, mie_fp_sub352L, mie_fp_mul352pre, mie_fp_mont352 },
+	{ 416, mie_fp_add416S, mie_fp_add416L, mie_fp_sub416S, mie_fp_sub416L, mie_fp_mul416pre, mie_fp_mont416 },
+	{ 480, mie_fp_add480S, mie_fp_add480L, mie_fp_sub480S, mie_fp_sub480L, mie_fp_mul480pre, mie_fp_mont480 },
+	{ 544, mie_fp_add544S, mie_fp_add544L, mie_fp_sub544S, mie_fp_sub544L, mie_fp_mul544pre, mie_fp_mont544 },
 #else
-	{ 576, mie_fp_add576S, mie_fp_add576L, mie_fp_sub576S, mie_fp_sub576L, mie_fp_mul576pre },
+	{ 576, mie_fp_add576S, mie_fp_add576L, mie_fp_sub576S, mie_fp_sub576L, mie_fp_mul576pre, mie_fp_mont576 },
 #endif
 };
 
@@ -263,6 +263,7 @@ void test(const Unit *p, size_t bitLen)
 	const void4op subS = funcOp.subS;
 	const void4op subL = funcOp.subL;
 	const void3op mulPre = funcOp.mulPre;
+	const void4Iop mont = funcOp.mont;
 
 	mie::fp::Unit x[MAX_N], y[MAX_N];
 	mie::fp::Unit z[MAX_N], w[MAX_N];
@@ -293,25 +294,7 @@ void test(const Unit *p, size_t bitLen)
 		mulPre(w2, x, z);
 		VERIFY_EQUAL(z2, w2, n * 2);
 	}
-	if (doBench) {
-//		CYBOZU_BENCH("addS", addS, x, y, x, p); // slow
-//		CYBOZU_BENCH("subS", subS, x, y, x, p);
-//		CYBOZU_BENCH("addL", addL, x, y, x, p);
-//		CYBOZU_BENCH("subL", subL, x, y, x, p);
-		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
-		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
-//		CYBOZU_BENCH("modC", modC, x, w2, p, n);
-	}
-#ifdef USE_XBYAKxx
-	if (bitLen <= 128) return;
-	if (doBench) {
-		fg.init(p, n);
-		CYBOZU_BENCH("addA", fg.add_, x, y, x);
-		CYBOZU_BENCH("subA", fg.sub_, x, y, x);
-		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
-	}
-#endif
-	if (bitLen == 128) {
+	{
 		mpz_class mp;
 		setMpz(mp, p, n);
 		Montgomery m(mp);
@@ -335,12 +318,34 @@ void test(const Unit *p, size_t bitLen)
 				getMpz(x, n, mx);
 				getMpz(y, n, my);
 				m.mont(z, x, y);
-				mie_fp_mont128(w, x, y, p, m.r_);
+				mont(w, x, y, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
 			}
 		}
-
+		if (doBench) {
+			CYBOZU_BENCH("montC", m.mont, x, y, x);
+			CYBOZU_BENCH("mont", mont, x, y, x, p, m.r_);
+		}
 	}
+	if (doBench) {
+//		CYBOZU_BENCH("addS", addS, x, y, x, p); // slow
+//		CYBOZU_BENCH("subS", subS, x, y, x, p);
+//		CYBOZU_BENCH("addL", addL, x, y, x, p);
+//		CYBOZU_BENCH("subL", subL, x, y, x, p);
+		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
+		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
+		CYBOZU_BENCH("modC", modC, x, w2, p, n);
+	}
+#ifdef USE_XBYAKxx
+	if (bitLen <= 128) return;
+	if (doBench) {
+		fg.init(p, n);
+		CYBOZU_BENCH("addA", fg.add_, x, y, x);
+		CYBOZU_BENCH("subA", fg.sub_, x, y, x);
+		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
+	}
+#endif
+	printf("mont test %d\n", (int)bitLen);
 }
 
 CYBOZU_TEST_AUTO(all)
