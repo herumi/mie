@@ -9,15 +9,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <cybozu/exception.hpp>
-#ifndef XBYAK_NO_OP_NAMES
-	#define XBYAK_NO_OP_NAMES
-#endif
-#include <xbyak/xbyak.h>
-#ifdef XBYAK32
-	#error "not support 32-bit mode"
-#endif
-#include <xbyak/xbyak_util.h>
-
 
 namespace mie {
 
@@ -47,7 +38,17 @@ T getCoff(T pLow)
 	return ret;
 }
 
-} // montgomery
+} } // mie::montgomery
+
+#if (CYBOZU_HOST == CYBOZU_HOST_INTEL) && (CYBOZU_OS_BIT == 64)
+
+#ifndef XBYAK_NO_OP_NAMES
+	#define XBYAK_NO_OP_NAMES
+#endif
+#include <xbyak/xbyak.h>
+#include <xbyak/xbyak_util.h>
+
+namespace mie {
 
 namespace fp_gen_local {
 
@@ -1670,3 +1671,5 @@ private:
 };
 
 } // mie
+
+#endif
