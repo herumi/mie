@@ -250,7 +250,7 @@ FuncOp getFuncOp(size_t bitLen)
 
 void test(const Unit *p, size_t bitLen)
 {
-	printf("test bitLen=%d\n", (int)bitLen);
+	printf("bitLen %d\n", (int)bitLen);
 	const size_t n = getUnitN(bitLen);
 #ifdef NDEBUG
 	bool doBench = true;
@@ -298,6 +298,9 @@ void test(const Unit *p, size_t bitLen)
 		mpz_class mp;
 		setMpz(mp, p, n);
 		Montgomery m(mp);
+#ifdef USE_XBYAK
+		if (bitLen > 128) fg.init(p, n);
+#endif
 		/*
 			real mont
 			   0    0
@@ -320,11 +323,17 @@ void test(const Unit *p, size_t bitLen)
 				m.mont(z, x, y);
 				mont(w, x, y, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
+#ifdef USE_XBYAK
+				if (bitLen > 128) {
+					fg.mul_(w, x, y);
+					VERIFY_EQUAL(z, w, n);
+				}
+#endif
 			}
 		}
 		if (doBench) {
-			CYBOZU_BENCH("montC", m.mont, x, y, x);
-			CYBOZU_BENCH("mont", mont, x, y, x, p, m.r_);
+//			CYBOZU_BENCH("montC", m.mont, x, y, x);
+			CYBOZU_BENCH("montA  ", mont, x, y, x, p, m.r_);
 		}
 	}
 	if (doBench) {
@@ -334,15 +343,15 @@ void test(const Unit *p, size_t bitLen)
 //		CYBOZU_BENCH("subL", subL, x, y, x, p);
 		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
 		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
-		CYBOZU_BENCH("modC", modC, x, w2, p, n);
+		CYBOZU_BENCH("modC   ", modC, x, w2, p, n);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
 	if (doBench) {
 		fg.init(p, n);
-		CYBOZU_BENCH("addA", fg.add_, x, y, x);
-		CYBOZU_BENCH("subA", fg.sub_, x, y, x);
-		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
+		CYBOZU_BENCH("addA   ", fg.add_, x, y, x);
+		CYBOZU_BENCH("subA   ", fg.sub_, x, y, x);
+//		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
 	}
 #endif
 	printf("mont test %d\n", (int)bitLen);
@@ -357,17 +366,17 @@ CYBOZU_TEST_AUTO(all)
 //		{ 2, { 0xf000000000000001, 1, } },
 		{ 2, { 0x000000000000001d, 0x8000000000000000, } },
 		{ 3, { 0x000000000000012b, 0x0000000000000000, 0x0000000080000000, } },
-		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0xffffffffffffffff, } },
-//		{ 3, { 0x7900342423332197, 0x1234567890123456, 0x1480948109481904, } },
 //		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x07ffffffffffffff, } },
-		{ 4, { 0xa700000000000013, 0x6121000000000013, 0xba344d8000000008, 0x2523648240000001, } },
+//		{ 3, { 0x7900342423332197, 0x1234567890123456, 0x1480948109481904, } },
+		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0xffffffffffffffff, } },
 //		{ 4, { 0x7900342423332197, 0x4242342420123456, 0x1234567892342342, 0x1480948109481904, } },
 //		{ 4, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x17ffffffffffffff, 0x1513423423423415, } },
+		{ 4, { 0xa700000000000013, 0x6121000000000013, 0xba344d8000000008, 0x2523648240000001, } },
 //		{ 5, { 0x0000000000000009, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
 		{ 5, { 0xfffffffffffffc97, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
-		{ 6, { 0x00000000ffffffff, 0xffffffff00000000, 0xfffffffffffffffe, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 6, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x4820984290482212, 0x9482094820948209, 0x0194810841094810, } },
 //		{ 6, { 0x7204224233321972, 0x0342308472047204, 0x4567890123456790, 0x0948204204243123, 0x2098420984209482, 0x2093482094810948, } },
+		{ 6, { 0x00000000ffffffff, 0xffffffff00000000, 0xfffffffffffffffe, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 7, { 0x0000000000000063, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
 		{ 7, { 0x000000000fffcff1, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 		{ 8, { 0xffffffffffffd0c9, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
