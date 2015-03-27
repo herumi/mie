@@ -8,9 +8,9 @@
 #include <mie/fp_util.hpp>
 #include <mie/fp2.hpp>
 
+#include <mie/fp_generator.hpp>
 #if (CYBOZU_HOST == CYBOZU_HOST_INTEL) && (CYBOZU_OS_BIT == 64)
 	#define USE_XBYAK
-	#include <mie/fp_generator.hpp>
 	static mie::FpGenerator fg;
 #endif
 #define PUT(x) std::cout << #x "=" << (x) << std::endl
@@ -33,11 +33,10 @@ void getMpz(Unit *x, size_t n, const mpz_class& mx)
 }
 
 struct Montgomery {
-	typedef mie::Gmp::BlockType BlockType;
 	mpz_class p_;
 	mpz_class R_; // (1 << (n_ * 64)) % p
 	mpz_class RR_; // (R * R) % p
-	BlockType r_; // p * r = -1 mod M = 1 << 64
+	Unit r_; // p * r = -1 mod M = 1 << 64
 	size_t n_;
 	Montgomery() {}
 	explicit Montgomery(const mpz_class& p)
@@ -66,16 +65,16 @@ struct Montgomery {
 #if 1
 		const size_t ySize = mie::Gmp::getBlockSize(y);
 		mpz_class c = y == 0 ? mpz_class(0) : x * mie::Gmp::getBlock(y, 0);
-		BlockType q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
+		Unit q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
 		c += p_ * q;
-		c >>= sizeof(BlockType) * 8;
+		c >>= sizeof(Unit) * 8;
 		for (size_t i = 1; i < n_; i++) {
 			if (i < ySize) {
 				c += x * mie::Gmp::getBlock(y, i);
 			}
-			BlockType q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
+			Unit q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
 			c += p_ * q;
-			c >>= sizeof(BlockType) * 8;
+			c >>= sizeof(Unit) * 8;
 		}
 		if (c >= p_) {
 			c -= p_;
@@ -86,10 +85,10 @@ struct Montgomery {
 		const size_t zSize = mie::Gmp::getBlockSize(z);
 		for (size_t i = 0; i < n_; i++) {
 			if (i < zSize) {
-				BlockType q = mie::Gmp::getBlock(z, 0) * r_;
+				Unit q = mie::Gmp::getBlock(z, 0) * r_;
 				z += p_ * (mp_limb_t)q;
 			}
-			z >>= sizeof(BlockType) * 8;
+			z >>= sizeof(Unit) * 8;
 		}
 		if (z >= p_) {
 			z -= p_;
