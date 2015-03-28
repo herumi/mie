@@ -72,6 +72,7 @@ def parseFor(s, envG):
 				e = eval(p.group(3), envG)
 				sub = ""
 				inFor = True
+				envL[v] = b
 			else:
 				out += line + '\n'
 	return out
