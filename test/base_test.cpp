@@ -60,6 +60,7 @@ struct Montgomery {
 	Montgomery() {}
 	explicit Montgomery(const mpz_class& p)
 	{
+		if (!mie::Gmp::isPrime(p)) throw cybozu::Exception("not prime") << p;
 		p_ = p;
 		r_ = mie::montgomery::getCoff(mie::Gmp::getBlock(p, 0));
 		n_ = mie::Gmp::getBlockSize(p);
@@ -79,9 +80,9 @@ struct Montgomery {
 		mul(mx, mx, my);
 		getMpz(z, n_, mx);
 	}
-	void mul(mpz_class& z, const mpz_class& x, const mpz_class& y) const
+#if 1
+	void mul2(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
-#if 0
 //		mod(z, x * y);
 		z = x * y;
 		for (size_t i = 0; i < n_; i++) {
@@ -92,11 +93,13 @@ struct Montgomery {
 			}
 			z >>= sizeof(Unit) * 8;
 		}
-//PUT(z);
 		if (z >= p_) {
 			z -= p_;
 		}
-#else
+	}
+#endif
+	void mul(mpz_class& z, const mpz_class& x, const mpz_class& y) const
+	{
 		const size_t ySize = mie::Gmp::getBlockSize(y);
 		mpz_class c = y == 0 ? mpz_class(0) : x * mie::Gmp::getBlock(y, 0);
 		Unit q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
@@ -114,7 +117,6 @@ struct Montgomery {
 			c -= p_;
 		}
 		z = c;
-#endif
 	}
 	// x = x * y
 	void mod(Unit *y, const Unit *x) const
@@ -335,8 +337,7 @@ void test(const Unit *p, size_t bitLen)
 			  -1    -R^-1
 			  -R    -1
 		*/
-		mpz_class t = 1;
-		const mpz_class R = (t << (n * sizeof(Unit) * 8)) % mp;
+		const mpz_class R = (mpz_class(1) << bitLen) % mp;
 		const mpz_class tbl[] = {
 			0, 1, R, mp - 1, mp - R
 		};
@@ -394,21 +395,19 @@ CYBOZU_TEST_AUTO(all)
 		const uint64_t p[9];
 	} tbl[] = {
 //		{ 2, { 0xf000000000000001, 1, } },
-		{ 2, { 0x000000000000001d, 0x8000000000000000, } },
-		{ 3, { 0x000000000000012b, 0x0000000000000000, 0x0000000080000000, } },
+//		{ 2, { 0x000000000000001d, 0x8000000000000000, } },
+		{ 3, { 0xfffffffffffffcb5, 0xffffffffffffffff, 0x00000000ffffffff, } },
 //		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x07ffffffffffffff, } },
 //		{ 3, { 0x7900342423332197, 0x1234567890123456, 0x1480948109481904, } },
-		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0xffffffffffffffff, } },
 //		{ 4, { 0x7900342423332197, 0x4242342420123456, 0x1234567892342342, 0x1480948109481904, } },
 //		{ 4, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x17ffffffffffffff, 0x1513423423423415, } },
 		{ 4, { 0xa700000000000013, 0x6121000000000013, 0xba344d8000000008, 0x2523648240000001, } },
 //		{ 5, { 0x0000000000000009, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
 		{ 5, { 0xfffffffffffffc97, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 6, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x4820984290482212, 0x9482094820948209, 0x0194810841094810, } },
-//		{ 6, { 0x7204224233321972, 0x0342308472047204, 0x4567890123456790, 0x0948204204243123, 0x2098420984209482, 0x2093482094810948, } },
 		{ 6, { 0x00000000ffffffff, 0xffffffff00000000, 0xfffffffffffffffe, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 7, { 0x0000000000000063, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
-		{ 7, { 0x000000000fffcff1, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
+		{ 7, { 0xfffffffffffffcc7, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 		{ 8, { 0xffffffffffffd0c9, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 		{ 9, { 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x00000000000001ff, } },
 //		{ 9, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x2498540975555312, 0x9482904924029424, 0x0948209842098402, 0x1098410948109482, 0x0820958209582094, 0x0000000000000029, } },
