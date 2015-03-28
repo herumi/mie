@@ -210,8 +210,9 @@ void modC(Unit *y, const Unit *x, const Unit *p, size_t n)
 void mul(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 {
 	Unit ret[MAX_N * 2];
+	assert(n <= MAX_N);
 	mpz_t mx, my, mz, mp;
-	set_zero(mz, ret, MAX_N * 2);
+	set_zero(mz, ret, n * 2);
 	set_mpz_t(mx, x, n);
 	set_mpz_t(my, y, n);
 	set_mpz_t(mp, p, n);
