@@ -79,3 +79,30 @@ define void @mie_fp_mont$(bit)(i$(bit)* %pz, i$(bit)* %px, i$(unit)* %py, i$(bit
 	ret void
 }
 
+define void @mie_fp_mod$(bit)(i$(bit)* %pz, i$(bit*2)* %px, i$(bit)* %pp, i$(unit) %r) {
+	%p = load i$(bit)* %pp
+	%x = load i$(bit*2)* %px
+	%x0 = zext i$(bit*2) %x to i$(bit*2+unit)
+
+@for i, 0, N
+@define cb = bit*2+unit-unit*i
+	%at$(i) = trunc i$(cb) %x$(i) to i$(unit)
+	%q$(i) = mul i$(unit) %at$(i), %r
+	%pq$(i) = call i$(bu) @mul$(bit)x$(unit)(i$(bit) %p, i$(unit) %q$(i))
+	%pqe$(i) = zext i$(bu) %pq$(i) to i$(cb)
+	%t$(i) = add i$(cb) %x$(i), %pqe$(i)
+	%t2$(i) = lshr i$(cb) %t$(i), $(unit)
+	@if i < N - 1
+	%x$(i+1) = trunc i$(cb) %t2$(i) to i$(cb-unit)
+	@endif
+@endfor
+	%v = trunc i$(bu2) %x$(N-1) to i$(bu)
+	%pe = zext i$(bit) %p to i$(bu)
+	%vc = sub i$(bu) %v, %pe
+	%c = lshr i$(bu) %vc, $(bit)
+	%c1 = trunc i$(bu) %c to i1
+	%z = select i1 %c1, i$(bu) %v, i$(bu) %vc
+	%zt = trunc i$(bu) %z to i$(bit)
+	store i$(bit) %zt, i$(bit)* %pz
+	ret void
+}
