@@ -32,6 +32,25 @@ void getMpz(Unit *x, size_t n, const mpz_class& mx)
 	mie::fp::local::toArray(x,  n, mx.get_mpz_t());
 }
 
+void put(const char *msg, const Unit *x, size_t n)
+{
+	printf("%s ", msg);
+	for (size_t i = 0; i < n; i++) printf("%016llx ", (long long)x[n - 1 - i]);
+	printf("\n");
+}
+void verifyEqual(const Unit *x, const Unit *y, size_t n, const char *file, int line)
+{
+	bool ok = mie::fp::local::isEqualArray(x, y, n);
+	CYBOZU_TEST_ASSERT(ok);
+	if (ok) return;
+	printf("%s:%d\n", file, line);
+	put("L", x, n);
+	put("R", y, n);
+	exit(1);
+}
+#define VERIFY_EQUAL(x, y, n) verifyEqual(x, y, n, __FILE__, __LINE__)
+
+
 struct Montgomery {
 	mpz_class p_;
 	mpz_class R_; // (1 << (n_ * 64)) % p
@@ -52,7 +71,7 @@ struct Montgomery {
 	void toMont(mpz_class& x) const { mul(x, x, RR_); }
 	void fromMont(mpz_class& x) const { mul(x, x, 1); }
 
-	void mont(Unit *z, const Unit *x, const Unit *y) const
+	void mul(Unit *z, const Unit *x, const Unit *y) const
 	{
 		mpz_class mx, my;
 		setMpz(mx, x, n_);
@@ -62,7 +81,22 @@ struct Montgomery {
 	}
 	void mul(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
-#if 1
+#if 0
+//		mod(z, x * y);
+		z = x * y;
+		for (size_t i = 0; i < n_; i++) {
+			const size_t zSize = mie::Gmp::getBlockSize(z);
+			if (i < zSize) {
+				Unit q = mie::Gmp::getBlock(z, 0) * r_;
+				z += p_ * (mp_limb_t)q;
+			}
+			z >>= sizeof(Unit) * 8;
+		}
+//PUT(z);
+		if (z >= p_) {
+			z -= p_;
+		}
+#else
 		const size_t ySize = mie::Gmp::getBlockSize(y);
 		mpz_class c = y == 0 ? mpz_class(0) : x * mie::Gmp::getBlock(y, 0);
 		Unit q = c == 0 ? 0 : mie::Gmp::getBlock(c, 0) * r_;
@@ -80,40 +114,32 @@ struct Montgomery {
 			c -= p_;
 		}
 		z = c;
-#else
-		z = x * y;
-		const size_t zSize = mie::Gmp::getBlockSize(z);
-		for (size_t i = 0; i < n_; i++) {
-			if (i < zSize) {
-				Unit q = mie::Gmp::getBlock(z, 0) * r_;
-				z += p_ * (mp_limb_t)q;
-			}
-			z >>= sizeof(Unit) * 8;
-		}
-		if (z >= p_) {
-			z -= p_;
-		}
 #endif
 	}
+	// x = x * y
+	void mod(Unit *y, const Unit *x) const
+	{
+		mpz_class mx;
+		setMpz(mx, x, n_ * 2);
+		mod(mx, mx);
+		getMpz(y, n_, mx);
+	}
+	void mod(mpz_class& y, const mpz_class& x) const
+	{
+		y = x;
+		for (size_t i = 0; i < n_; i++) {
+			const size_t ySize = mie::Gmp::getBlockSize(y);
+			if (i < ySize) {
+				Unit q = mie::Gmp::getBlock(y, 0) * r_;
+				y += p_ * (mp_limb_t)q;
+			}
+			y >>= sizeof(Unit) * 8;
+		}
+		if (y >= p_) {
+			y -= p_;
+		}
+	}
 };
-
-void put(const char *msg, const Unit *x, size_t n)
-{
-	printf("%s ", msg);
-	for (size_t i = 0; i < n; i++) printf("%016llx ", (long long)x[n - 1 - i]);
-	printf("\n");
-}
-void verifyEqual(const Unit *x, const Unit *y, size_t n, const char *file, int line)
-{
-	bool ok = mie::fp::local::isEqualArray(x, y, n);
-	CYBOZU_TEST_ASSERT(ok);
-	if (ok) return;
-	printf("%s:%d\n", file, line);
-	put("L", x, n);
-	put("R", y, n);
-	exit(1);
-}
-#define VERIFY_EQUAL(x, y, n) verifyEqual(x, y, n, __FILE__, __LINE__)
 
 void addC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 {
@@ -309,7 +335,7 @@ void test(const Unit *p, size_t bitLen)
 			  -R    -1
 		*/
 		mpz_class t = 1;
-		const mpz_class R = (t << (n * 64)) % mp;
+		const mpz_class R = (t << (n * sizeof(Unit) * 8)) % mp;
 		const mpz_class tbl[] = {
 			0, 1, R, mp - 1, mp - R
 		};
@@ -319,9 +345,13 @@ void test(const Unit *p, size_t bitLen)
 				const mpz_class& my = tbl[j];
 				getMpz(x, n, mx);
 				getMpz(y, n, my);
-				m.mont(z, x, y);
+				m.mul(z, x, y);
 				mont(w, x, y, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
+//				mpz_class xy = mx * my;
+//				getMpz(w2, n * 2, xy);
+//				m.mod(w, w2);
+//				VERIFY_EQUAL(z, w, n);
 #ifdef USE_XBYAK
 				if (bitLen > 128) {
 					fg.mul_(w, x, y);

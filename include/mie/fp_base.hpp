@@ -40,6 +40,7 @@ typedef void (*void3op)(Unit*, const Unit*, const Unit*);
 typedef void (*void4op)(Unit*, const Unit*, const Unit*, const Unit*);
 typedef int (*int2op)(Unit*, const Unit*);
 typedef void (*void4Iop)(Unit*, const Unit*, const Unit*, const Unit*, Unit);
+typedef void (*void3Iop)(Unit*, const Unit*, const Unit*, Unit);
 
 } } // mie::fp
 
@@ -53,6 +54,7 @@ void mie_fp_add ## len ## L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp:
 void mie_fp_sub ## len ## S(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
 void mie_fp_sub ## len ## L(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
 void mie_fp_mul ## len ## pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*); \
+void mie_fp_mod ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit); \
 void mie_fp_mont ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit);
 
 MIE_FP_DEF_FUNC(128)
