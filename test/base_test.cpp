@@ -52,10 +52,11 @@ void verifyEqual(const Unit *x, const Unit *y, size_t n, const char *file, int l
 
 
 struct Montgomery {
+	static const size_t UnitBit = sizeof(Unit) * 8;
 	mpz_class p_;
-	mpz_class R_; // (1 << (n_ * 64)) % p
+	mpz_class R_; // (1 << (n_ * UnitBit)) % p
 	mpz_class RR_; // (R * R) % p
-	Unit r_; // p * r = -1 mod M = 1 << 64
+	Unit r_; // p * r = -1 mod M = 1 << UnitBit
 	size_t n_;
 	Montgomery() {}
 	explicit Montgomery(const mpz_class& p)
@@ -64,8 +65,7 @@ struct Montgomery {
 		p_ = p;
 		r_ = mie::montgomery::getCoff(mie::Gmp::getBlock(p, 0));
 		n_ = mie::Gmp::getBlockSize(p);
-		R_ = 1;
-		R_ = (R_ << (n_ * 64)) % p_;
+		R_ = (mpz_class(1) << (n_ * UnitBit)) % p_;
 		RR_ = (R_ * R_) % p_;
 	}
 
@@ -74,22 +74,20 @@ struct Montgomery {
 
 	void mul(Unit *z, const Unit *x, const Unit *y) const
 	{
-		mpz_class mx, my;
+		mpz_class mx, my, mz;
 		setMpz(mx, x, n_);
 		setMpz(my, y, n_);
-		mul(mx, mx, my);
-		getMpz(z, n_, mx);
+		mul(mz, mx, my);
+		getMpz(z, n_, mz);
 	}
 #if 1
 	void mul2(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
-//		mod(z, x * y);
 		z = x * y;
 		for (size_t i = 0; i < n_; i++) {
-			const size_t zSize = mie::Gmp::getBlockSize(z);
-			if (i < zSize) {
+			if (z != 0) {
 				Unit q = mie::Gmp::getBlock(z, 0) * r_;
-				z += p_ * (mp_limb_t)q;
+				z += p_ * q;
 			}
 			z >>= sizeof(Unit) * 8;
 		}
@@ -130,8 +128,7 @@ struct Montgomery {
 	{
 		y = x;
 		for (size_t i = 0; i < n_; i++) {
-			const size_t ySize = mie::Gmp::getBlockSize(y);
-			if (i < ySize) {
+			if (y != 0) {
 				Unit q = mie::Gmp::getBlock(y, 0) * r_;
 				y += p_ * (mp_limb_t)q;
 			}
@@ -350,10 +347,10 @@ void test(const Unit *p, size_t bitLen)
 				m.mul(z, x, y);
 				mont(w, x, y, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
-//				mpz_class xy = mx * my;
-//				getMpz(w2, n * 2, xy);
-//				m.mod(w, w2);
-//				VERIFY_EQUAL(z, w, n);
+				mpz_class xy = mx * my;
+				getMpz(w2, n * 2, xy);
+				m.mod(w, w2);
+				VERIFY_EQUAL(z, w, n);
 #ifdef USE_XBYAK
 				if (bitLen > 128) {
 					fg.mul_(w, x, y);
