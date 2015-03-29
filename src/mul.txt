@@ -92,16 +92,13 @@ define void @mie_fp_mod$(bit)(i$(bit)* %pz, i$(bit*2)* %px, i$(bit)* %pp, i$(uni
 	%pqe$(i) = zext i$(bu) %pq$(i) to i$(cb)
 	%t$(i) = add i$(cb) %x$(i), %pqe$(i)
 	%t2$(i) = lshr i$(cb) %t$(i), $(unit)
-	@if i < N - 1
 	%x$(i+1) = trunc i$(cb) %t2$(i) to i$(cb-unit)
-	@endif
 @endfor
-	%v = trunc i$(bu2) %x$(N-1) to i$(bu)
 	%pe = zext i$(bit) %p to i$(bu)
-	%vc = sub i$(bu) %v, %pe
+	%vc = sub i$(bu) %x$(N), %pe
 	%c = lshr i$(bu) %vc, $(bit)
 	%c1 = trunc i$(bu) %c to i1
-	%z = select i1 %c1, i$(bu) %v, i$(bu) %vc
+	%z = select i1 %c1, i$(bu) %x$(N), i$(bu) %vc
 	%zt = trunc i$(bu) %z to i$(bit)
 	store i$(bit) %zt, i$(bit)* %pz
 	ret void

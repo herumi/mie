@@ -353,26 +353,30 @@ void test(const Unit *p, size_t bitLen)
 			}
 		}
 		if (doBench) {
-//			CYBOZU_BENCH("montC", m.mont, x, y, x);
-			CYBOZU_BENCH("montA  ", mont, x, y, x, p, m.r_);
+			memset(x, -1, sizeof(x));
+			memset(y, -1, sizeof(y));
+			CYBOZU_BENCH("mulPre_ll", mulPre, w2, y, x);
+			CYBOZU_BENCH("mod_ll   ", mod, x, w2, p, m.r_);
+			CYBOZU_BENCH("mont_ll  ", mont, x, y, x, p, m.r_);
 		}
 	}
 	if (doBench) {
+		memset(x, -1, sizeof(x));
+		memset(y, -1, sizeof(y));
 //		CYBOZU_BENCH("addS", addS, x, y, x, p); // slow
 //		CYBOZU_BENCH("subS", subS, x, y, x, p);
 //		CYBOZU_BENCH("addL", addL, x, y, x, p);
 //		CYBOZU_BENCH("subL", subL, x, y, x, p);
-		CYBOZU_BENCH("mulPreA", mulPre, w2, y, x);
-		CYBOZU_BENCH("mulPreC", mulPreC, w2, y, x, n);
-		CYBOZU_BENCH("modC   ", modC, x, w2, p, n);
+		CYBOZU_BENCH("mulPreC  ", mulPreC, w2, y, x, n);
+		CYBOZU_BENCH("modC     ", modC, x, w2, p, n);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
 	if (doBench) {
 		fg.init(p, n);
-		CYBOZU_BENCH("addA   ", fg.add_, x, y, x);
-		CYBOZU_BENCH("subA   ", fg.sub_, x, y, x);
-//		CYBOZU_BENCH("mulA", fg.mul_, x, y, x);
+//		CYBOZU_BENCH("add_X    ", fg.add_, x, y, x);
+//		CYBOZU_BENCH("sub_X    ", fg.sub_, x, y, x);
+		CYBOZU_BENCH("mont_X   ", fg.mul_, x, y, x);
 	}
 #endif
 	printf("mont test %d\n", (int)bitLen);
