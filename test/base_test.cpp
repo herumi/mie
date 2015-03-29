@@ -194,7 +194,7 @@ void modC(Unit *y, const Unit *x, const Unit *p, size_t n)
 	mie::fp::local::clearArray(y, my->_mp_size, n);
 }
 
-void mul(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
+void mulC(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 {
 	Unit ret[MAX_N * 2];
 	assert(n <= MAX_N);
@@ -369,6 +369,7 @@ void test(const Unit *p, size_t bitLen)
 //		CYBOZU_BENCH("subL", subL, x, y, x, p);
 		CYBOZU_BENCH("mulPreC  ", mulPreC, w2, y, x, n);
 		CYBOZU_BENCH("modC     ", modC, x, w2, p, n);
+//		CYBOZU_BENCH("mulC     ", mulC, x, y, x, p, n);
 	}
 #ifdef USE_XBYAK
 	if (bitLen <= 128) return;
