@@ -77,25 +77,13 @@ struct Montgomery {
 		mpz_class mx, my, mz;
 		setMpz(mx, x, n_);
 		setMpz(my, y, n_);
+#if 0
 		mul(mz, mx, my);
+#else
+		mod(mz, mx * my);
+#endif
 		getMpz(z, n_, mz);
 	}
-#if 1
-	void mul2(mpz_class& z, const mpz_class& x, const mpz_class& y) const
-	{
-		z = x * y;
-		for (size_t i = 0; i < n_; i++) {
-			if (z != 0) {
-				Unit q = mie::Gmp::getBlock(z, 0) * r_;
-				z += p_ * q;
-			}
-			z >>= sizeof(Unit) * 8;
-		}
-		if (z >= p_) {
-			z -= p_;
-		}
-	}
-#endif
 	void mul(mpz_class& z, const mpz_class& x, const mpz_class& y) const
 	{
 		const size_t ySize = mie::Gmp::getBlockSize(y);
@@ -223,6 +211,7 @@ void mul(Unit *z, const Unit *x, const Unit *y, const Unit *p, size_t n)
 typedef mie::fp::void3op void3op;
 typedef mie::fp::void4op void4op;
 typedef mie::fp::void4Iop void4Iop;
+typedef mie::fp::void3Iop void3Iop;
 
 const struct FuncOp {
 	size_t bitLen;
@@ -232,24 +221,25 @@ const struct FuncOp {
 	void4op subL;
 	void3op mulPre;
 	void4Iop mont;
+	void3Iop mod;
 } gFuncOpTbl[] = {
-	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L, mie_fp_mul128pre, mie_fp_mont128 },
-	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L, mie_fp_mul192pre, mie_fp_mont192 },
-	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L, mie_fp_mul256pre, mie_fp_mont256 },
-	{ 320, mie_fp_add320S, mie_fp_add320L, mie_fp_sub320S, mie_fp_sub320L, mie_fp_mul320pre, mie_fp_mont320 },
-	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L, mie_fp_mul384pre, mie_fp_mont384 },
-	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L, mie_fp_mul448pre, mie_fp_mont448 },
-	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L, mie_fp_mul512pre, mie_fp_mont512 },
+	{ 128, mie_fp_add128S, mie_fp_add128L, mie_fp_sub128S, mie_fp_sub128L, mie_fp_mul128pre, mie_fp_mont128, mie_fp_mod128 },
+	{ 192, mie_fp_add192S, mie_fp_add192L, mie_fp_sub192S, mie_fp_sub192L, mie_fp_mul192pre, mie_fp_mont192, mie_fp_mod192 },
+	{ 256, mie_fp_add256S, mie_fp_add256L, mie_fp_sub256S, mie_fp_sub256L, mie_fp_mul256pre, mie_fp_mont256, mie_fp_mod256 },
+	{ 320, mie_fp_add320S, mie_fp_add320L, mie_fp_sub320S, mie_fp_sub320L, mie_fp_mul320pre, mie_fp_mont320, mie_fp_mod320 },
+	{ 384, mie_fp_add384S, mie_fp_add384L, mie_fp_sub384S, mie_fp_sub384L, mie_fp_mul384pre, mie_fp_mont384, mie_fp_mod384 },
+	{ 448, mie_fp_add448S, mie_fp_add448L, mie_fp_sub448S, mie_fp_sub448L, mie_fp_mul448pre, mie_fp_mont448, mie_fp_mod448 },
+	{ 512, mie_fp_add512S, mie_fp_add512L, mie_fp_sub512S, mie_fp_sub512L, mie_fp_mul512pre, mie_fp_mont512, mie_fp_mod512 },
 #if CYBOZU_OS_BIT == 32
-	{ 160, mie_fp_add160S, mie_fp_add160L, mie_fp_sub160S, mie_fp_sub160L, mie_fp_mul160pre, mie_fp_mont160 },
-	{ 224, mie_fp_add224S, mie_fp_add224L, mie_fp_sub224S, mie_fp_sub224L, mie_fp_mul224pre, mie_fp_mont224 },
-	{ 288, mie_fp_add288S, mie_fp_add288L, mie_fp_sub288S, mie_fp_sub288L, mie_fp_mul288pre, mie_fp_mont288 },
-	{ 352, mie_fp_add352S, mie_fp_add352L, mie_fp_sub352S, mie_fp_sub352L, mie_fp_mul352pre, mie_fp_mont352 },
-	{ 416, mie_fp_add416S, mie_fp_add416L, mie_fp_sub416S, mie_fp_sub416L, mie_fp_mul416pre, mie_fp_mont416 },
-	{ 480, mie_fp_add480S, mie_fp_add480L, mie_fp_sub480S, mie_fp_sub480L, mie_fp_mul480pre, mie_fp_mont480 },
-	{ 544, mie_fp_add544S, mie_fp_add544L, mie_fp_sub544S, mie_fp_sub544L, mie_fp_mul544pre, mie_fp_mont544 },
+	{ 160, mie_fp_add160S, mie_fp_add160L, mie_fp_sub160S, mie_fp_sub160L, mie_fp_mul160pre, mie_fp_mont160, mie_fp_mod160 },
+	{ 224, mie_fp_add224S, mie_fp_add224L, mie_fp_sub224S, mie_fp_sub224L, mie_fp_mul224pre, mie_fp_mont224, mie_fp_mod224 },
+	{ 288, mie_fp_add288S, mie_fp_add288L, mie_fp_sub288S, mie_fp_sub288L, mie_fp_mul288pre, mie_fp_mont288, mie_fp_mod288 },
+	{ 352, mie_fp_add352S, mie_fp_add352L, mie_fp_sub352S, mie_fp_sub352L, mie_fp_mul352pre, mie_fp_mont352, mie_fp_mod352 },
+	{ 416, mie_fp_add416S, mie_fp_add416L, mie_fp_sub416S, mie_fp_sub416L, mie_fp_mul416pre, mie_fp_mont416, mie_fp_mod416 },
+	{ 480, mie_fp_add480S, mie_fp_add480L, mie_fp_sub480S, mie_fp_sub480L, mie_fp_mul480pre, mie_fp_mont480, mie_fp_mod480 },
+	{ 544, mie_fp_add544S, mie_fp_add544L, mie_fp_sub544S, mie_fp_sub544L, mie_fp_mul544pre, mie_fp_mont544, mie_fp_mod544 },
 #else
-	{ 576, mie_fp_add576S, mie_fp_add576L, mie_fp_sub576S, mie_fp_sub576L, mie_fp_mul576pre, mie_fp_mont576 },
+	{ 576, mie_fp_add576S, mie_fp_add576L, mie_fp_sub576S, mie_fp_sub576L, mie_fp_mul576pre, mie_fp_mont576, mie_fp_mod576 },
 #endif
 };
 
@@ -289,6 +279,7 @@ void test(const Unit *p, size_t bitLen)
 	const void4op subL = funcOp.subL;
 	const void3op mulPre = funcOp.mulPre;
 	const void4Iop mont = funcOp.mont;
+	const void3Iop mod = funcOp.mod;
 
 	mie::fp::Unit x[MAX_N], y[MAX_N];
 	mie::fp::Unit z[MAX_N], w[MAX_N];
@@ -350,6 +341,8 @@ void test(const Unit *p, size_t bitLen)
 				mpz_class xy = mx * my;
 				getMpz(w2, n * 2, xy);
 				m.mod(w, w2);
+				VERIFY_EQUAL(z, w, n);
+				mod(w, w2, p, m.r_);
 				VERIFY_EQUAL(z, w, n);
 #ifdef USE_XBYAK
 				if (bitLen > 128) {
