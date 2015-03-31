@@ -393,7 +393,7 @@ CYBOZU_TEST_AUTO(all)
 	} tbl[] = {
 //		{ 2, { 0xf000000000000001, 1, } },
 //		{ 2, { 0x000000000000001d, 0x8000000000000000, } },
-		{ 3, { 0xfffffffffffffcb5, 0xffffffffffffffff, 0x00000000ffffffff, } },
+//		{ 3, { 0xfffffffffffffcb5, 0xffffffffffffffff, 0x00000000ffffffff, } },
 //		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x07ffffffffffffff, } },
 		{ 3, { 0xffffffffffffffff, 0xfffffffffffffffe, 0xffffffffffffffff, } },
 		{ 3, { 0xfffffffeffffee37, 0xffffffffffffffff, 0xffffffffffffffff, } },
