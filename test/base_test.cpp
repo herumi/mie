@@ -272,6 +272,8 @@ void test(const Unit *p, size_t bitLen)
 #else
 	bool doBench = false;
 #endif
+	mpz_class mp;
+	setMpz(mp, p, n);
 	const FuncOp funcOp = getFuncOp(bitLen);
 	const void4op addS = funcOp.addS;
 	const void4op addL = funcOp.addL;
@@ -311,8 +313,6 @@ void test(const Unit *p, size_t bitLen)
 		VERIFY_EQUAL(z2, w2, n * 2);
 	}
 	{
-		mpz_class mp;
-		setMpz(mp, p, n);
 		Montgomery m(mp);
 #ifdef USE_XBYAK
 		if (bitLen > 128) fg.init(p, n);
@@ -358,6 +358,9 @@ void test(const Unit *p, size_t bitLen)
 			CYBOZU_BENCH("mulPre_ll", mulPre, w2, y, x);
 			CYBOZU_BENCH("mod_ll   ", mod, x, w2, p, m.r_);
 			CYBOZU_BENCH("mont_ll  ", mont, x, y, x, p, m.r_);
+			if (mp == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
+				CYBOZU_BENCH("NSIT_P192mod", mie_fp_mul_NIST_P192, x, y, x);
+			}
 		}
 	}
 	if (doBench) {
@@ -380,7 +383,6 @@ void test(const Unit *p, size_t bitLen)
 		CYBOZU_BENCH("mont_X   ", fg.mul_, x, y, x);
 	}
 #endif
-	printf("mont test %d\n", (int)bitLen);
 }
 
 CYBOZU_TEST_AUTO(all)
@@ -393,10 +395,12 @@ CYBOZU_TEST_AUTO(all)
 //		{ 2, { 0x000000000000001d, 0x8000000000000000, } },
 		{ 3, { 0xfffffffffffffcb5, 0xffffffffffffffff, 0x00000000ffffffff, } },
 //		{ 3, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x07ffffffffffffff, } },
-//		{ 3, { 0x7900342423332197, 0x1234567890123456, 0x1480948109481904, } },
+		{ 3, { 0xffffffffffffffff, 0xfffffffffffffffe, 0xffffffffffffffff, } },
+		{ 3, { 0xfffffffeffffee37, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 4, { 0x7900342423332197, 0x4242342420123456, 0x1234567892342342, 0x1480948109481904, } },
 //		{ 4, { 0x0f69466a74defd8d, 0xfffffffe26f2fc17, 0x17ffffffffffffff, 0x1513423423423415, } },
 		{ 4, { 0xa700000000000013, 0x6121000000000013, 0xba344d8000000008, 0x2523648240000001, } },
+		{ 4, { 0xfffffffefffffc2f, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 5, { 0x0000000000000009, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x8000000000000000, } },
 		{ 5, { 0xfffffffffffffc97, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, } },
 //		{ 6, { 0x4720422423332197, 0x0034230847204720, 0x3456789012345679, 0x4820984290482212, 0x9482094820948209, 0x0194810841094810, } },
