@@ -78,23 +78,23 @@ public:
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;
-		if (pBitLen_ <= 128) {  op_ = fp::MontFp<tag, 128>::init(p, useMont); }
+		if (pBitLen_ <= 128) {  op_ = fp::FpBase<tag, 128>::init(p, useMont); }
 #if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 160) { static fp::MontFp<tag, 160> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 160) { static fp::FpBase<tag, 160> f; op_ = f.init(p, useMont); }
 #endif
-		else if (pBitLen_ <= 192) { static fp::MontFp<tag, 192> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 192) { static fp::FpBase<tag, 192> f; op_ = f.init(p, useMont); }
 #if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 224) { static fp::MontFp<tag, 224> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 224) { static fp::FpBase<tag, 224> f; op_ = f.init(p, useMont); }
 #endif
-		else if (pBitLen_ <= 256) { static fp::MontFp<tag, 256> f; op_ = f.init(p, useMont); }
-		else if (pBitLen_ <= 384) { static fp::MontFp<tag, 384> f; op_ = f.init(p, useMont); }
-		else if (pBitLen_ <= 448) { static fp::MontFp<tag, 448> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 256) { static fp::FpBase<tag, 256> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 384) { static fp::FpBase<tag, 384> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 448) { static fp::FpBase<tag, 448> f; op_ = f.init(p, useMont); }
 #if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 544) { static fp::MontFp<tag, 544> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 544) { static fp::FpBase<tag, 544> f; op_ = f.init(p, useMont); }
 #else
-		else if (pBitLen_ <= 576) { static fp::MontFp<tag, 576> f; op_ = f.init(p, useMont); }
+		else if (pBitLen_ <= 576) { static fp::FpBase<tag, 576> f; op_ = f.init(p, useMont); }
 #endif
-		else { static fp::MontFp<tag, maxBitN> f; op_ = f.init(p, useMont); }
+		else { static fp::FpBase<tag, maxBitN> f; op_ = f.init(p, useMont); }
 		assert(op_.N <= maxUnitN);
 		sq_.set(mp);
 	}
