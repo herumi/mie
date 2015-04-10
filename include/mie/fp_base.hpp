@@ -22,9 +22,7 @@
 	#pragma warning(pop)
 #endif
 #include <cybozu/inttype.hpp>
-#ifdef USE_MONT_FP
 #include <mie/fp_generator.hpp>
-#endif
 
 namespace mie { namespace fp {
 
@@ -157,6 +155,7 @@ struct Op {
 	}
 };
 
+#if 0
 template<class tag, size_t bitN>
 struct FixedFp {
 	typedef fp::Unit Unit;
@@ -238,7 +237,7 @@ struct FixedFp {
 		}
 		local::toArray(z, N, mz);
 	}
-	static inline void mul(Unit *z, const Unit *x, const Unit *y)
+	static inline void mulC(Unit *z, const Unit *x, const Unit *y)
 	{
 		Unit ret[N * 2];
 #ifdef MIE_USE_LLVM
@@ -293,7 +292,7 @@ struct FixedFp {
 	{
 		mul(z, x, x); // QQQ : use powMod with 2?
 	}
-	static inline void inv(Unit *y, const Unit *x)
+	static inline void invC(Unit *y, const Unit *x)
 	{
 		mpz_class my;
 		mpz_t mx;
@@ -301,7 +300,7 @@ struct FixedFp {
 		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
 		local::toArray(y, N, my.get_mpz_t());
 	}
-	static inline void neg(Unit *y, const Unit *x)
+	static inline void negC(Unit *y, const Unit *x)
 	{
 		if (isZero(x)) {
 			if (x != y) clear(y);
@@ -322,7 +321,7 @@ struct FixedFp {
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline Op init(const Unit *p)
+	static inline Op init(const Unit *p, bool useMont = false)
 	{
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
@@ -333,8 +332,8 @@ struct FixedFp {
 		op.N = N;
 		op.isZero = &isZero;
 		op.clear = &clear;
-		op.neg = &neg;
-		op.inv = &inv;
+		op.neg = &negC;
+		op.inv = &invC;
 		op.square = &square;
 		op.copy = &copy;
 		op.add = &add;
@@ -367,8 +366,8 @@ struct FixedFp {
 
 template<class tag, size_t bitN> mpz_class FixedFp<tag, bitN>::mp_;
 template<class tag, size_t bitN> fp::Unit FixedFp<tag, bitN>::p_[FixedFp<tag, bitN>::N];
+#endif
 
-#ifdef USE_MONT_FP
 template<class tag, size_t bitN>
 struct MontFp {
 	typedef fp::Unit Unit;
@@ -383,9 +382,157 @@ struct MontFp {
 	static Unit invTbl_[invTblN][N];
 	static size_t modBitLen_;
 	static FpGenerator fg_;
-	static void3op add_;
-	static void3op mul_;
+	static void3op mul;
 
+	//////////////////////////////////////////////////////////////////
+	// for FixedFp
+	static inline void set_mpz_t(mpz_t& z, const Unit* p, int n = (int)N)
+	{
+		z->_mp_alloc = n;
+		int i = n;
+		while (i > 0 && p[i - 1] == 0) {
+			i--;
+		}
+		z->_mp_size = i;
+		z->_mp_d = (mp_limb_t*)p;
+	}
+	static inline void set_zero(mpz_t& z, Unit *p, size_t n)
+	{
+		z->_mp_alloc = (int)n;
+		z->_mp_size = 0;
+		z->_mp_d = (mp_limb_t*)p;
+	}
+	static inline void add(Unit *z, const Unit *x, const Unit *y)
+	{
+		Unit ret[N + 2]; // not N + 1
+		mpz_t mz, mx, my;
+		set_zero(mz, ret, N + 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_add(mz, mx, my);
+		if (mpz_cmp(mz, mp_.get_mpz_t()) >= 0) {
+			mpz_sub(mz, mz, mp_.get_mpz_t());
+		}
+		local::toArray(z, N, mz);
+	}
+#ifdef MIE_USE_LLVM
+#if CYBOZU_OS_BIT == 64
+	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128S(z, x, y, p_); }
+	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128S(z, x, y, p_); }
+	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_add192S(z, x, y, p_); }
+	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub192S(z, x, y, p_); }
+	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256S(z, x, y, p_); }
+	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256S(z, x, y, p_); }
+	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384L(z, x, y, p_); }
+	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384L(z, x, y, p_); }
+
+	static inline void add576(Unit *z, const Unit *x, const Unit *y) { mie_fp_add576L(z, x, y, p_); }
+	static inline void sub576(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub576L(z, x, y, p_); }
+#else
+	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128S(z, x, y, p_); }
+	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128S(z, x, y, p_); }
+	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_add192L(z, x, y, p_); }
+	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub192L(z, x, y, p_); }
+	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256L(z, x, y, p_); }
+	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256L(z, x, y, p_); }
+	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384L(z, x, y, p_); }
+	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384L(z, x, y, p_); }
+
+	static inline void add160(Unit *z, const Unit *x, const Unit *y) { mie_fp_add160L(z, x, y, p_); }
+	static inline void sub160(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub160L(z, x, y, p_); }
+	static inline void add224(Unit *z, const Unit *x, const Unit *y) { mie_fp_add224L(z, x, y, p_); }
+	static inline void sub224(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub224L(z, x, y, p_); }
+	static inline void add544(Unit *z, const Unit *x, const Unit *y) { mie_fp_add544L(z, x, y, p_); }
+	static inline void sub544(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub544L(z, x, y, p_); }
+#endif
+#endif
+	static inline void sub(Unit *z, const Unit *x, const Unit *y)
+	{
+		Unit ret[N + 1];
+		mpz_t mz, mx, my;
+		set_zero(mz, ret, N + 1);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_sub(mz, mx, my);
+		if (mpz_sgn(mz) < 0) {
+			mpz_add(mz, mz, mp_.get_mpz_t());
+		}
+		local::toArray(z, N, mz);
+	}
+	static inline void mulF(Unit *z, const Unit *x, const Unit *y)
+	{
+		Unit ret[N * 2];
+#ifdef MIE_USE_LLVM
+		const size_t roundN = N * sizeof(Unit) * 8;
+		switch (roundN) {
+		case 128: mie_fp_mul128pre(ret, x, y); modF(z, ret); return;
+		case 192: mie_fp_mul192pre(ret, x, y); modF(z, ret); return;
+		case 256: mie_fp_mul256pre(ret, x, y); modF(z, ret); return;
+		case 320: mie_fp_mul320pre(ret, x, y); modF(z, ret); return;
+		case 576: mie_fp_mul576pre(ret, x, y); modF(z, ret); return;
+#if CYBOZU_OS_BIT == 32
+		case 160: mie_fp_mul160pre(ret, x, y); modF(z, ret); return;
+		case 192: mie_fp_mul192pre(ret, x, y); modF(z, ret); return;
+		case 224: mie_fp_mul256pre(ret, x, y); modF(z, ret); return;
+		case 384: mie_fp_mul384pre(ret, x, y); modF(z, ret); return;
+		case 544: mie_fp_mul544pre(ret, x, y); modF(z, ret); return;
+#endif
+		}
+#endif
+#if 1
+		pre_mul(ret, x, y);
+		modF(z, ret);
+#else
+		mpz_t mx, my, mz;
+		set_zero(mz, ret, N * 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_mul(mz, mx, my);
+		mpz_mod(mz, mz, mp_.get_mpz_t());
+		local::toArray(z, N, mz);
+#endif
+	}
+	static inline void pre_mul(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_t mx, my, mz;
+		set_zero(mz, z, N * 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_mul(mz, mx, my);
+		local::toArray(z, N * 2, mz);
+	}
+	// x[N * 2] -> y[N]
+	static inline void modF(Unit *y, const Unit *x)
+	{
+		mpz_t mx, my;
+		set_mpz_t(mx, x, N * 2);
+		set_mpz_t(my, y, N);
+		mpz_mod(my, mx, mp_.get_mpz_t());
+		local::clearArray(y, my->_mp_size, N);
+	}
+#if 0
+	static inline void squareC(Unit *z, const Unit *x)
+	{
+		mulC(z, x, x);
+	}
+#endif
+	static inline void invF(Unit *y, const Unit *x)
+	{
+		mpz_class my;
+		mpz_t mx;
+		set_mpz_t(mx, x);
+		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
+		local::toArray(y, N, my.get_mpz_t());
+	}
+	static inline void neg(Unit *y, const Unit *x)
+	{
+		if (isZero(x)) {
+			if (x != y) clear(y);
+			return;
+		}
+		sub(y, p_, x);
+	}
+	//////////////////////////////////////////////////////////////////
 	// for MontFp
 	static inline void fromRawGmp(Unit *y, const mpz_class& x)
 	{
@@ -393,16 +540,17 @@ struct MontFp {
 	}
 	static void initInvTbl(Unit invTbl[invTblN][N])
 	{
+		void3op _add = Xbyak::CastTo<void3op>(fg_.add_);
 		Unit t[N];
 		clear(t);
 		t[0] = 2;
 		toMont(t, t);
 		for (int i = 0; i < invTblN; i++) {
 			copy(invTbl[invTblN - 1 - i], t);
-			add_(t, t, t);
+			_add(t, t, t);
 		}
 	}
-	static inline void invC(Unit *y, const Unit *x)
+	static inline void invM(Unit *y, const Unit *x)
 	{
 		const int2op preInv = Xbyak::CastTo<int2op>(fg_.preInv_);
 		Unit r[N];
@@ -412,19 +560,19 @@ struct MontFp {
 			R = 2^(N * 64)
 			get r2^(-k)R^2 = r 2^(N * 64 * 2 - k)
 		*/
-		mul_(y, r, invTbl_[k]);
+		mul(y, r, invTbl_[k]);
 	}
-	static inline void squareC(Unit *y, const Unit *x)
+	static inline void square(Unit *y, const Unit *x)
 	{
-		mul_(y, x, x);
+		mul(y, x, x);
 	}
 	static inline void toMont(Unit *y, const Unit *x)
 	{
-		mul_(y, x, RR_);
+		mul(y, x, RR_);
 	}
 	static inline void fromMont(Unit *y, const Unit *x)
 	{
-		mul_(y, x, one_);
+		mul(y, x, one_);
 	}
 	// common
 	static inline void clear(Unit *x)
@@ -439,45 +587,86 @@ struct MontFp {
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline Op init(const Unit *p)
+	static inline Op init(const Unit *p, bool useMont)
 	{
-		assert(N >= 2);
-		assert(sizeof(mp_limb_t) == sizeof(Unit));
-		copy(p_, p);
-		Gmp::setRaw(mp_, p, N);
+		if (useMont) {
+			assert(N >= 2);
+			assert(sizeof(mp_limb_t) == sizeof(Unit));
+			copy(p_, p);
+			Gmp::setRaw(mp_, p, N);
 
-		mpz_class t = 1;
-		fromRawGmp(one_, t);
-		t = (t << (N * 64)) % mp_;
-		fromRawGmp(R_, t);
-		t = (t * t) % mp_;
-		fromRawGmp(RR_, t);
-		fg_.init(p_, N);
-		add_ = Xbyak::CastTo<void3op>(fg_.add_);
-		mul_ = Xbyak::CastTo<void3op>(fg_.mul_);
+			mpz_class t = 1;
+			fromRawGmp(one_, t);
+			t = (t << (N * 64)) % mp_;
+			fromRawGmp(R_, t);
+			t = (t * t) % mp_;
+			fromRawGmp(RR_, t);
+			fg_.init(p_, N);
+			mul = Xbyak::CastTo<void3op>(fg_.mul_);
 
-		Op op;
-		op.N = N;
-		op.isZero = &isZero;
-		op.clear = &clear;
-		op.neg = Xbyak::CastTo<void2op>(fg_.neg_);
-		op.inv = &invC;
-		op.square = Xbyak::CastTo<void2op>(fg_.sqr_);
-		if (op.square == 0) op.square = &squareC;
-		op.copy = &copy;
-		op.add = add_;
-		op.sub = Xbyak::CastTo<void3op>(fg_.sub_);
-		op.mul = mul_;
-		op.mp = mp_;
-		op.p = &p_[0];
-		op.toMont = &toMont;
-		op.fromMont = &fromMont;
+			Op op;
+			op.N = N;
+			op.isZero = &isZero;
+			op.clear = &clear;
+			op.neg = Xbyak::CastTo<void2op>(fg_.neg_);
+			op.inv = &invM;
+			op.square = Xbyak::CastTo<void2op>(fg_.sqr_);
+			if (op.square == 0) op.square = &square;
+			op.copy = &copy;
+			op.add = Xbyak::CastTo<void3op>(fg_.add_);
+			op.sub = Xbyak::CastTo<void3op>(fg_.sub_);
+			op.mul = mul;
+			op.mp = mp_;
+			op.p = &p_[0];
+			op.toMont = &toMont;
+			op.fromMont = &fromMont;
 
-//		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
-//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
-//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
-		initInvTbl(invTbl_);
-		return op;
+	//		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
+	//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
+	//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
+			initInvTbl(invTbl_);
+			return op;
+		} else {
+			assert(N >= 2);
+			assert(sizeof(mp_limb_t) == sizeof(Unit));
+			copy(p_, p);
+			Gmp::setRaw(mp_, p, N);
+			mul = &mulF;
+
+			Op op;
+			op.N = N;
+			op.isZero = &isZero;
+			op.clear = &clear;
+			op.neg = &neg;
+			op.inv = &invF;
+			op.square = &square;
+			op.copy = &copy;
+			op.add = &add;
+			op.sub = &sub;
+			op.mul = &mulF;
+#ifdef MIE_USE_LLVM
+			const size_t roundN = N * sizeof(Unit) * 8;
+			switch (roundN) {
+			case 128: op.add = &add128; op.sub = &sub128; break;
+			case 192: op.add = &add192; op.sub = &sub192; break;
+			case 256: op.add = &add256; op.sub = &sub256; break;
+			case 384: op.add = &add384; op.sub = &sub384; break;
+#if CYBOZU_OS_BIT == 32
+			case 160: op.add = &add160; op.sub = &sub160; break;
+			case 224: op.add = &add224; op.sub = &sub224; break;
+			case 544: op.add = &add544; op.sub = &sub544; break;
+#else
+			case 576: op.add = &add576; op.sub = &sub576; break;
+#endif
+			}
+			if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
+				op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
+			}
+#endif
+			op.mp = mp_;
+			op.p = &p_[0];
+			return op;
+		}
 	}
 };
 template<class tag, size_t bitN> mpz_class MontFp<tag, bitN>::mp_;
@@ -488,8 +677,6 @@ template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::RR_[MontFp<tag, bit
 template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::invTbl_[MontFp<tag, bitN>::invTblN][MontFp<tag, bitN>::N];
 template<class tag, size_t bitN> size_t MontFp<tag, bitN>::modBitLen_;
 template<class tag, size_t bitN> FpGenerator MontFp<tag, bitN>::fg_;
-template<class tag, size_t bitN> void3op MontFp<tag, bitN>::add_;
-template<class tag, size_t bitN> void3op MontFp<tag, bitN>::mul_;
-#endif
+template<class tag, size_t bitN> void3op MontFp<tag, bitN>::mul;
 
 } } // mie::fp
