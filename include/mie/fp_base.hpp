@@ -242,21 +242,21 @@ struct FixedFp {
 	{
 		Unit ret[N * 2];
 #ifdef MIE_USE_LLVM
-#if CYBOZU_OS_BIT == 64
-		if (bitN <= 128) { mie_fp_mul128pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 192) { mie_fp_mul192pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 256) { mie_fp_mul256pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 384) { mie_fp_mul384pre(ret, x, y); mod(z, ret); return; }
-//		if (bitN <= 576) { mie_fp_mul576pre(ret, x, y); mod(z, ret); return; }
-#else
-		if (bitN <= 128) { mie_fp_mul128pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 160) { mie_fp_mul160pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 192) { mie_fp_mul192pre(ret, x, y); mod(z, ret); return; }
-		if (bitN <= 224) { mie_fp_mul224pre(ret, x, y); mod(z, ret); return; }
-//		if (bitN <= 256) { mie_fp_mul256pre(ret, x, y); mod(z, ret); return; }
-//		if (bitN <= 384) { mie_fp_mul384pre(ret, x, y); mod(z, ret); return; }
-//		if (bitN <= 544) { mie_fp_mul544pre(ret, x, y); mod(z, ret); return; }
+		const size_t roundN = N * sizeof(Unit) * 8;
+		switch (roundN) {
+		case 128: mie_fp_mul128pre(ret, x, y); mod(z, ret); return;
+		case 192: mie_fp_mul192pre(ret, x, y); mod(z, ret); return;
+		case 256: mie_fp_mul256pre(ret, x, y); mod(z, ret); return;
+		case 384: mie_fp_mul384pre(ret, x, y); mod(z, ret); return;
+		case 576: mie_fp_mul576pre(ret, x, y); mod(z, ret); return;
+#if CYBOZU_OS_BIT == 32
+		case 160: mie_fp_mul160pre(ret, x, y); mod(z, ret); return;
+		case 192: mie_fp_mul192pre(ret, x, y); mod(z, ret); return;
+		case 256: mie_fp_mul256pre(ret, x, y); mod(z, ret); return;
+		case 384: mie_fp_mul384pre(ret, x, y); mod(z, ret); return;
+		case 544: mie_fp_mul544pre(ret, x, y); mod(z, ret); return;
 #endif
+		}
 #endif
 #if 0
 		pre_mul(ret, x, y);
