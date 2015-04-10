@@ -370,12 +370,20 @@ struct FpBase {
 	}
 	static inline Op init(const Unit *p, bool useMont)
 	{
-		if (useMont) {
-			assert(N >= 2);
-			assert(sizeof(mp_limb_t) == sizeof(Unit));
-			copy(p_, p);
-			Gmp::setRaw(mp_, p, N);
+		assert(N >= 2);
+		assert(sizeof(mp_limb_t) == sizeof(Unit));
+		copy(p_, p);
+		Gmp::setRaw(mp_, p, N);
 
+		Op op;
+		op.N = N;
+		op.isZero = &isZero;
+		op.clear = &clear;
+		op.copy = &copy;
+		op.mp = mp_;
+		op.p = &p_[0];
+
+		if (useMont) {
 			mpz_class t = 1;
 			fromRawGmp(one_, t);
 			t = (t << (N * 64)) % mp_;
@@ -385,20 +393,13 @@ struct FpBase {
 			fg_.init(p_, N);
 			mul = Xbyak::CastTo<void3op>(fg_.mul_);
 
-			Op op;
-			op.N = N;
-			op.isZero = &isZero;
-			op.clear = &clear;
 			op.neg = Xbyak::CastTo<void2op>(fg_.neg_);
 			op.inv = &invM;
 			op.square = Xbyak::CastTo<void2op>(fg_.sqr_);
 			if (op.square == 0) op.square = &square;
-			op.copy = &copy;
 			op.add = Xbyak::CastTo<void3op>(fg_.add_);
 			op.sub = Xbyak::CastTo<void3op>(fg_.sub_);
 			op.mul = mul;
-			op.mp = mp_;
-			op.p = &p_[0];
 			op.toMont = &toMont;
 			op.fromMont = &fromMont;
 
@@ -406,22 +407,12 @@ struct FpBase {
 	//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
 	//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
 			initInvTbl(invTbl_);
-			return op;
 		} else {
-			assert(N >= 2);
-			assert(sizeof(mp_limb_t) == sizeof(Unit));
-			copy(p_, p);
-			Gmp::setRaw(mp_, p, N);
 			mul = &mulF;
 
-			Op op;
-			op.N = N;
-			op.isZero = &isZero;
-			op.clear = &clear;
 			op.neg = &neg;
 			op.inv = &invF;
 			op.square = &square;
-			op.copy = &copy;
 			op.add = &add;
 			op.sub = &sub;
 			op.mul = &mulF;
@@ -444,10 +435,8 @@ struct FpBase {
 				op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
 			}
 #endif
-			op.mp = mp_;
-			op.p = &p_[0];
-			return op;
 		}
+		return op;
 	}
 };
 template<class tag, size_t bitN> mpz_class FpBase<tag, bitN>::mp_;
