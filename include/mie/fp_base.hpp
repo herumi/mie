@@ -247,12 +247,12 @@ struct FixedFp {
 		case 128: mie_fp_mul128pre(ret, x, y); mod(z, ret); return;
 		case 192: mie_fp_mul192pre(ret, x, y); mod(z, ret); return;
 		case 256: mie_fp_mul256pre(ret, x, y); mod(z, ret); return;
-		case 384: mie_fp_mul384pre(ret, x, y); mod(z, ret); return;
+		case 320: mie_fp_mul320pre(ret, x, y); mod(z, ret); return;
 		case 576: mie_fp_mul576pre(ret, x, y); mod(z, ret); return;
 #if CYBOZU_OS_BIT == 32
 		case 160: mie_fp_mul160pre(ret, x, y); mod(z, ret); return;
 		case 192: mie_fp_mul192pre(ret, x, y); mod(z, ret); return;
-		case 256: mie_fp_mul256pre(ret, x, y); mod(z, ret); return;
+		case 224: mie_fp_mul256pre(ret, x, y); mod(z, ret); return;
 		case 384: mie_fp_mul384pre(ret, x, y); mod(z, ret); return;
 		case 544: mie_fp_mul544pre(ret, x, y); mod(z, ret); return;
 #endif
@@ -347,11 +347,12 @@ struct FixedFp {
 		case 192: op.add = &add192; op.sub = &sub192; break;
 		case 256: op.add = &add256; op.sub = &sub256; break;
 		case 384: op.add = &add384; op.sub = &sub384; break;
-		case 576: op.add = &add576; op.sub = &sub576; break;
 #if CYBOZU_OS_BIT == 32
 		case 160: op.add = &add160; op.sub = &sub160; break;
 		case 224: op.add = &add224; op.sub = &sub224; break;
 		case 544: op.add = &add544; op.sub = &sub544; break;
+#else
+		case 576: op.add = &add576; op.sub = &sub576; break;
 #endif
 		}
 		if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
