@@ -337,60 +337,27 @@ struct FixedFp {
 		op.inv = &inv;
 		op.square = &square;
 		op.copy = &copy;
+		op.add = &add;
+		op.sub = &sub;
+		op.mul = &mul;
 #ifdef MIE_USE_LLVM
-		printf("fp2 use llvm bitN=%zd\n", bitN);
-		if (bitN <= 128) {
-			op.add = &add128;
-			op.sub = &sub128;
-		} else
+		const size_t roundN = N * sizeof(Unit) * 8;
+		switch (roundN) {
+		case 128: op.add = &add128; op.sub = &sub128; break;
+		case 192: op.add = &add192; op.sub = &sub192; break;
+		case 256: op.add = &add256; op.sub = &sub256; break;
+		case 384: op.add = &add384; op.sub = &sub384; break;
+		case 576: op.add = &add576; op.sub = &sub576; break;
 #if CYBOZU_OS_BIT == 32
-		if (bitN <= 160) {
-			op.add = &add160;
-			op.sub = &sub160;
-		} else
+		case 160: op.add = &add160; op.sub = &sub160; break;
+		case 224: op.add = &add224; op.sub = &sub224; break;
+		case 544: op.add = &add544; op.sub = &sub544; break;
 #endif
-		if (bitN <= 192) {
-			op.add = &add192;
-			op.sub = &sub192;
-		} else
-#if CYBOZU_OS_BIT == 32
-		if (bitN <= 224) {
-			op.add = &add224;
-			op.sub = &sub224;
-		} else
-#endif
-		if (bitN <= 256) {
-			op.add = &add256;
-			op.sub = &sub256;
-		} else
-		if (bitN <= 384) {
-			op.add = &add384;
-			op.sub = &sub384;
-		} else
-#if CYBOZU_OS_BIT == 64
-		if (bitN <= 576) {
-			op.add = &add576;
-			op.sub = &sub576;
-		} else
-#else
-		if (bitN <= 544) {
-			op.add = &add544;
-			op.sub = &sub544;
-		} else
-#endif
-#endif
-		{
-			op.add = &add;
-			op.sub = &sub;
 		}
-#ifdef MIE_USE_LLVM
 		if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
 			op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
-		} else
-#endif
-		{
-			op.mul = &mul;
 		}
+#endif
 		op.mp = mp_;
 		op.p = &p_[0];
 		return op;
