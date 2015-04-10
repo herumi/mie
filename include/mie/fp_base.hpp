@@ -375,8 +375,8 @@ struct MontFp {
 	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
 	static const size_t invTblN = N * sizeof(Unit) * 8 * 2;
 	static mpz_class mp_;
-//	static mie::SquareRoot sq_;
 	static Unit p_[N];
+	// montgomery
 	static Unit one_[N];
 	static Unit R_[N]; // (1 << (N * 64)) % p
 	static Unit RR_[N]; // (R * R) % p
@@ -453,6 +453,8 @@ struct MontFp {
 		t = (t * t) % mp_;
 		fromRawGmp(RR_, t);
 		fg_.init(p_, N);
+		add_ = Xbyak::CastTo<void3op>(fg_.add_);
+		mul_ = Xbyak::CastTo<void3op>(fg_.mul_);
 
 		Op op;
 		op.N = N;
@@ -463,9 +465,9 @@ struct MontFp {
 		op.square = Xbyak::CastTo<void2op>(fg_.sqr_);
 		if (op.square == 0) op.square = &squareC;
 		op.copy = &copy;
-		op.add = Xbyak::CastTo<void3op>(fg_.add_);
+		op.add = add_;
 		op.sub = Xbyak::CastTo<void3op>(fg_.sub_);
-		op.mul = Xbyak::CastTo<void3op>(fg_.mul_);
+		op.mul = mul_;
 		op.mp = mp_;
 		op.p = &p_[0];
 		op.toMont = &toMont;
@@ -486,6 +488,8 @@ template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::RR_[MontFp<tag, bit
 template<class tag, size_t bitN> fp::Unit MontFp<tag, bitN>::invTbl_[MontFp<tag, bitN>::invTblN][MontFp<tag, bitN>::N];
 template<class tag, size_t bitN> size_t MontFp<tag, bitN>::modBitLen_;
 template<class tag, size_t bitN> FpGenerator MontFp<tag, bitN>::fg_;
+template<class tag, size_t bitN> void3op MontFp<tag, bitN>::add_;
+template<class tag, size_t bitN> void3op MontFp<tag, bitN>::mul_;
 #endif
 
 } } // mie::fp
