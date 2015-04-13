@@ -24,6 +24,10 @@
 #include <cybozu/inttype.hpp>
 #include <mie/fp_generator.hpp>
 
+#ifndef MIE_FP_BLOCK_MAX_BIT_N
+	#define MIE_FP_BLOCK_MAX_BIT_N 521
+#endif
+
 namespace mie { namespace fp {
 
 #if defined(CYBOZU_OS_BIT) && (CYBOZU_OS_BIT == 32)
@@ -31,6 +35,12 @@ typedef uint32_t Unit;
 #else
 typedef uint64_t Unit;
 #endif
+
+template<class T, size_t bitLen>
+struct ElementNumT {
+	static const size_t value = (bitLen + sizeof(T) * 8 - 1) / (sizeof(T) * 8);
+};
+static const size_t maxUnitN = fp::ElementNumT<Unit, MIE_FP_BLOCK_MAX_BIT_N>::value;
 
 typedef void (*void1op)(Unit*);
 typedef void (*void2op)(Unit*, const Unit*);
@@ -135,7 +145,7 @@ struct TagDefault;
 
 struct Op {
 	mpz_class mp;
-	const Unit* p;
+	const Unit *p;
 	size_t N;
 	bool (*isZero)(const Unit*);
 	void1op clear;
@@ -159,16 +169,18 @@ struct Op {
 template<class tag, size_t bitN>
 struct FpBase {
 	typedef fp::Unit Unit;
-	static const size_t N = (bitN + sizeof(Unit) * 8 - 1) / (sizeof(Unit) * 8);
+	static const size_t N = fp::ElementNumT<Unit, bitN>::value;
 	static const size_t invTblN = N * sizeof(Unit) * 8 * 2;
 	static mpz_class mp_;
 	static Unit p_[N];
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 	// montgomery
 	static Unit one_[N];
 	static Unit R_[N]; // (1 << (N * 64)) % p
 	static Unit RR_[N]; // (R * R) % p
 	static Unit invTbl_[invTblN][N];
 	static FpGenerator fg_;
+#endif
 	static void3op mul;
 
 	//////////////////////////////////////////////////////////////////
@@ -303,6 +315,7 @@ MIE_FP_DEF_METHOD(544, L)
 	}
 	//////////////////////////////////////////////////////////////////
 	// for Montgomery
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 	static inline void fromRawGmp(Unit *y, const mpz_class& x)
 	{
 		local::toArray(y, N, x.get_mpz_t());
@@ -339,6 +352,7 @@ MIE_FP_DEF_METHOD(544, L)
 	{
 		mul(y, x, one_);
 	}
+#endif
 	// common
 	static inline void square(Unit *y, const Unit *x)
 	{
@@ -371,6 +385,7 @@ MIE_FP_DEF_METHOD(544, L)
 		op.clear = &clear;
 		op.copy = &copy;
 
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 		if (useMont) {
 			mpz_class t = 1;
 			fromRawGmp(one_, t);
@@ -396,7 +411,9 @@ MIE_FP_DEF_METHOD(544, L)
 	//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
 	//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
 			initInvTbl(invTbl_);
-		} else {
+		} else
+#endif
+		{
 			op.neg = &neg;
 			op.inv = &invF;
 			op.square = &square;
@@ -436,11 +453,13 @@ MIE_FP_DEF_METHOD(544, L)
 };
 template<class tag, size_t bitN> mpz_class FpBase<tag, bitN>::mp_;
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::p_[FpBase<tag, bitN>::N];
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::one_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::R_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::RR_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::invTbl_[FpBase<tag, bitN>::invTblN][FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> FpGenerator FpBase<tag, bitN>::fg_;
+#endif
 template<class tag, size_t bitN> void3op FpBase<tag, bitN>::mul;
 
 } } // mie::fp

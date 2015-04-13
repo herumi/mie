@@ -24,33 +24,23 @@
 #include <mie/gmp_util.hpp>
 #include <mie/power.hpp>
 
-#ifndef MIE_FP_BLOCK_MAX_BIT_N
-	#define MIE_FP_BLOCK_MAX_BIT_N 521
-#endif
-
 namespace mie {
 
-template<class T, size_t bitLen>
-struct ElementNumT {
-	static const size_t value = (bitLen + sizeof(T) * 8 - 1) / (sizeof(T) * 8);
-};
 struct Block {
 	typedef fp::Unit Unit;
 	const Unit *p; // pointer to original FpT.v_
 	size_t n;
-	static const size_t maxUnitN = ElementNumT<Unit, MIE_FP_BLOCK_MAX_BIT_N>::value;
-	Unit v_[maxUnitN];
+	Unit v_[fp::maxUnitN];
 };
 
 template<class tag = fp::TagDefault, size_t maxBitN = MIE_FP_BLOCK_MAX_BIT_N>
 class FpT {
 	typedef fp::Unit Unit;
-	static const size_t maxUnitN = ElementNumT<Unit, maxBitN>::value;
 	static fp::Op op_;
 	static mie::SquareRoot sq_;
 	static size_t pBitLen_;
 	template<class tag2, size_t maxBitN2> friend class FpT;
-	Unit v_[maxUnitN];
+	Unit v_[fp::maxUnitN];
 public:
 	// return pointer to array v_[]
 	const Unit *getUnit() const { return v_; }
@@ -72,8 +62,8 @@ public:
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
 		pBitLen_ = Gmp::getBitLen(mp);
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
-		Unit p[maxUnitN] = {};
-		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
+		Unit p[fp::maxUnitN] = {};
+		const size_t n = Gmp::getRaw(p, fp::maxUnitN, mp);
 		if (n < 2) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;

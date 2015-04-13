@@ -42,6 +42,8 @@ T getCoff(T pLow)
 
 #if (CYBOZU_HOST == CYBOZU_HOST_INTEL) && (CYBOZU_OS_BIT == 64)
 
+#define MIE_FP_GENERATOR_USE_XBYAK
+
 #ifndef XBYAK_NO_OP_NAMES
 	#define XBYAK_NO_OP_NAMES
 #endif
