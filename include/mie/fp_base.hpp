@@ -145,6 +145,7 @@ struct Op {
 	const Unit* p;
 	size_t N;
 	bool (*isZero)(const Unit*);
+	bool (*isValid)(const Unit*);
 	void1op clear;
 	void2op neg;
 	void2op inv;
@@ -300,6 +301,7 @@ MIE_FP_DEF_METHOD(544, L)
 #endif
 #undef MIE_FP_DEF_METHOD
 #endif
+	// y[N] = 1 / x[N] mod p[N]
 	static inline void invF(Unit *y, const Unit *x)
 	{
 		mpz_class my;
@@ -363,6 +365,10 @@ MIE_FP_DEF_METHOD(544, L)
 	{
 		return local::isZeroArray(x, N);
 	}
+	static inline bool isValid(const Unit *x)
+	{
+		return local::compareArray(x, p_, N) < 0;
+	}
 	static inline Op init(const Unit *p, bool useMont = true)
 	{
 		assert(N >= 2);
@@ -376,9 +382,9 @@ MIE_FP_DEF_METHOD(544, L)
 		op.p = &p_[0];
 
 		op.isZero = &isZero;
+		op.isValid = &isValid;
 		op.clear = &clear;
 		op.copy = &copy;
-
 
 		if (useMont) {
 			mpz_class t = 1;
@@ -388,6 +394,7 @@ MIE_FP_DEF_METHOD(544, L)
 			t = (t * t) % mp_;
 			fromRawGmp(RR_, t);
 			fg_.init(p_, N);
+			// used by initInvTbl
 			mul = Xbyak::CastTo<void3op>(fg_.mul_);
 
 			op.neg = Xbyak::CastTo<void2op>(fg_.neg_);

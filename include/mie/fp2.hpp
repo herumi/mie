@@ -321,7 +321,7 @@ public:
 	}
 	bool isValid() const
 	{
-		return fp::local::compareArray(v_, op_.p, op_.N) < 0;
+		return op_.isValid(v_);
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
