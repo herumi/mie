@@ -74,26 +74,30 @@ public:
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
 		Unit p[maxUnitN] = {};
 		const size_t n = Gmp::getRaw(p, maxUnitN, mp);
-		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+		if (n < 2) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;
-		if (pBitLen_ <= 128) {  op_ = fp::FpBase<tag, 128>::init(p, useMont); }
-#if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 160) { static fp::FpBase<tag, 160> f; op_ = f.init(p, useMont); }
-#endif
-		else if (pBitLen_ <= 192) { static fp::FpBase<tag, 192> f; op_ = f.init(p, useMont); }
-#if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 224) { static fp::FpBase<tag, 224> f; op_ = f.init(p, useMont); }
-#endif
-		else if (pBitLen_ <= 256) { static fp::FpBase<tag, 256> f; op_ = f.init(p, useMont); }
-		else if (pBitLen_ <= 384) { static fp::FpBase<tag, 384> f; op_ = f.init(p, useMont); }
-		else if (pBitLen_ <= 448) { static fp::FpBase<tag, 448> f; op_ = f.init(p, useMont); }
-#if CYBOZU_OS_BIT == 32
-		else if (pBitLen_ <= 544) { static fp::FpBase<tag, 544> f; op_ = f.init(p, useMont); }
+		switch (n * sizeof(Unit) * 8) {
+		case 128: fp::FpBase<tag, 128>::init(op_, p, useMont); break;
+		case 192: fp::FpBase<tag, 192>::init(op_, p, useMont); break;
+		case 256: fp::FpBase<tag, 256>::init(op_, p, useMont); break;
+		case 320: fp::FpBase<tag, 320>::init(op_, p, useMont); break;
+		case 384: fp::FpBase<tag, 384>::init(op_, p, useMont); break;
+		case 448: fp::FpBase<tag, 448>::init(op_, p, useMont); break;
+		case 512: fp::FpBase<tag, 512>::init(op_, p, useMont); break;
+#if CYBOZU_OS_BIT == 64
+		case 576: fp::FpBase<tag, 576>::init(op_, p, useMont); break;
 #else
-		else if (pBitLen_ <= 576) { static fp::FpBase<tag, 576> f; op_ = f.init(p, useMont); }
+		case 160: fp::FpBase<tag, 160>::init(op_, p, useMont); break;
+		case 224: fp::FpBase<tag, 224>::init(op_, p, useMont); break;
+		case 288: fp::FpBase<tag, 288>::init(op_, p, useMont); break;
+		case 352: fp::FpBase<tag, 352>::init(op_, p, useMont); break;
+		case 416: fp::FpBase<tag, 416>::init(op_, p, useMont); break;
+		case 480: fp::FpBase<tag, 480>::init(op_, p, useMont); break;
+		case 544: fp::FpBase<tag, 544>::init(op_, p, useMont); break;
 #endif
-		else { static fp::FpBase<tag, maxBitN> f; op_ = f.init(p, useMont); }
+		default:  fp::FpBase<tag, maxBitN>::init(op_, p, useMont); break;
+		}
 		assert(op_.N <= maxUnitN);
 		sq_.set(mp);
 	}
@@ -321,7 +325,7 @@ public:
 	}
 	bool isValid() const
 	{
-		return op_.isValid(v_);
+		return fp::local::compareArray(v_, op_.p, op_.N) < 0;
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{

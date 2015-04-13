@@ -55,7 +55,6 @@ void mie_fp_mul ## len ## pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::f
 void mie_fp_mod ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit); \
 void mie_fp_mont ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit);
 
-#if CYBOZU_OS_BIT == 64
 MIE_FP_DEF_FUNC(128)
 MIE_FP_DEF_FUNC(192)
 MIE_FP_DEF_FUNC(256)
@@ -63,21 +62,15 @@ MIE_FP_DEF_FUNC(320)
 MIE_FP_DEF_FUNC(384)
 MIE_FP_DEF_FUNC(448)
 MIE_FP_DEF_FUNC(512)
+#if CYBOZU_OS_BIT == 64
 MIE_FP_DEF_FUNC(576)
 #else
-MIE_FP_DEF_FUNC(128)
 MIE_FP_DEF_FUNC(160)
-MIE_FP_DEF_FUNC(192)
 MIE_FP_DEF_FUNC(224)
-MIE_FP_DEF_FUNC(256)
 MIE_FP_DEF_FUNC(288)
-MIE_FP_DEF_FUNC(320)
 MIE_FP_DEF_FUNC(352)
-MIE_FP_DEF_FUNC(384)
 MIE_FP_DEF_FUNC(416)
-MIE_FP_DEF_FUNC(448)
 MIE_FP_DEF_FUNC(480)
-MIE_FP_DEF_FUNC(512)
 MIE_FP_DEF_FUNC(544)
 #endif
 #undef MIE_FP_DEF_FUNC
@@ -145,7 +138,6 @@ struct Op {
 	const Unit* p;
 	size_t N;
 	bool (*isZero)(const Unit*);
-	bool (*isValid)(const Unit*);
 	void1op clear;
 	void2op neg;
 	void2op inv;
@@ -176,7 +168,6 @@ struct FpBase {
 	static Unit R_[N]; // (1 << (N * 64)) % p
 	static Unit RR_[N]; // (R * R) % p
 	static Unit invTbl_[invTblN][N];
-	static size_t modBitLen_;
 	static FpGenerator fg_;
 	static void3op mul;
 
@@ -365,24 +356,18 @@ MIE_FP_DEF_METHOD(544, L)
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline bool isValid(const Unit *x)
-	{
-		return local::compareArray(x, p_, N) < 0;
-	}
-	static inline Op init(const Unit *p, bool useMont = true)
+	static inline void init(Op& op, const Unit *p, bool useMont = true)
 	{
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
 		copy(p_, p);
 		Gmp::setRaw(mp_, p, N);
 
-		Op op;
 		op.N = N;
 		op.mp = mp_;
 		op.p = &p_[0];
 
 		op.isZero = &isZero;
-		op.isValid = &isValid;
 		op.clear = &clear;
 		op.copy = &copy;
 
@@ -436,7 +421,6 @@ MIE_FP_DEF_METHOD(544, L)
 			case 224: op.add = &add224; op.sub = &sub224; op.mul = &mul224; break;
 			case 288: op.add = &add288; op.sub = &sub288; op.mul = &mul288; break;
 			case 352: op.add = &add352; op.sub = &sub352; op.mul = &mul352; break;
-			case 352: op.add = &add352; op.sub = &sub352; op.mul = &mul352; break;
 			case 416: op.add = &add416; op.sub = &sub416; op.mul = &mul416; break;
 			case 480: op.add = &add480; op.sub = &sub480; op.mul = &mul480; break;
 			case 544: op.add = &add544; op.sub = &sub544; op.mul = &mul544; break;
@@ -448,7 +432,6 @@ MIE_FP_DEF_METHOD(544, L)
 #endif
 			mul = op.mul;
 		}
-		return op;
 	}
 };
 template<class tag, size_t bitN> mpz_class FpBase<tag, bitN>::mp_;
@@ -457,7 +440,6 @@ template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::one_[FpBase<tag, bi
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::R_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::RR_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::invTbl_[FpBase<tag, bitN>::invTblN][FpBase<tag, bitN>::N];
-template<class tag, size_t bitN> size_t FpBase<tag, bitN>::modBitLen_;
 template<class tag, size_t bitN> FpGenerator FpBase<tag, bitN>::fg_;
 template<class tag, size_t bitN> void3op FpBase<tag, bitN>::mul;
 
