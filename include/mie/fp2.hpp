@@ -15,9 +15,6 @@
 		#define NOMINMAX
 	#endif
 #endif
-#if defined(_WIN64) || defined(__x86_64__)
-//	#define USE_MONT_FP
-#endif
 #include <cybozu/hash.hpp>
 #include <cybozu/itoa.hpp>
 #include <cybozu/atoi.hpp>
@@ -33,20 +30,22 @@
 
 namespace mie {
 
+template<class T, size_t bitLen>
+struct ElementNumT {
+	static const size_t value = (bitLen + sizeof(T) * 8 - 1) / (sizeof(T) * 8);
+};
 struct Block {
 	typedef fp::Unit Unit;
 	const Unit *p; // pointer to original FpT.v_
 	size_t n;
-	static const size_t UnitByteN = sizeof(Unit);
-	static const size_t maxUnitN = (MIE_FP_BLOCK_MAX_BIT_N + UnitByteN * 8 - 1) / (UnitByteN * 8);
+	static const size_t maxUnitN = ElementNumT<Unit, MIE_FP_BLOCK_MAX_BIT_N>::value;
 	Unit v_[maxUnitN];
 };
 
 template<class tag = fp::TagDefault, size_t maxBitN = MIE_FP_BLOCK_MAX_BIT_N>
 class FpT {
 	typedef fp::Unit Unit;
-	static const size_t UnitByteN = sizeof(Unit);
-	static const size_t maxUnitN = (maxBitN + UnitByteN * 8 - 1) / (UnitByteN * 8);
+	static const size_t maxUnitN = ElementNumT<Unit, maxBitN>::value;
 	static fp::Op op_;
 	static mie::SquareRoot sq_;
 	static size_t pBitLen_;

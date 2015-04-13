@@ -55,6 +55,7 @@ void mie_fp_mul ## len ## pre(mie::fp::Unit*, const mie::fp::Unit*, const mie::f
 void mie_fp_mod ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit); \
 void mie_fp_mont ## len(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*, mie::fp::Unit);
 
+#if CYBOZU_OS_BIT == 64
 MIE_FP_DEF_FUNC(128)
 MIE_FP_DEF_FUNC(192)
 MIE_FP_DEF_FUNC(256)
@@ -62,17 +63,24 @@ MIE_FP_DEF_FUNC(320)
 MIE_FP_DEF_FUNC(384)
 MIE_FP_DEF_FUNC(448)
 MIE_FP_DEF_FUNC(512)
-#if CYBOZU_OS_BIT == 32
-MIE_FP_DEF_FUNC(160)
-MIE_FP_DEF_FUNC(224)
-MIE_FP_DEF_FUNC(288)
-MIE_FP_DEF_FUNC(352)
-MIE_FP_DEF_FUNC(416)
-MIE_FP_DEF_FUNC(480)
-MIE_FP_DEF_FUNC(544)
-#else
 MIE_FP_DEF_FUNC(576)
+#else
+MIE_FP_DEF_FUNC(128)
+MIE_FP_DEF_FUNC(160)
+MIE_FP_DEF_FUNC(192)
+MIE_FP_DEF_FUNC(224)
+MIE_FP_DEF_FUNC(256)
+MIE_FP_DEF_FUNC(288)
+MIE_FP_DEF_FUNC(320)
+MIE_FP_DEF_FUNC(352)
+MIE_FP_DEF_FUNC(384)
+MIE_FP_DEF_FUNC(416)
+MIE_FP_DEF_FUNC(448)
+MIE_FP_DEF_FUNC(480)
+MIE_FP_DEF_FUNC(512)
+MIE_FP_DEF_FUNC(544)
 #endif
+#undef MIE_FP_DEF_FUNC
 
 void mie_fp_mul_NIST_P192(mie::fp::Unit*, const mie::fp::Unit*, const mie::fp::Unit*);
 
@@ -202,37 +210,6 @@ struct FpBase {
 		}
 		local::toArray(z, N, mz);
 	}
-#ifdef MIE_USE_LLVM
-#if CYBOZU_OS_BIT == 64
-	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128S(z, x, y, p_); }
-	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128S(z, x, y, p_); }
-	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_add192S(z, x, y, p_); }
-	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub192S(z, x, y, p_); }
-	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256S(z, x, y, p_); }
-	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256S(z, x, y, p_); }
-	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384L(z, x, y, p_); }
-	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384L(z, x, y, p_); }
-
-	static inline void add576(Unit *z, const Unit *x, const Unit *y) { mie_fp_add576L(z, x, y, p_); }
-	static inline void sub576(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub576L(z, x, y, p_); }
-#else
-	static inline void add128(Unit *z, const Unit *x, const Unit *y) { mie_fp_add128S(z, x, y, p_); }
-	static inline void sub128(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub128S(z, x, y, p_); }
-	static inline void add192(Unit *z, const Unit *x, const Unit *y) { mie_fp_add192L(z, x, y, p_); }
-	static inline void sub192(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub192L(z, x, y, p_); }
-	static inline void add256(Unit *z, const Unit *x, const Unit *y) { mie_fp_add256L(z, x, y, p_); }
-	static inline void sub256(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub256L(z, x, y, p_); }
-	static inline void add384(Unit *z, const Unit *x, const Unit *y) { mie_fp_add384L(z, x, y, p_); }
-	static inline void sub384(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub384L(z, x, y, p_); }
-
-	static inline void add160(Unit *z, const Unit *x, const Unit *y) { mie_fp_add160L(z, x, y, p_); }
-	static inline void sub160(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub160L(z, x, y, p_); }
-	static inline void add224(Unit *z, const Unit *x, const Unit *y) { mie_fp_add224L(z, x, y, p_); }
-	static inline void sub224(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub224L(z, x, y, p_); }
-	static inline void add544(Unit *z, const Unit *x, const Unit *y) { mie_fp_add544L(z, x, y, p_); }
-	static inline void sub544(Unit *z, const Unit *x, const Unit *y) { mie_fp_sub544L(z, x, y, p_); }
-#endif
-#endif
 	static inline void sub(Unit *z, const Unit *x, const Unit *y)
 	{
 		Unit ret[N + 1];
@@ -246,28 +223,39 @@ struct FpBase {
 		}
 		local::toArray(z, N, mz);
 	}
+	static inline void neg(Unit *y, const Unit *x)
+	{
+		if (isZero(x)) {
+			if (x != y) clear(y);
+			return;
+		}
+		sub(y, p_, x);
+	}
+	// z[N * 2] = x[N] * y[N]
+	static inline void mulPre(Unit *z, const Unit *x, const Unit *y)
+	{
+		mpz_t mx, my, mz;
+		set_zero(mz, z, N * 2);
+		set_mpz_t(mx, x);
+		set_mpz_t(my, y);
+		mpz_mul(mz, mx, my);
+		local::toArray(z, N * 2, mz);
+	}
+	// y[N] = x[N * 2] mod p[N]
+	static inline void modF(Unit *y, const Unit *x)
+	{
+		mpz_t mx, my;
+		set_mpz_t(mx, x, N * 2);
+		set_mpz_t(my, y, N);
+		mpz_mod(my, mx, mp_.get_mpz_t());
+		local::clearArray(y, my->_mp_size, N);
+	}
+	// z[N] = x[N] * y[N] mod p[N]
 	static inline void mulF(Unit *z, const Unit *x, const Unit *y)
 	{
 		Unit ret[N * 2];
-#ifdef MIE_USE_LLVM
-		const size_t roundN = N * sizeof(Unit) * 8;
-		switch (roundN) {
-		case 128: mie_fp_mul128pre(ret, x, y); modF(z, ret); return;
-		case 192: mie_fp_mul192pre(ret, x, y); modF(z, ret); return;
-		case 256: mie_fp_mul256pre(ret, x, y); modF(z, ret); return;
-		case 320: mie_fp_mul320pre(ret, x, y); modF(z, ret); return;
-		case 576: mie_fp_mul576pre(ret, x, y); modF(z, ret); return;
-#if CYBOZU_OS_BIT == 32
-		case 160: mie_fp_mul160pre(ret, x, y); modF(z, ret); return;
-		case 192: mie_fp_mul192pre(ret, x, y); modF(z, ret); return;
-		case 224: mie_fp_mul256pre(ret, x, y); modF(z, ret); return;
-		case 384: mie_fp_mul384pre(ret, x, y); modF(z, ret); return;
-		case 544: mie_fp_mul544pre(ret, x, y); modF(z, ret); return;
-#endif
-		}
-#endif
 #if 0
-		pre_mul(ret, x, y);
+		mulPre(ret, x, y);
 		modF(z, ret);
 #else
 		mpz_t mx, my, mz;
@@ -279,24 +267,39 @@ struct FpBase {
 		local::toArray(z, N, mz);
 #endif
 	}
-	static inline void pre_mul(Unit *z, const Unit *x, const Unit *y)
-	{
-		mpz_t mx, my, mz;
-		set_zero(mz, z, N * 2);
-		set_mpz_t(mx, x);
-		set_mpz_t(my, y);
-		mpz_mul(mz, mx, my);
-		local::toArray(z, N * 2, mz);
-	}
-	// x[N * 2] -> y[N]
-	static inline void modF(Unit *y, const Unit *x)
-	{
-		mpz_t mx, my;
-		set_mpz_t(mx, x, N * 2);
-		set_mpz_t(my, y, N);
-		mpz_mod(my, mx, mp_.get_mpz_t());
-		local::clearArray(y, my->_mp_size, N);
-	}
+#ifdef MIE_USE_LLVM
+#define MIE_FP_DEF_METHOD(len, suffix) \
+static inline void add ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_add ## len ## suffix(z, x, y, p_); } \
+static inline void sub ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_sub ## len ## suffix(z, x, y, p_); } \
+static inline void mul ## len(Unit* z, const Unit* x, const Unit* y) { Unit ret[N * 2]; mie_fp_mul ## len ## pre(ret, x, y); modF(z, ret); }
+
+#if CYBOZU_OS_BIT == 64
+MIE_FP_DEF_METHOD(128, S)
+MIE_FP_DEF_METHOD(192, S)
+MIE_FP_DEF_METHOD(256, S)
+MIE_FP_DEF_METHOD(320, S)
+MIE_FP_DEF_METHOD(384, L)
+MIE_FP_DEF_METHOD(448, L)
+MIE_FP_DEF_METHOD(512, L)
+MIE_FP_DEF_METHOD(576, L)
+#else
+MIE_FP_DEF_METHOD(128, S)
+MIE_FP_DEF_METHOD(160, L)
+MIE_FP_DEF_METHOD(192, L)
+MIE_FP_DEF_METHOD(224, L)
+MIE_FP_DEF_METHOD(256, L)
+MIE_FP_DEF_METHOD(288, L)
+MIE_FP_DEF_METHOD(320, L)
+MIE_FP_DEF_METHOD(352, L)
+MIE_FP_DEF_METHOD(384, L)
+MIE_FP_DEF_METHOD(416, L)
+MIE_FP_DEF_METHOD(448, L)
+MIE_FP_DEF_METHOD(480, L)
+MIE_FP_DEF_METHOD(512, L)
+MIE_FP_DEF_METHOD(544, L)
+#endif
+#undef MIE_FP_DEF_METHOD
+#endif
 	static inline void invF(Unit *y, const Unit *x)
 	{
 		mpz_class my;
@@ -304,14 +307,6 @@ struct FpBase {
 		set_mpz_t(mx, x);
 		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
 		local::toArray(y, N, my.get_mpz_t());
-	}
-	static inline void neg(Unit *y, const Unit *x)
-	{
-		if (isZero(x)) {
-			if (x != y) clear(y);
-			return;
-		}
-		sub(y, p_, x);
 	}
 	//////////////////////////////////////////////////////////////////
 	// for Montgomery
@@ -368,7 +363,7 @@ struct FpBase {
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline Op init(const Unit *p, bool useMont)
+	static inline Op init(const Unit *p, bool useMont = true)
 	{
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
@@ -377,11 +372,13 @@ struct FpBase {
 
 		Op op;
 		op.N = N;
+		op.mp = mp_;
+		op.p = &p_[0];
+
 		op.isZero = &isZero;
 		op.clear = &clear;
 		op.copy = &copy;
-		op.mp = mp_;
-		op.p = &p_[0];
+
 
 		if (useMont) {
 			mpz_class t = 1;
@@ -408,33 +405,41 @@ struct FpBase {
 	//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
 			initInvTbl(invTbl_);
 		} else {
-			mul = &mulF;
-
 			op.neg = &neg;
 			op.inv = &invF;
 			op.square = &square;
 			op.add = &add;
 			op.sub = &sub;
 			op.mul = &mulF;
+
 #ifdef MIE_USE_LLVM
 			const size_t roundN = N * sizeof(Unit) * 8;
 			switch (roundN) {
-			case 128: op.add = &add128; op.sub = &sub128; break;
-			case 192: op.add = &add192; op.sub = &sub192; break;
-			case 256: op.add = &add256; op.sub = &sub256; break;
-			case 384: op.add = &add384; op.sub = &sub384; break;
-#if CYBOZU_OS_BIT == 32
-			case 160: op.add = &add160; op.sub = &sub160; break;
-			case 224: op.add = &add224; op.sub = &sub224; break;
-			case 544: op.add = &add544; op.sub = &sub544; break;
+			case 128: op.add = &add128; op.sub = &sub128; op.mul = &mul128; break;
+			case 192: op.add = &add192; op.sub = &sub192; op.mul = &mul192; break;
+			case 256: op.add = &add256; op.sub = &sub256; op.mul = &mul256; break;
+			case 320: op.add = &add320; op.sub = &sub320; op.mul = &mul320; break;
+			case 384: op.add = &add384; op.sub = &sub384; op.mul = &mul384; break;
+			case 448: op.add = &add448; op.sub = &sub448; op.mul = &mul448; break;
+			case 512: op.add = &add512; op.sub = &sub512; op.mul = &mul512; break;
+#if CYBOZU_OS_BIT == 64
+			case 576: op.add = &add576; op.sub = &sub576; op.mul = &mul576; break;
 #else
-			case 576: op.add = &add576; op.sub = &sub576; break;
+			case 160: op.add = &add160; op.sub = &sub160; op.mul = &mul160; break;
+			case 224: op.add = &add224; op.sub = &sub224; op.mul = &mul224; break;
+			case 288: op.add = &add288; op.sub = &sub288; op.mul = &mul288; break;
+			case 352: op.add = &add352; op.sub = &sub352; op.mul = &mul352; break;
+			case 352: op.add = &add352; op.sub = &sub352; op.mul = &mul352; break;
+			case 416: op.add = &add416; op.sub = &sub416; op.mul = &mul416; break;
+			case 480: op.add = &add480; op.sub = &sub480; op.mul = &mul480; break;
+			case 544: op.add = &add544; op.sub = &sub544; op.mul = &mul544; break;
 #endif
 			}
 			if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
 				op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
 			}
 #endif
+			mul = op.mul;
 		}
 		return op;
 	}
