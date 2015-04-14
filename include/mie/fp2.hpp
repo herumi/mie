@@ -64,7 +64,7 @@ public:
 		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
 		Unit p[fp::maxUnitN] = {};
 		const size_t n = Gmp::getRaw(p, fp::maxUnitN, mp);
-		if (n < 2) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
+		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;
 		switch (n * sizeof(Unit) * 8) {

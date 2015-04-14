@@ -23,6 +23,7 @@
 #endif
 #include <cybozu/inttype.hpp>
 #include <mie/fp_generator.hpp>
+//#undef MIE_FP_GENERATOR_USE_XBYAK
 
 #ifndef MIE_FP_BLOCK_MAX_BIT_N
 	#define MIE_FP_BLOCK_MAX_BIT_N 521
@@ -384,6 +385,11 @@ MIE_FP_DEF_METHOD(544, L)
 		op.isZero = &isZero;
 		op.clear = &clear;
 		op.copy = &copy;
+
+#ifndef MIE_FP_GENERATOR_USE_XBYAK
+		useMont = false;
+		cybozu::disable_warning_unused_variable(useMont);
+#endif
 
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 		if (useMont) {
