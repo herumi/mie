@@ -148,6 +148,7 @@ struct Op {
 	mpz_class mp;
 	const Unit *p;
 	size_t N;
+	size_t bitLen;
 	bool (*isZero)(const Unit*);
 	void1op clear;
 	void2op neg;
@@ -161,7 +162,8 @@ struct Op {
 	void2op toMont;
 	void2op fromMont;
 	Op()
-		: p(0), N(0), isZero(0), clear(0), neg(0), inv(0)
+		: p(0), N(0), bitLen(0)
+		, isZero(0), clear(0), neg(0), inv(0)
 		, square(0), copy(0),add(0), sub(0), mul(0), toMont(0), fromMont(0)
 	{
 	}
@@ -371,7 +373,7 @@ MIE_FP_DEF_METHOD(544, L)
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline void init(Op& op, const Unit *p, bool useMont = true)
+	static inline void init(Op& op, const Unit *p, size_t bitLen, bool useMont = true)
 	{
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
@@ -379,6 +381,7 @@ MIE_FP_DEF_METHOD(544, L)
 		Gmp::setRaw(mp_, p, N);
 
 		op.N = N;
+		op.bitLen = bitLen;
 		op.mp = mp_;
 		op.p = &p_[0];
 

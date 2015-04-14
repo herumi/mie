@@ -38,7 +38,6 @@ class FpT {
 	typedef fp::Unit Unit;
 	static fp::Op op_;
 	static mie::SquareRoot sq_;
-	static size_t pBitLen_;
 	template<class tag2, size_t maxBitN2> friend class FpT;
 	Unit v_[fp::maxUnitN];
 public:
@@ -60,35 +59,34 @@ public:
 		mpz_class mp;
 		inFromStr(mp, &isMinus, mstr, base);
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
-		pBitLen_ = Gmp::getBitLen(mp);
-		if (pBitLen_ > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << pBitLen_ << maxBitN;
+		const size_t bitLen = Gmp::getBitLen(mp);
+		if (bitLen > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << bitLen << maxBitN;
 		Unit p[fp::maxUnitN] = {};
 		const size_t n = Gmp::getRaw(p, fp::maxUnitN, mp);
 		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;
 		switch (n * sizeof(Unit) * 8) {
-		case 128: fp::FpBase<tag, 128>::init(op_, p, useMont); break;
-		case 192: fp::FpBase<tag, 192>::init(op_, p, useMont); break;
-		case 256: fp::FpBase<tag, 256>::init(op_, p, useMont); break;
-		case 320: fp::FpBase<tag, 320>::init(op_, p, useMont); break;
-		case 384: fp::FpBase<tag, 384>::init(op_, p, useMont); break;
-		case 448: fp::FpBase<tag, 448>::init(op_, p, useMont); break;
-		case 512: fp::FpBase<tag, 512>::init(op_, p, useMont); break;
+		case 128: fp::FpBase<tag, 128>::init(op_, p, bitLen, useMont); break;
+		case 192: fp::FpBase<tag, 192>::init(op_, p, bitLen, useMont); break;
+		case 256: fp::FpBase<tag, 256>::init(op_, p, bitLen, useMont); break;
+		case 320: fp::FpBase<tag, 320>::init(op_, p, bitLen, useMont); break;
+		case 384: fp::FpBase<tag, 384>::init(op_, p, bitLen, useMont); break;
+		case 448: fp::FpBase<tag, 448>::init(op_, p, bitLen, useMont); break;
+		case 512: fp::FpBase<tag, 512>::init(op_, p, bitLen, useMont); break;
 #if CYBOZU_OS_BIT == 64
-		case 576: fp::FpBase<tag, 576>::init(op_, p, useMont); break;
+		case 576: fp::FpBase<tag, 576>::init(op_, p, bitLen, useMont); break;
 #else
-		case 160: fp::FpBase<tag, 160>::init(op_, p, useMont); break;
-		case 224: fp::FpBase<tag, 224>::init(op_, p, useMont); break;
-		case 288: fp::FpBase<tag, 288>::init(op_, p, useMont); break;
-		case 352: fp::FpBase<tag, 352>::init(op_, p, useMont); break;
-		case 416: fp::FpBase<tag, 416>::init(op_, p, useMont); break;
-		case 480: fp::FpBase<tag, 480>::init(op_, p, useMont); break;
-		case 544: fp::FpBase<tag, 544>::init(op_, p, useMont); break;
+		case 160: fp::FpBase<tag, 160>::init(op_, p, bitLen, useMont); break;
+		case 224: fp::FpBase<tag, 224>::init(op_, p, bitLen, useMont); break;
+		case 288: fp::FpBase<tag, 288>::init(op_, p, bitLen, useMont); break;
+		case 352: fp::FpBase<tag, 352>::init(op_, p, bitLen, useMont); break;
+		case 416: fp::FpBase<tag, 416>::init(op_, p, bitLen, useMont); break;
+		case 480: fp::FpBase<tag, 480>::init(op_, p, bitLen, useMont); break;
+		case 544: fp::FpBase<tag, 544>::init(op_, p, bitLen, useMont); break;
 #endif
-		default:  fp::FpBase<tag, maxBitN>::init(op_, p, useMont); break;
+		default:  fp::FpBase<tag, maxBitN>::init(op_, p, bitLen, useMont); break;
 		}
-		assert(op_.N <= maxUnitN);
 		sq_.set(mp);
 	}
 	static inline void getModulo(std::string& pstr)
@@ -207,7 +205,7 @@ public:
 	template<class RG>
 	void setRand(RG& rg)
 	{
-		fp::getRandVal(v_, rg, op_.p, pBitLen_);
+		fp::getRandVal(v_, rg, op_.p, op_.bitLen);
 		fromMont(*this, *this);
 	}
 	static inline void toStr(std::string& str, const Unit *x, size_t n, int base = 10, bool withPrefix = false)
@@ -311,7 +309,7 @@ public:
 	{
 		Block b;
 		getBlock(b);
-		bv.append(b.p, pBitLen_);
+		bv.append(b.p, op_.bitLen);
 	}
 	bool isValid() const
 	{
@@ -319,11 +317,11 @@ public:
 	}
 	void fromBitVec(const cybozu::BitVector& bv)
 	{
-		if (bv.size() != pBitLen_) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << pBitLen_;
+		if (bv.size() != op_.bitLen) throw cybozu::Exception("FpT:fromBitVec:bad size") << bv.size() << op_.bitLen;
 		setRaw(bv.getBlock(), bv.getBlockSize());
 	}
-	static inline size_t getModBitLen() { return pBitLen_; }
-	static inline size_t getBitVecSize() { return pBitLen_; }
+	static inline size_t getModBitLen() { return op_.bitLen; }
+	static inline size_t getBitVecSize() { return op_.bitLen; }
 	bool operator==(const FpT& rhs) const { return fp::local::isEqualArray(v_, rhs.v_, op_.N); }
 	bool operator!=(const FpT& rhs) const { return !operator==(rhs); }
 	inline friend FpT operator+(const FpT& x, const FpT& y) { FpT z; add(z, x, y); return z; }
@@ -382,7 +380,6 @@ private:
 
 template<class tag, size_t maxBitN> fp::Op FpT<tag, maxBitN>::op_;
 template<class tag, size_t maxBitN> mie::SquareRoot FpT<tag, maxBitN>::sq_;
-template<class tag, size_t maxBitN> size_t FpT<tag, maxBitN>::pBitLen_;
 
 namespace power_impl {
 
