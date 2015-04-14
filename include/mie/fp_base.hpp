@@ -160,10 +160,9 @@ struct Op {
 	void3op sub;
 	void3op mul;
 	// for Montgomery
-	Unit one[fp::maxUnitN];
+	Unit one[fp::maxUnitN]; // one = 1
 	Unit RR[fp::maxUnitN]; // R = (1 << (N * 64)) % p; RR = (R * R) % p
-//	void2op toMont;
-//	void2op fromMont;
+
 	Op()
 		: N(0), bitLen(0)
 		, isZero(0), clear(0), neg(0), inv(0)
@@ -353,16 +352,6 @@ MIE_FP_DEF_METHOD(544, L)
 		*/
 		op_->mul(y, r, invTbl_[k]);
 	}
-#if 0
-	static inline void toMont(Unit *y, const Unit *x)
-	{
-		op_->mul(y, x, op_->RR);
-	}
-	static inline void fromMont(Unit *y, const Unit *x)
-	{
-		op_->mul(y, x, op_->one);
-	}
-#endif
 #endif
 	// common
 	static inline void square(Unit *y, const Unit *x)
@@ -404,7 +393,7 @@ MIE_FP_DEF_METHOD(544, L)
 		if (op.useMont) {
 			mpz_class t = 1;
 			fromRawGmp(op.one, t);
-			t = (t << (N * 64)) % op.mp;
+			t = (t << (N * sizeof(Unit) * 8)) % op.mp;
 			t = (t * t) % op.mp;
 			fromRawGmp(op.RR, t);
 			fg_.init(op.p, N);
@@ -417,8 +406,6 @@ MIE_FP_DEF_METHOD(544, L)
 			op.add = Xbyak::CastTo<void3op>(fg_.add_);
 			op.sub = Xbyak::CastTo<void3op>(fg_.sub_);
 			op.mul = Xbyak::CastTo<void3op>(fg_.mul_);
-//			op.toMont = &toMont;
-//			op.fromMont = &fromMont;
 
 	//		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
 	//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
