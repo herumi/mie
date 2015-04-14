@@ -146,7 +146,7 @@ struct TagDefault;
 
 struct Op {
 	mpz_class mp;
-	const Unit *p;
+	Unit p[fp::maxUnitN];
 	size_t N;
 	size_t bitLen;
 	bool (*isZero)(const Unit*);
@@ -162,7 +162,7 @@ struct Op {
 	void2op toMont;
 	void2op fromMont;
 	Op()
-		: p(0), N(0), bitLen(0)
+		: N(0), bitLen(0)
 		, isZero(0), clear(0), neg(0), inv(0)
 		, square(0), copy(0),add(0), sub(0), mul(0), toMont(0), fromMont(0)
 	{
@@ -175,7 +175,6 @@ struct FpBase {
 	static const size_t N = fp::ElementNumT<Unit, bitN>::value;
 	static const size_t invTblN = N * sizeof(Unit) * 8 * 2;
 	static const Op *op_;
-	static Unit p_[N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 	// montgomery
 	static Unit one_[N];
@@ -236,7 +235,7 @@ struct FpBase {
 			if (x != y) clear(y);
 			return;
 		}
-		sub(y, p_, x);
+		sub(y, op_->p, x);
 	}
 	// z[N * 2] = x[N] * y[N]
 	static inline void mulPre(Unit *z, const Unit *x, const Unit *y)
@@ -276,8 +275,8 @@ struct FpBase {
 	}
 #ifdef MIE_USE_LLVM
 #define MIE_FP_DEF_METHOD(len, suffix) \
-static inline void add ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_add ## len ## suffix(z, x, y, p_); } \
-static inline void sub ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_sub ## len ## suffix(z, x, y, p_); } \
+static inline void add ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_add ## len ## suffix(z, x, y, op_->p); } \
+static inline void sub ## len(Unit* z, const Unit* x, const Unit* y) { mie_fp_sub ## len ## suffix(z, x, y, op_->p); } \
 static inline void mul ## len(Unit* z, const Unit* x, const Unit* y) { Unit ret[N * 2]; mie_fp_mul ## len ## pre(ret, x, y); modF(z, ret); }
 
 #if CYBOZU_OS_BIT == 64
@@ -378,12 +377,11 @@ MIE_FP_DEF_METHOD(544, L)
 		op_ = &op;
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
-		copy(p_, p);
+		copy(op.p, p);
 		Gmp::setRaw(op.mp, p, N);
 
 		op.N = N;
 		op.bitLen = bitLen;
-		op.p = &p_[0];
 
 		op.isZero = &isZero;
 		op.clear = &clear;
@@ -402,7 +400,7 @@ MIE_FP_DEF_METHOD(544, L)
 			fromRawGmp(R_, t);
 			t = (t * t) % op_->mp;
 			fromRawGmp(RR_, t);
-			fg_.init(p_, N);
+			fg_.init(op_->p, N);
 			// used by initInvTbl
 			mul = Xbyak::CastTo<void3op>(fg_.mul_);
 
@@ -461,7 +459,6 @@ MIE_FP_DEF_METHOD(544, L)
 	}
 };
 template<class tag, size_t bitN> const Op *FpBase<tag, bitN>::op_;
-template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::p_[FpBase<tag, bitN>::N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::one_[FpBase<tag, bitN>::N];
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::R_[FpBase<tag, bitN>::N];
