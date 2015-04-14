@@ -174,7 +174,7 @@ struct FpBase {
 	typedef fp::Unit Unit;
 	static const size_t N = fp::ElementNumT<Unit, bitN>::value;
 	static const size_t invTblN = N * sizeof(Unit) * 8 * 2;
-	static mpz_class mp_;
+	static const Op *op_;
 	static Unit p_[N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 	// montgomery
@@ -212,8 +212,8 @@ struct FpBase {
 		set_mpz_t(mx, x);
 		set_mpz_t(my, y);
 		mpz_add(mz, mx, my);
-		if (mpz_cmp(mz, mp_.get_mpz_t()) >= 0) {
-			mpz_sub(mz, mz, mp_.get_mpz_t());
+		if (mpz_cmp(mz, op_->mp.get_mpz_t()) >= 0) {
+			mpz_sub(mz, mz, op_->mp.get_mpz_t());
 		}
 		local::toArray(z, N, mz);
 	}
@@ -226,7 +226,7 @@ struct FpBase {
 		set_mpz_t(my, y);
 		mpz_sub(mz, mx, my);
 		if (mpz_sgn(mz) < 0) {
-			mpz_add(mz, mz, mp_.get_mpz_t());
+			mpz_add(mz, mz, op_->mp.get_mpz_t());
 		}
 		local::toArray(z, N, mz);
 	}
@@ -254,7 +254,7 @@ struct FpBase {
 		mpz_t mx, my;
 		set_mpz_t(mx, x, N * 2);
 		set_mpz_t(my, y, N);
-		mpz_mod(my, mx, mp_.get_mpz_t());
+		mpz_mod(my, mx, op_->mp.get_mpz_t());
 		local::clearArray(y, my->_mp_size, N);
 	}
 	// z[N] = x[N] * y[N] mod p[N]
@@ -270,7 +270,7 @@ struct FpBase {
 		set_mpz_t(mx, x);
 		set_mpz_t(my, y);
 		mpz_mul(mz, mx, my);
-		mpz_mod(mz, mz, mp_.get_mpz_t());
+		mpz_mod(mz, mz, op_->mp.get_mpz_t());
 		local::toArray(z, N, mz);
 #endif
 	}
@@ -313,7 +313,7 @@ MIE_FP_DEF_METHOD(544, L)
 		mpz_class my;
 		mpz_t mx;
 		set_mpz_t(mx, x);
-		mpz_invert(my.get_mpz_t(), mx, mp_.get_mpz_t());
+		mpz_invert(my.get_mpz_t(), mx, op_->mp.get_mpz_t());
 		local::toArray(y, N, my.get_mpz_t());
 	}
 	//////////////////////////////////////////////////////////////////
@@ -375,14 +375,14 @@ MIE_FP_DEF_METHOD(544, L)
 	}
 	static inline void init(Op& op, const Unit *p, size_t bitLen, bool useMont = true)
 	{
+		op_ = &op;
 		assert(N >= 2);
 		assert(sizeof(mp_limb_t) == sizeof(Unit));
 		copy(p_, p);
-		Gmp::setRaw(mp_, p, N);
+		Gmp::setRaw(op.mp, p, N);
 
 		op.N = N;
 		op.bitLen = bitLen;
-		op.mp = mp_;
 		op.p = &p_[0];
 
 		op.isZero = &isZero;
@@ -398,9 +398,9 @@ MIE_FP_DEF_METHOD(544, L)
 		if (useMont) {
 			mpz_class t = 1;
 			fromRawGmp(one_, t);
-			t = (t << (N * 64)) % mp_;
+			t = (t << (N * 64)) % op_->mp;
 			fromRawGmp(R_, t);
-			t = (t * t) % mp_;
+			t = (t * t) % op_->mp;
 			fromRawGmp(RR_, t);
 			fg_.init(p_, N);
 			// used by initInvTbl
@@ -452,7 +452,7 @@ MIE_FP_DEF_METHOD(544, L)
 			case 544: op.add = &add544; op.sub = &sub544; op.mul = &mul544; break;
 #endif
 			}
-			if (mp_ == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
+			if (op_->mp == mpz_class("0xfffffffffffffffffffffffffffffffeffffffffffffffff")) {
 				op.mul = &mie_fp_mul_NIST_P192; // slower than MontFp192
 			}
 #endif
@@ -460,7 +460,7 @@ MIE_FP_DEF_METHOD(544, L)
 		}
 	}
 };
-template<class tag, size_t bitN> mpz_class FpBase<tag, bitN>::mp_;
+template<class tag, size_t bitN> const Op *FpBase<tag, bitN>::op_;
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::p_[FpBase<tag, bitN>::N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::one_[FpBase<tag, bitN>::N];
