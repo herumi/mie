@@ -143,13 +143,13 @@ public:
 		}
 		return *this;
 	}
-	void toMont(FpT& y, const FpT& x)
+	void toMont(FpT& y, const FpT& x) const
 	{
-		if (op_.toMont) op_.toMont(y.v_, x.v_);
+		if (op_.useMont) op_.toMont(y.v_, x.v_);
 	}
-	void fromMont(FpT& y, const FpT& x)
+	void fromMont(FpT& y, const FpT& x) const
 	{
-		if (op_.fromMont) op_.fromMont(y.v_, x.v_);
+		if (op_.useMont) op_.fromMont(y.v_, x.v_);
 	}
 	void fromStr(const std::string& str, int base = 0)
 	{
@@ -195,7 +195,7 @@ public:
 	{
 		assert(maxUnitN <= Block::maxUnitN);
 		b.n = op_.N;
-		if (op_.fromMont) {
+		if (op_.useMont) {
 			op_.fromMont(b.v_, v_);
 			b.p = &b.v_[0];
 		} else {
