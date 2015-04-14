@@ -141,7 +141,8 @@ inline void toArray(Unit *y, size_t yn, const mpz_srcptr x)
 	clearArray(y, xn, yn);
 }
 
-} // mie::fp
+} // mie::fp::local
+
 struct TagDefault;
 
 struct Op {
@@ -192,6 +193,8 @@ struct Op {
 			tbl -= N;
 		}
 	}
+	template<class tag, size_t maxBitN>
+	void setModulo(const mpz_class& mp, bool useMont);
 };
 
 template<class tag, size_t bitN>
@@ -452,5 +455,36 @@ template<class tag, size_t bitN> const Op *FpBase<tag, bitN>::op_;
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 template<class tag, size_t bitN> FpGenerator FpBase<tag, bitN>::fg_;
 #endif
+
+template<class tag, size_t maxBitN>
+inline void Op::setModulo(const mpz_class& mp, bool useMont)
+{
+	const size_t bitLen = Gmp::getBitLen(mp);
+	if (bitLen > maxBitN) throw cybozu::Exception("mie:fp:Op:setModulo:large mp") << mp << maxBitN;
+	const size_t unitBit = sizeof(Unit) * 8;
+	const size_t n = (bitLen + unitBit - 1) / unitBit;
+	if (n == 0 || n > fp::maxUnitN) throw cybozu::Exception("mie:fp:Op:setModulo:large mp") << mp << fp::maxUnitN;
+	switch (n * unitBit) {
+	case 128: FpBase<tag, 128>::init(*this, mp, bitLen, useMont); break;
+	case 192: FpBase<tag, 192>::init(*this, mp, bitLen, useMont); break;
+	case 256: FpBase<tag, 256>::init(*this, mp, bitLen, useMont); break;
+	case 320: FpBase<tag, 320>::init(*this, mp, bitLen, useMont); break;
+	case 384: FpBase<tag, 384>::init(*this, mp, bitLen, useMont); break;
+	case 448: FpBase<tag, 448>::init(*this, mp, bitLen, useMont); break;
+	case 512: FpBase<tag, 512>::init(*this, mp, bitLen, useMont); break;
+#if CYBOZU_OS_BIT == 64
+	case 576: FpBase<tag, 576>::init(*this, mp, bitLen, useMont); break;
+#else
+	case 160: FpBase<tag, 160>::init(*this, mp, bitLen, useMont); break;
+	case 224: FpBase<tag, 224>::init(*this, mp, bitLen, useMont); break;
+	case 288: FpBase<tag, 288>::init(*this, mp, bitLen, useMont); break;
+	case 352: FpBase<tag, 352>::init(*this, mp, bitLen, useMont); break;
+	case 416: FpBase<tag, 416>::init(*this, mp, bitLen, useMont); break;
+	case 480: FpBase<tag, 480>::init(*this, mp, bitLen, useMont); break;
+	case 544: FpBase<tag, 544>::init(*this, mp, bitLen, useMont); break;
+#endif
+	default:  FpBase<tag, maxBitN>::init(*this, mp, bitLen, useMont); break;
+	}
+}
 
 } } // mie::fp
