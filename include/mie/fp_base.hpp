@@ -162,9 +162,10 @@ struct Op {
 	// for Montgomery
 	Unit one[fp::maxUnitN]; // one = 1
 	Unit RR[fp::maxUnitN]; // R = (1 << (N * 64)) % p; RR = (R * R) % p
+	std::vector<Unit> invTbl;
 
 	Op()
-		: N(0), bitLen(0)
+		: useMont(false), mp(), p(), N(0), bitLen(0)
 		, isZero(0), clear(0), neg(0), inv(0)
 		, square(0), copy(0),add(0), sub(0), mul(0)
 	{
@@ -177,16 +178,28 @@ struct Op {
 	{
 		mul(y, x, one);
 	}
+	void initInvTbl(size_t N)
+	{
+		assert(N <= fp::maxUnitN);
+		const size_t invTblN = N * sizeof(Unit) * 8 * 2;
+		invTbl.resize(invTblN * N);
+		Unit *tbl = invTbl.data() + (invTblN - 1) * N;
+		Unit t[fp::maxUnitN] = {};
+		t[0] = 2;
+		toMont(tbl, t);
+		for (size_t i = 0; i < invTblN - 1; i++) {
+			add(tbl - N, tbl, tbl);
+			tbl -= N;
+		}
+	}
 };
 
 template<class tag, size_t bitN>
 struct FpBase {
 	typedef fp::Unit Unit;
 	static const size_t N = fp::ElementNumT<Unit, bitN>::value;
-	static const size_t invTblN = N * sizeof(Unit) * 8 * 2;
 	static const Op *op_;
 	// for Montgomery
-	static Unit invTbl_[invTblN][N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 	static FpGenerator fg_;
 #endif
@@ -321,25 +334,11 @@ MIE_FP_DEF_METHOD(544, L)
 		mpz_invert(my.get_mpz_t(), mx, op_->mp.get_mpz_t());
 		local::toArray(y, N, my.get_mpz_t());
 	}
-	//////////////////////////////////////////////////////////////////
-	// for Montgomery
-#ifdef MIE_FP_GENERATOR_USE_XBYAK
 	static inline void fromRawGmp(Unit *y, const mpz_class& x)
 	{
 		local::toArray(y, N, x.get_mpz_t());
 	}
-	static void initInvTbl(Unit invTbl[invTblN][N])
-	{
-		void3op _add = Xbyak::CastTo<void3op>(fg_.add_);
-		Unit t[N];
-		clear(t);
-		t[0] = 2;
-		op_->toMont(t, t);
-		for (int i = 0; i < invTblN; i++) {
-			copy(invTbl[invTblN - 1 - i], t);
-			_add(t, t, t);
-		}
-	}
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 	static inline void invM(Unit *y, const Unit *x)
 	{
 		const int2op preInv = Xbyak::CastTo<int2op>(fg_.preInv_);
@@ -350,7 +349,7 @@ MIE_FP_DEF_METHOD(544, L)
 			R = 2^(N * 64)
 			get r2^(-k)R^2 = r 2^(N * 64 * 2 - k)
 		*/
-		op_->mul(y, r, invTbl_[k]);
+		op_->mul(y, r, op_->invTbl.data() + k * N);
 	}
 #endif
 	// common
@@ -370,17 +369,17 @@ MIE_FP_DEF_METHOD(544, L)
 	{
 		return local::isZeroArray(x, N);
 	}
-	static inline void init(Op& op, const Unit *p, size_t bitLen, bool useMont = true)
+	static inline void init(Op& op, const mpz_class& mp, size_t bitLen, bool useMont = true)
 	{
-		op_ = &op;
-		assert(N >= 2);
-		assert(sizeof(mp_limb_t) == sizeof(Unit));
-		copy(op.p, p);
-		Gmp::setRaw(op.mp, p, N);
-
 #ifndef MIE_FP_GENERATOR_USE_XBYAK
 		useMont = false;
 #endif
+		assert(N >= 2);
+		assert(sizeof(mp_limb_t) == sizeof(Unit));
+		op_ = &op;
+		op.mp = mp;
+		fromRawGmp(op.p, mp);
+
 		op.useMont = useMont;
 		op.N = N;
 		op.bitLen = bitLen;
@@ -389,15 +388,10 @@ MIE_FP_DEF_METHOD(544, L)
 		op.clear = &clear;
 		op.copy = &copy;
 
-#ifdef MIE_FP_GENERATOR_USE_XBYAK
 		if (op.useMont) {
-			mpz_class t = 1;
-			fromRawGmp(op.one, t);
-			t = (t << (N * sizeof(Unit) * 8)) % op.mp;
-			t = (t * t) % op.mp;
-			fromRawGmp(op.RR, t);
+
+#ifdef MIE_FP_GENERATOR_USE_XBYAK
 			fg_.init(op.p, N);
-			// used by initInvTbl
 
 			op.neg = Xbyak::CastTo<void2op>(fg_.neg_);
 			op.inv = &invM;
@@ -410,10 +404,14 @@ MIE_FP_DEF_METHOD(544, L)
 	//		shr1 = Xbyak::CastTo<void2op>(fg_.shr1_);
 	//		addNc = Xbyak::CastTo<bool3op>(fg_.addNc_);
 	//		subNc = Xbyak::CastTo<bool3op>(fg_.subNc_);
-			initInvTbl(invTbl_);
-		} else
 #endif
-		{
+			mpz_class t = 1;
+			fromRawGmp(op.one, t);
+			t = (t << (N * sizeof(Unit) * 8)) % op.mp;
+			t = (t * t) % op.mp;
+			fromRawGmp(op.RR, t);
+			op.initInvTbl(N);
+		} else {
 			op.neg = &neg;
 			op.inv = &invF;
 			op.square = &square;
@@ -451,7 +449,6 @@ MIE_FP_DEF_METHOD(544, L)
 	}
 };
 template<class tag, size_t bitN> const Op *FpBase<tag, bitN>::op_;
-template<class tag, size_t bitN> fp::Unit FpBase<tag, bitN>::invTbl_[FpBase<tag, bitN>::invTblN][FpBase<tag, bitN>::N];
 #ifdef MIE_FP_GENERATOR_USE_XBYAK
 template<class tag, size_t bitN> FpGenerator FpBase<tag, bitN>::fg_;
 #endif

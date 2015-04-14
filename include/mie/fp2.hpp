@@ -61,31 +61,30 @@ public:
 		if (isMinus) throw cybozu::Exception("mie:FpT:setModulo:mstr is not minus") << mstr;
 		const size_t bitLen = Gmp::getBitLen(mp);
 		if (bitLen > maxBitN) throw cybozu::Exception("mie:FpT:setModulo:too large bitLen") << bitLen << maxBitN;
-		Unit p[fp::maxUnitN] = {};
-		const size_t n = Gmp::getRaw(p, fp::maxUnitN, mp);
-		if (n == 0) throw cybozu::Exception("mie:FpT:setModulo:bad mstr") << mstr;
 		bool useMont = true;
 //		bool useMont = false;
-		switch (n * sizeof(Unit) * 8) {
-		case 128: fp::FpBase<tag, 128>::init(op_, p, bitLen, useMont); break;
-		case 192: fp::FpBase<tag, 192>::init(op_, p, bitLen, useMont); break;
-		case 256: fp::FpBase<tag, 256>::init(op_, p, bitLen, useMont); break;
-		case 320: fp::FpBase<tag, 320>::init(op_, p, bitLen, useMont); break;
-		case 384: fp::FpBase<tag, 384>::init(op_, p, bitLen, useMont); break;
-		case 448: fp::FpBase<tag, 448>::init(op_, p, bitLen, useMont); break;
-		case 512: fp::FpBase<tag, 512>::init(op_, p, bitLen, useMont); break;
+		const size_t unitBit = sizeof(Unit) * 8;
+		const size_t roundBit = (bitLen + unitBit - 1) & ~(unitBit - 1);
+		switch (roundBit) {
+		case 128: fp::FpBase<tag, 128>::init(op_, mp, bitLen, useMont); break;
+		case 192: fp::FpBase<tag, 192>::init(op_, mp, bitLen, useMont); break;
+		case 256: fp::FpBase<tag, 256>::init(op_, mp, bitLen, useMont); break;
+		case 320: fp::FpBase<tag, 320>::init(op_, mp, bitLen, useMont); break;
+		case 384: fp::FpBase<tag, 384>::init(op_, mp, bitLen, useMont); break;
+		case 448: fp::FpBase<tag, 448>::init(op_, mp, bitLen, useMont); break;
+		case 512: fp::FpBase<tag, 512>::init(op_, mp, bitLen, useMont); break;
 #if CYBOZU_OS_BIT == 64
-		case 576: fp::FpBase<tag, 576>::init(op_, p, bitLen, useMont); break;
+		case 576: fp::FpBase<tag, 576>::init(op_, mp, bitLen, useMont); break;
 #else
-		case 160: fp::FpBase<tag, 160>::init(op_, p, bitLen, useMont); break;
-		case 224: fp::FpBase<tag, 224>::init(op_, p, bitLen, useMont); break;
-		case 288: fp::FpBase<tag, 288>::init(op_, p, bitLen, useMont); break;
-		case 352: fp::FpBase<tag, 352>::init(op_, p, bitLen, useMont); break;
-		case 416: fp::FpBase<tag, 416>::init(op_, p, bitLen, useMont); break;
-		case 480: fp::FpBase<tag, 480>::init(op_, p, bitLen, useMont); break;
-		case 544: fp::FpBase<tag, 544>::init(op_, p, bitLen, useMont); break;
+		case 160: fp::FpBase<tag, 160>::init(op_, mp, bitLen, useMont); break;
+		case 224: fp::FpBase<tag, 224>::init(op_, mp, bitLen, useMont); break;
+		case 288: fp::FpBase<tag, 288>::init(op_, mp, bitLen, useMont); break;
+		case 352: fp::FpBase<tag, 352>::init(op_, mp, bitLen, useMont); break;
+		case 416: fp::FpBase<tag, 416>::init(op_, mp, bitLen, useMont); break;
+		case 480: fp::FpBase<tag, 480>::init(op_, mp, bitLen, useMont); break;
+		case 544: fp::FpBase<tag, 544>::init(op_, mp, bitLen, useMont); break;
 #endif
-		default:  fp::FpBase<tag, maxBitN>::init(op_, p, bitLen, useMont); break;
+		default:  fp::FpBase<tag, maxBitN>::init(op_, mp, bitLen, useMont); break;
 		}
 		sq_.set(mp);
 	}
