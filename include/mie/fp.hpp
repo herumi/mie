@@ -312,6 +312,7 @@ mie::ope::Optimized<typename T::ImplType> FpT<T, tag>::opt_;
 
 } // mie
 
+#ifndef MIE_DONT_DEFINE_HASH
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
@@ -327,6 +328,7 @@ struct hash<mie::FpT<T, tag> > {
 };
 
 CYBOZU_NAMESPACE_TR1_END } // std::tr1
+#endif
 
 #ifdef _MSC_VER
 	#pragma warning(pop)

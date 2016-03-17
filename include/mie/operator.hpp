@@ -20,6 +20,10 @@
 		#define MIE_FORCE_INLINE __attribute__((always_inline))
 	#endif
 #endif
+#ifdef __APPLE__
+	#define MIE_DONT_DEFINE_HASH
+#endif
+
 
 namespace mie { namespace ope {
 

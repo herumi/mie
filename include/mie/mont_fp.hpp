@@ -449,6 +449,7 @@ template<size_t N, class tag>typename MontFpT<N, tag>::int2op MontFpT<N, tag>::p
 
 } // mie
 
+#ifndef MIE_DONT_DEFINE_HASH
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
@@ -461,3 +462,4 @@ struct hash<mie::MontFpT<N, tag> > {
 };
 
 CYBOZU_NAMESPACE_TR1_END } // std::tr1
+#endif

@@ -567,6 +567,7 @@ struct EcParam {
 
 } // mie
 
+#ifndef MIE_DONT_DEFINE_HASH
 namespace std { CYBOZU_NAMESPACE_TR1_BEGIN
 template<class T> struct hash;
 
@@ -583,3 +584,4 @@ struct hash<mie::EcT<_Fp> > {
 };
 
 CYBOZU_NAMESPACE_TR1_END } // std
+#endif
