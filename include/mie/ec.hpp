@@ -439,6 +439,9 @@ public:
 			} else {
 				self.y.fromStr(&str[pos + 1], 16);
 			}
+			if (!EcT::isValid(self.x, self.y)) {
+				throw cybozu::Exception("EcT:operator>>:bad x, y") << self.x << self.y;
+			}
 		}
 		return is;
 	}

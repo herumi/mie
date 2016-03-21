@@ -264,6 +264,11 @@ struct Test {
 			ss >> Q;
 			CYBOZU_TEST_EQUAL(P, Q);
 		}
+		// bad value
+		{
+			std::istringstream ss("5_3");
+			CYBOZU_TEST_EXCEPTION_MESSAGE(ss >> Q, cybozu::Exception, "bad");
+		}
 		// compressed
 		Ec::setCompressedExpression(true);
 		P.set(x, y);
@@ -286,6 +291,11 @@ struct Test {
 			ss << P;
 			ss >> Q;
 			CYBOZU_TEST_EQUAL(P, Q);
+		}
+		// bad value
+		{
+			std::istringstream ss("5_3");
+			CYBOZU_TEST_EXCEPTION_MESSAGE(ss >> Q, cybozu::Exception, "bad");
 		}
 	}
 
