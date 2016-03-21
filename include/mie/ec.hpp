@@ -502,6 +502,9 @@ public:
 			bv.extract(t, bitLen, bitLen);
 			y.fromBitVec(t);
 		}
+		if (!isValid(x, y)) {
+			throw cybozu::Exception("fromBitVec:bad x, y") << x << y;
+		}
 		z = 1;
 #endif
 	}
