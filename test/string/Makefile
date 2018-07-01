@@ -16,7 +16,7 @@ ifeq ($(BIT),64)
 TARGET += string_test64
 endif
 # ----------------------------------------------------------------
-CFLAGS += -O3 -DXBYAK_NO_OP_NAMES -fomit-frame-pointer -DNDEBUG -msse4 $(ADD_OPT) -I../../include
+CFLAGS += -Ofast -fomit-frame-pointer -DNDEBUG -msse4 $(ADD_OPT) -I../../include
 CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wwrite-strings -Wfloat-equal -Wpointer-arith #-Wlong-long # -Wcast-align
 CFLAGS+=$(CFLAGS_WARN)
 # ----------------------------------------------------------------
